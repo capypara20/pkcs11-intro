@@ -1,26 +1,15 @@
-/* 共通トークン：全章で共有する */
+/* 共通トークン：全章で共有する。ダーク固定で、説明文の面（--paper*）だけライトの色合いを使う */
 :root{
   --bg:#0F1724; --panel:#172235; --panel2:#1E2B42; --line:#2C3D58;
   --ink:#E7EBF1; --muted:#97A3B6; --brass:#D6AB4C; --cipher:#4CC2B1; --warn:#E07A6A;
+  --paper:#F3F4F1; --paper-ink:#16202E; --paper-muted:#56637A; --paper-line:#D5DAE1;
+  --paper-brass:#9A7420; --paper-cipher:#137A6C; --paper-warn:#B4473A;
   --font:"IBM Plex Sans JP","Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
   --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  color-scheme:dark;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
-}
-@media (prefers-color-scheme:light){
-  :root:not([data-theme="dark"]){
-    --bg:#F3F4F1; --panel:#FFFFFF; --panel2:#E9ECEF; --line:#C5CCD6;
-    --ink:#16202E; --muted:#56637A; --brass:#9A7420; --cipher:#137A6C; --warn:#B4473A;
-  }
-}
-:root[data-theme="light"]{
-  --bg:#F3F4F1; --panel:#FFFFFF; --panel2:#E9ECEF; --line:#C5CCD6;
-  --ink:#16202E; --muted:#56637A; --brass:#9A7420; --cipher:#137A6C; --warn:#B4473A;
-}
-:root[data-theme="dark"]{
-  --bg:#0F1724; --panel:#172235; --panel2:#1E2B42; --line:#2C3D58;
-  --ink:#E7EBF1; --muted:#97A3B6; --brass:#D6AB4C; --cipher:#4CC2B1; --warn:#E07A6A;
 }
 *,*::before,*::after{box-sizing:inherit}
 html,body{margin:0}

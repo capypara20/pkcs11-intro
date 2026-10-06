@@ -19,10 +19,11 @@ window.runSteps=function(cfg){
     dots.appendChild(d);
   });
 
-  function fit(){document.documentElement.style.setProperty('--s',Math.min(innerWidth/1280,innerHeight/720))}
+  // 周りに余白を残し、1.15 倍で頭打ちにする（大きい画面ではブラウザの拡大縮小が効く）
+  function fit(){document.documentElement.style.setProperty('--s',Math.min(1.15,(innerWidth-64)/1280,(innerHeight-48)/720))}
 
   function show(n){
-    i=Math.max(0,Math.min(steps.length-1,n));
+    i=(n%steps.length+steps.length)%steps.length; // 最後の次は最初、最初の前は最後
     const s=all?cfg.all:steps[i], cur=i+1, hl=s.hl||[cur];
     svg.dataset.cur=all?'all':String(cur);
     groups.forEach(g=>{
@@ -44,27 +45,22 @@ window.runSteps=function(cfg){
     if(cfg.onShow)cfg.onShow(cur,all);
   }
 
+  // 動きを減らす設定のときだけ止める（ボタンは置かない）
   function setPaused(p){
     paused=p;
     $('stage').classList.toggle('paused',p);
     p?svg.pauseAnimations():svg.unpauseAnimations();
-    $('pause').setAttribute('aria-pressed',p);
-    $('pause').textContent=p?'再生':'一時停止';
   }
 
   $('prev').onclick=()=>{all=false;show(i-1)};
   $('next').onclick=()=>{all=false;show(i+1)};
   $('all').onclick=()=>{all=!all;show(i)};
-  $('pause').onclick=()=>setPaused(!paused);
-  $('theme').onclick=()=>toggleTheme();
   addEventListener('keydown',e=>{
     if(e.ctrlKey||e.metaKey||e.altKey)return;
     if(e.key===' '&&e.target.closest('button,a,[role=button]'))return;
     if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();all=false;show(i+1)}
     else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();all=false;show(i-1)}
     else if(e.key==='a'||e.key==='A'){all=!all;show(i)}
-    else if(e.key==='p'||e.key==='P')setPaused(!paused);
-    else if(e.key==='t'||e.key==='T')toggleTheme();
   });
   addEventListener('resize',fit);
   addEventListener('hashchange',()=>{all=location.hash==='#all';const m=parseInt(location.hash.slice(1),10);show(isNaN(m)?i:m-1)});

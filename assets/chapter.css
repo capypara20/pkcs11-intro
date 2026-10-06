@@ -30,8 +30,8 @@ svg .chip.on rect{fill:var(--panel2);stroke:var(--brass)}
 svg .chip.on text{fill:var(--brass)}
 svg .chip:hover rect,svg .chip:focus-visible rect{stroke:var(--brass);stroke-width:2}
 svg .chip:hover text{fill:var(--brass)}
-svg .alt{opacity:0;pointer-events:none;transition:opacity .3s ease}
-svg .alt.shown{opacity:1;pointer-events:auto}
+svg .alt,svg .alt-t{opacity:0;pointer-events:none;transition:opacity .3s ease}
+svg .alt.shown,svg .alt-t.shown{opacity:1;pointer-events:auto}
 g[data-step].now{filter:drop-shadow(0 0 7px var(--brass))}
 .pop{opacity:0;transform:scale(.9);transform-box:fill-box;transform-origin:center;
   transition:opacity .4s ease calc(var(--d,0)*.12s),transform .4s ease calc(var(--d,0)*.12s)}
@@ -57,6 +57,14 @@ pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:6px
 .dots{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
 .dots button{width:14px;height:14px;padding:0;border-radius:50%;background:var(--panel2)}
 .dots button.on{background:var(--brass);border-color:var(--brass)}
+/* 説明パネルはライトの色合い（紙）。図はダークのまま */
+.panel{background:var(--paper);color:var(--paper-ink);border-color:var(--paper-line)}
+.panel .count{color:var(--paper-brass)}
+.panel .body code{color:var(--paper-cipher)}
+.panel .body a{color:var(--paper-cipher)}
+.panel pre{background:var(--bg);border-color:var(--bg);color:var(--ink)}
+.panel .dots button{background:var(--paper-line);border-color:var(--paper-line)}
+.panel .dots button.on{background:var(--paper-brass);border-color:var(--paper-brass)}
 .fade{animation:fade .35s ease}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 

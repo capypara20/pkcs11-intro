@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/base.css">
 <link rel="stylesheet" href="../assets/chapter.css">
-<script src="../assets/base.js"></script>
 <script src="../assets/steps.js"></script>
 </head>
 <body>
@@ -21,8 +20,6 @@
       <button id="prev">前へ</button>
       <button id="next">次へ</button>
       <button id="all" aria-pressed="false">全体を表示</button>
-      <button id="pause" aria-pressed="false">一時停止</button>
-      <button id="theme">テーマ</button>
     </div>
   </header>
 
@@ -138,20 +135,6 @@
         <text x="546" y="320.0" text-anchor="end" font-size="12" class="brass">共通鍵</text></g>
       <g class="pop" style="--d:4"><path d="M552,404 L558,404 L558,452 L552,452" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
         <text x="546" y="432.0" text-anchor="end" font-size="12" class="brass">AES</text></g>
-    </g>
-    <g data-only="3">
-      <rect x="10" y="8" width="320" height="300" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
-      <text x="26" y="36" font-size="16" font-weight="700">種類が違えば下の層が変わる</text>
-      <text x="26" y="60" font-size="12.5" class="mut">Object / Storage / Key の層は共通</text>
-      <text x="26" y="96" font-size="14" font-weight="700" class="brass">RSA 秘密鍵</text>
-      <text x="38" y="120" font-size="12" class="mono">秘密鍵: CKA_SIGN, CKA_SENSITIVE …</text>
-      <text x="38" y="142" font-size="12" class="mono">RSA: CKA_MODULUS,</text>
-      <text x="74" y="162" font-size="12" class="mono">CKA_PRIVATE_EXPONENT …</text>
-      <text x="38" y="184" font-size="12" class="mono wr">CKA_MODULUS_BITS はない</text>
-      <text x="26" y="220" font-size="14" font-weight="700" class="brass">EC 公開鍵</text>
-      <text x="38" y="244" font-size="12" class="mono">公開鍵: CKA_VERIFY …</text>
-      <text x="38" y="266" font-size="12" class="mono">EC: CKA_EC_PARAMS, CKA_EC_POINT</text>
-      <text x="38" y="288" font-size="12" class="mono wr">CKA_SENSITIVE はない</text>
     </g>
 
     <!-- 4. テンプレート -->
@@ -494,6 +477,85 @@
       <text x="574" y="452" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
       <a href="ref-attributes.html#rsa-private"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
     </g>
+    <g class="alt-t" data-cls="secret" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_GenerateKey</text>
+      <text x="26" y="94" font-size="12.5" class="mono brass">CKM_AES_KEY_GEN</text>
+      <line x1="26" y1="108" x2="314" y2="108" stroke="var(--line)"/>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = FALSE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_LABEL = &quot;ch1-sealed&quot;</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_VALUE_LEN = 32</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_ENCRYPT = TRUE</text>
+      <text x="30" y="228" font-size="12.5" class="mono">CKA_DECRYPT = TRUE</text>
+      <text x="30" y="250" font-size="12.5" class="mono">CKA_SENSITIVE = TRUE</text>
+      <text x="30" y="272" font-size="12.5" class="mono">CKA_EXTRACTABLE = FALSE</text>
+      <text x="26" y="292" font-size="12" class="mut">CLASS と KEY_TYPE はメカニズムが決める</text>
+    </g>
+    <g class="alt-t" data-cls="data" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_CreateObject</text>
+      <line x1="26" y1="86" x2="314" y2="86" stroke="var(--line)"/>
+      <text x="30" y="118" font-size="12.5" class="mono">CKA_CLASS = CKO_DATA</text>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_PRIVATE = FALSE</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_LABEL = &quot;config&quot;</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_APPLICATION = &quot;my-app&quot;</text>
+      <text x="30" y="228" font-size="12.5" class="mut">CKA_VALUE = （中身のバイト列）</text>
+      <text x="26" y="292" font-size="12" class="mut">作るときは CKA_CLASS も自分で書く</text>
+    </g>
+    <g class="alt-t" data-cls="cert" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_CreateObject</text>
+      <line x1="26" y1="86" x2="314" y2="86" stroke="var(--line)"/>
+      <text x="30" y="118" font-size="12.5" class="mono">CKA_CLASS = CKO_CERTIFICATE</text>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_CERTIFICATE_TYPE = CKC_X_509</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_LABEL = &quot;server-cert&quot;</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_ID = 01</text>
+      <text x="30" y="228" font-size="12.5" class="mut">CKA_SUBJECT = （DER の名前）</text>
+      <text x="30" y="250" font-size="12.5" class="mut">CKA_ISSUER = （DER の名前）</text>
+      <text x="30" y="272" font-size="12.5" class="mut">CKA_VALUE = （証明書の BER）</text>
+      <text x="26" y="292" font-size="12" class="mut">鍵と同じ CKA_ID で対応づける</text>
+    </g>
+    <g class="alt-t" data-cls="pub" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_GenerateKeyPair</text>
+      <text x="314" y="72" text-anchor="end" font-size="12" class="brass">公開鍵側</text>
+      <text x="26" y="94" font-size="12.5" class="mono brass">CKM_RSA_PKCS_KEY_PAIR_GEN</text>
+      <line x1="26" y1="108" x2="314" y2="108" stroke="var(--line)"/>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_LABEL = &quot;signer&quot;</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_ID = 01</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_VERIFY = TRUE</text>
+      <text x="30" y="228" font-size="12.5" class="mono">CKA_ENCRYPT = FALSE</text>
+      <text x="30" y="250" font-size="12.5" class="mono">CKA_MODULUS_BITS = 2048</text>
+      <text x="30" y="272" font-size="12.5" class="mono">CKA_PUBLIC_EXPONENT = 65537</text>
+      <text x="26" y="292" font-size="12" class="mut">鍵長はこちら側に書く</text>
+    </g>
+    <g class="alt-t" data-cls="priv" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_GenerateKeyPair</text>
+      <text x="314" y="72" text-anchor="end" font-size="12" class="brass">秘密鍵側</text>
+      <text x="26" y="94" font-size="12.5" class="mono brass">CKM_RSA_PKCS_KEY_PAIR_GEN</text>
+      <line x1="26" y1="108" x2="314" y2="108" stroke="var(--line)"/>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_LABEL = &quot;signer&quot;</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_ID = 01</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_SIGN = TRUE</text>
+      <text x="30" y="228" font-size="12.5" class="mono">CKA_SENSITIVE = TRUE</text>
+      <text x="30" y="250" font-size="12.5" class="mono">CKA_EXTRACTABLE = FALSE</text>
+      <text x="26" y="292" font-size="12" class="mut">MODULUS_BITS は書かない（持たない属性）</text>
+    </g>
   </svg>
   </div>
 
@@ -510,15 +572,27 @@
 
 <script>
 const C=code;
-// オブジェクトの種類ボタン：押すとその種類の例の箱に切り替える。CKO_SECRET_KEY は本題の AES の例
-const svgEl=document.getElementById('svg');
+// オブジェクトの種類ボタン：押すとその種類のテンプレートと例の箱に切り替える。CKO_SECRET_KEY は本題の AES の例
+// 手順3では種類を自動で順に切り替える（押すか一時停止で止まる）
+const svgEl=document.getElementById('svg'), stageEl=document.getElementById('stage');
+const ORDER=['secret','data','cert','pub','priv'];
+let cycle=null, curCls='secret';
 function pick(cls){
+  curCls=cls;
+  const step=+svgEl.dataset.cur||0;
   svgEl.querySelectorAll('.alt').forEach(g=>{const on=g.dataset.cls===cls;g.classList.toggle('shown',on);g.setAttribute('aria-hidden',!on)});
+  // AES のテンプレートは手順4以降なら図の本体にあるので、手順2・3のときだけ重ねる
+  svgEl.querySelectorAll('.alt-t').forEach(g=>{const on=g.dataset.cls===cls&&(cls!=='secret'||(step>=2&&step<=3));g.classList.toggle('shown',on);g.setAttribute('aria-hidden',!on)});
   svgEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.cls===cls));
 }
+function stopCycle(){clearInterval(cycle);cycle=null}
+function startCycle(){
+  stopCycle();
+  cycle=setInterval(()=>{if(!stageEl.classList.contains('paused'))pick(ORDER[(ORDER.indexOf(curCls)+1)%ORDER.length])},3500);
+}
 svgEl.querySelectorAll('.chip').forEach(c=>{
-  c.addEventListener('click',()=>pick(c.dataset.cls));
-  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();pick(c.dataset.cls)}});
+  c.addEventListener('click',()=>{stopCycle();pick(c.dataset.cls)});
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();stopCycle();pick(c.dataset.cls)}});
 });
 runSteps({
   steps:[
@@ -526,11 +600,11 @@ runSteps({
      b:"トークンの中身はすべてオブジェクト。オブジェクトは「属性（<code>CKA_*</code>）と値」の組の集まりで、それ以外の中身はない。鍵の値も <code>CKA_VALUE</code> という属性の1つにすぎない。",
      c:[C("// 属性は「型」と「値」の組"),"Attribute::Label(\"ch1-sealed\".into())",C("// = CKA_LABEL と、そのバイト列")]},
     {t:"CKA_CLASS が種類を決める",
-     b:"どの種類のオブジェクトかは <code>CKA_CLASS</code> で決まる。データ・証明書・公開鍵・秘密鍵・共通鍵などがあり、種類によって持てる属性が変わる。AES の鍵は共通鍵 <code>CKO_SECRET_KEY</code>。図の上の種類を押すと、その種類のオブジェクトの例に箱が切り替わる。",
+     b:"どの種類のオブジェクトかは <code>CKA_CLASS</code> で決まる。データ・証明書・公開鍵・秘密鍵・共通鍵などがあり、種類によって持てる属性が変わる。AES の鍵は共通鍵 <code>CKO_SECRET_KEY</code>。図の上の種類を押すと、その種類のテンプレートとオブジェクトの例に切り替わる。",
      c:["Attribute::Class(ObjectClass::SECRET_KEY)",C("// CKA_CLASS = CKO_SECRET_KEY")]},
-    {t:"種類ごとに持つ属性が決まる",
-     b:"どの属性を持つかは種類で決まる。仕様は属性を層に分けて定義していて、この AES 鍵は Object から AES までの全層の属性を持つ。RSA や EC の鍵では下の層が入れ替わる（上の種類を押して見比べられる）。全属性は<a href=\"ref-attributes.html\">属性リファレンス</a>へ。",
-     c:["info(rsa_priv, AttributeType::ModulusBits)",C("// → TypeInvalid（秘密鍵にはない）"),"info(rsa_pub, AttributeType::Sensitive)",C("// → TypeInvalid（公開鍵にはない）")]},
+    {t:"種類が変われば、書くことも変わる",
+     b:"どの属性を持つかは種類で決まる。仕様は属性を層に分けて定義していて、上の Object・Storage は共通、下の層が種類ごとに入れ替わる。この手順では種類が順に切り替わり、左にテンプレート、右にできるオブジェクトが出る。種類を押すとそこで止まる。",
+     c:["session.create_object(&template)?;",C("// データ・証明書：CKA_CLASS も自分で書く"),"session.generate_key_pair(","    &mech, &pub_t, &priv_t)?;",C("// 鍵ペア：公開鍵側と秘密鍵側の2つ")]},
     {t:"テンプレートで注文する",
      b:"作るときは、ほしい属性を並べた配列（テンプレート）と、作り方（メカニズム）を渡す。AES 鍵なら <code>CKM_AES_KEY_GEN</code> で、鍵長は <code>CKA_VALUE_LEN</code> で指定する。",
      c:["let template = [Attribute::Token(false),","    Attribute::Label(\"ch1-sealed\".into()),","    Attribute::ValueLen(32.into()),","    Attribute::Sensitive(true),","    Attribute::Extractable(false), /* ... */];"]},
@@ -556,7 +630,7 @@ runSteps({
      b:"<code>C_FindObjects</code> の検索条件もテンプレート。書いた属性がすべて一致するオブジェクトのハンドルが返る。空のテンプレートなら、見えるものすべてが返る。",
      c:["b.find_objects(&[","    Attribute::Class(ObjectClass::SECRET_KEY),","    Attribute::KeyType(KeyType::AES)])?;",C("// 全部一致したものだけ")]}
   ],
-  onShow:()=>pick('secret'),
+  onShow:(cur,all)=>{stopCycle();pick('secret');if(cur===3&&!all)startCycle()},
   all:{t:"全体像",
     b:"オブジェクトは属性の集まり。アプリはテンプレートで属性を指定して作り、残りはメカニズムとトークンが埋める。アプリが持つのはハンドルだけで、<code>CKA_SENSITIVE</code> などの属性が「何を読ませ、何を変えさせるか」を決める。各属性の詳細は属性リファレンスへ。",
     c:[C("// この章の関数と属性はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも使い方は同じ"),C("// 挙動は examples/01-objects で CI 確認")]}
