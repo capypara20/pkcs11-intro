@@ -19,8 +19,6 @@ window.runSteps=function(cfg){
     dots.appendChild(d);
   });
 
-  // 周りに余白を残し、1.15 倍で頭打ちにする（大きい画面ではブラウザの拡大縮小が効く）
-  function fit(){document.documentElement.style.setProperty('--s',Math.min(1.15,(innerWidth-64)/1280,(innerHeight-48)/720))}
 
   function show(n){
     i=(n%steps.length+steps.length)%steps.length; // 最後の次は最初、最初の前は最後
@@ -62,10 +60,9 @@ window.runSteps=function(cfg){
     else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();all=false;show(i-1)}
     else if(e.key==='a'||e.key==='A'){all=!all;show(i)}
   });
-  addEventListener('resize',fit);
   addEventListener('hashchange',()=>{all=location.hash==='#all';const m=parseInt(location.hash.slice(1),10);show(isNaN(m)?i:m-1)});
   if(location.hash==='#all')all=true;
   const n=parseInt(location.hash.slice(1),10);
-  fit();show(isNaN(n)?0:n-1);
+  show(isNaN(n)?0:n-1);
   if(reduce)setPaused(true);
 };
