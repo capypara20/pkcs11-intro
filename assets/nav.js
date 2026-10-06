@@ -5,6 +5,7 @@
     ['docs/00-overview.html','第0章 全体像'],
     ['docs/01-objects.html','第1章 オブジェクトと属性'],
     ['docs/02-keypair.html','第2章 鍵ペアの生成'],
+    ['docs/03-sign.html','第3章 署名と検証'],
   ];
   const REFS=[
     ['docs/ref-attributes.html','属性リファレンス'],

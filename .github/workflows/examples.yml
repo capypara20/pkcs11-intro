@@ -23,3 +23,4 @@ jobs:
           cargo run -p overview
           cargo run -p objects
           cargo run -p keypair
+          cargo run -p sign
