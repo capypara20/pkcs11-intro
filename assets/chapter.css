@@ -22,9 +22,16 @@ g[data-step],g[data-only]{opacity:0;transition:opacity .5s ease,transform .6s cu
 g[data-step].shown,g[data-only].shown{opacity:1;transform:none}
 g[data-step].shown.dim{opacity:.3}
 g[data-step]:not(.shown),g[data-only]:not(.shown){pointer-events:none}
-svg a.chip{cursor:pointer}
-svg a.chip:hover rect,svg a.chip:focus-visible rect{stroke:var(--brass);stroke-width:2}
-svg a.chip:hover text{fill:var(--brass)}
+/* 押して切り替える小さなボタン（第1章のオブジェクトの種類など） */
+svg .chip{cursor:pointer;outline:none}
+svg .chip rect{fill:var(--panel);stroke:var(--line)}
+svg .chip text{fill:var(--muted)}
+svg .chip.on rect{fill:var(--panel2);stroke:var(--brass)}
+svg .chip.on text{fill:var(--brass)}
+svg .chip:hover rect,svg .chip:focus-visible rect{stroke:var(--brass);stroke-width:2}
+svg .chip:hover text{fill:var(--brass)}
+svg .alt{opacity:0;pointer-events:none;transition:opacity .3s ease}
+svg .alt.shown{opacity:1;pointer-events:auto}
 g[data-step].now{filter:drop-shadow(0 0 7px var(--brass))}
 .pop{opacity:0;transform:scale(.9);transform-box:fill-box;transform-origin:center;
   transition:opacity .4s ease calc(var(--d,0)*.12s),transform .4s ease calc(var(--d,0)*.12s)}

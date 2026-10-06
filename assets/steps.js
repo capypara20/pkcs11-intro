@@ -1,6 +1,7 @@
 // 章ページ共通の手順エンジン（第1章以降で使う）
 //   runSteps({steps:[{t,b,c,hl?}], all:{t,b,c}})
 //   t … 見出し / b … 本文HTML / c … コード行（HTML）/ hl … 光らせる手順番号（省略時は現在の手順）
+//   onShow(cur, all) … 手順が変わるたびに呼ばれる（章ごとの追加の表示を戻すときなどに使う）
 // 図の要素：data-step="n" は手順 n 以降ずっと表示、data-only="n m" はその手順のときだけ表示
 window.code=s=>`<span class=c>${s}</span>`;
 window.runSteps=function(cfg){
@@ -40,6 +41,7 @@ window.runSteps=function(cfg){
     $('all').setAttribute('aria-pressed',all);
     const h=all?'#all':'#'+cur;
     if(location.hash!==h)history.replaceState(null,'',h);
+    if(cfg.onShow)cfg.onShow(cur,all);
   }
 
   function setPaused(p){
@@ -57,7 +59,7 @@ window.runSteps=function(cfg){
   $('theme').onclick=()=>toggleTheme();
   addEventListener('keydown',e=>{
     if(e.ctrlKey||e.metaKey||e.altKey)return;
-    if(e.key===' '&&e.target.closest('button,a'))return;
+    if(e.key===' '&&e.target.closest('button,a,[role=button]'))return;
     if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();all=false;show(i+1)}
     else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();all=false;show(i-1)}
     else if(e.key==='a'||e.key==='A'){all=!all;show(i)}
