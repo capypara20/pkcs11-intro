@@ -62,6 +62,94 @@ fn value_hidden(s: &Session, h: ObjectHandle) -> Result<bool> {
     Ok(matches!(info.as_slice(), [AttributeInfo::Sensitive]))
 }
 
+/// 属性の状態だけを調べる（値は読まない）。TypeInvalid ならその種類のオブジェクトにはない属性
+fn info(s: &Session, h: ObjectHandle, t: AttributeType) -> Result<AttributeInfo> {
+    Ok(s.get_attribute_info(h, &[t])?.remove(0))
+}
+
+/// 鍵の種類が変われば、持つ属性（下の層）が変わることを確かめる
+fn other_kinds(s: &Session) -> Result<()> {
+    use AttributeInfo::{Available, Sensitive, TypeInvalid};
+    // RSA：鍵長 CKA_MODULUS_BITS は公開鍵側のテンプレートに書く
+    let (rsa_pub, rsa_priv) = s.generate_key_pair(
+        &Mechanism::RsaPkcsKeyPairGen,
+        &[
+            Attribute::Token(false),
+            Attribute::ModulusBits(2048.into()),
+            Attribute::PublicExponent(vec![0x01, 0x00, 0x01]),
+            Attribute::Verify(true),
+        ],
+        &[
+            Attribute::Token(false),
+            Attribute::Sign(true),
+            Attribute::Sensitive(true),
+        ],
+    )?;
+    // 秘密鍵には CKA_MODULUS_BITS がなく、秘密指数 d は SENSITIVE で読めない
+    assert!(matches!(
+        info(s, rsa_priv, AttributeType::ModulusBits)?,
+        TypeInvalid
+    ));
+    assert!(matches!(
+        info(s, rsa_priv, AttributeType::Modulus)?,
+        Available(_)
+    ));
+    assert!(matches!(
+        info(s, rsa_priv, AttributeType::PrivateExponent)?,
+        Sensitive
+    ));
+    // 公開鍵には CKA_SENSITIVE そのものがない
+    assert!(matches!(
+        info(s, rsa_pub, AttributeType::ModulusBits)?,
+        Available(_)
+    ));
+    assert!(matches!(
+        info(s, rsa_pub, AttributeType::Sensitive)?,
+        TypeInvalid
+    ));
+    println!("RSA: 秘密鍵に MODULUS_BITS はない、公開鍵に SENSITIVE はない");
+
+    // EC：曲線 CKA_EC_PARAMS（P-256 の OID を DER で）を公開鍵側に書く
+    let p256 = vec![0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07];
+    let (ec_pub, ec_priv) = s.generate_key_pair(
+        &Mechanism::EccKeyPairGen,
+        &[
+            Attribute::Token(false),
+            Attribute::EcParams(p256),
+            Attribute::Verify(true),
+        ],
+        &[
+            Attribute::Token(false),
+            Attribute::Sign(true),
+            Attribute::Sensitive(true),
+        ],
+    )?;
+    assert!(matches!(
+        info(s, ec_pub, AttributeType::EcPoint)?,
+        Available(_)
+    ));
+    assert!(matches!(
+        info(s, ec_pub, AttributeType::ModulusBits)?,
+        TypeInvalid
+    ));
+    assert!(matches!(
+        info(s, ec_priv, AttributeType::EcParams)?,
+        Available(_)
+    ));
+    assert!(matches!(info(s, ec_priv, AttributeType::Value)?, Sensitive));
+    println!("EC: 公開鍵に EC_POINT、秘密鍵に EC_PARAMS。秘密値 CKA_VALUE は読めない");
+
+    // 上の層の属性はどの種類も同じように持つ
+    for h in [rsa_pub, rsa_priv, ec_pub, ec_priv] {
+        assert!(matches!(info(s, h, AttributeType::Label)?, Available(_)));
+        assert!(matches!(info(s, h, AttributeType::Local)?, Available(_)));
+    }
+    for h in [rsa_pub, rsa_priv, ec_pub, ec_priv] {
+        s.destroy_object(h)?; // C_DestroyObject
+    }
+    Ok(())
+}
+
 fn is_read_only(r: cryptoki::error::Result<()>) -> bool {
     matches!(r, Err(Error::Pkcs11(RvError::AttributeReadOnly, _)))
 }
@@ -148,7 +236,10 @@ fn main() -> Result<()> {
     );
     println!("ch1-open: EXTRACTABLE TRUE→FALSE は通り、FALSE→TRUE は CKR_ATTRIBUTE_READ_ONLY");
 
-    // 6. 検索条件もテンプレート。書いた属性がすべて一致するものだけ返る
+    // 6. 種類が変われば持つ属性も変わる（RSA・EC）
+    other_kinds(&a)?;
+
+    // 7. 検索条件もテンプレート。書いた属性がすべて一致するものだけ返る
     let aes = [
         Attribute::Class(ObjectClass::SECRET_KEY),
         Attribute::KeyType(KeyType::AES),
@@ -156,7 +247,7 @@ fn main() -> Result<()> {
     assert_eq!(b.find_objects(&aes)?.len(), 3);
     println!("CLASS=SECRET_KEY かつ KEY_TYPE=AES で検索: 3 件");
 
-    // 7. セッションオブジェクトは同じアプリの別セッションからも見えるが、作ったセッションを閉じると消える
+    // 8. セッションオブジェクトは同じアプリの別セッションからも見えるが、作ったセッションを閉じると消える
     assert_eq!(by_label(&b, "ch1-renamed")?, 1);
     a.close()?;
     assert_eq!(by_label(&b, "ch1-renamed")?, 0);
