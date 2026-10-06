@@ -113,16 +113,16 @@
 
     <!-- 2. CKA_CLASS が種類を決める -->
     <g data-step="2">
-      <g class="pop" style="--d:0"><rect x="600" y="19" width="110" height="26" rx="4" fill="none" stroke="var(--line)"/>
-        <text x="655" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_DATA</text></g>
-      <g class="pop" style="--d:1"><rect x="716" y="19" width="110" height="26" rx="4" fill="none" stroke="var(--line)"/>
-        <text x="771" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_CERTIFICATE</text></g>
-      <g class="pop" style="--d:2"><rect x="832" y="19" width="110" height="26" rx="4" fill="none" stroke="var(--line)"/>
-        <text x="887" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_PUBLIC_KEY</text></g>
-      <g class="pop" style="--d:3"><rect x="948" y="19" width="110" height="26" rx="4" fill="none" stroke="var(--line)"/>
-        <text x="1003" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_PRIVATE_KEY</text></g>
-      <g class="pop" style="--d:4"><rect x="1064" y="19" width="110" height="26" rx="4" fill="var(--panel2)" stroke="var(--brass)"/>
-        <text x="1119" y="36" text-anchor="middle" font-size="11" class="mono brass">CKO_SECRET_KEY</text></g>
+      <a class="chip" href="ref-attributes.html#data"><title>CKO_DATA の属性一覧（属性リファレンス）</title><g class="pop" style="--d:0"><rect x="600" y="19" width="110" height="26" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="655" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_DATA</text></g></a>
+      <a class="chip" href="ref-attributes.html#certificate"><title>CKO_CERTIFICATE の属性一覧（属性リファレンス）</title><g class="pop" style="--d:1"><rect x="716" y="19" width="110" height="26" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="771" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_CERTIFICATE</text></g></a>
+      <a class="chip" href="ref-attributes.html#public"><title>CKO_PUBLIC_KEY の属性一覧（属性リファレンス）</title><g class="pop" style="--d:2"><rect x="832" y="19" width="110" height="26" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="887" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_PUBLIC_KEY</text></g></a>
+      <a class="chip" href="ref-attributes.html#private"><title>CKO_PRIVATE_KEY の属性一覧（属性リファレンス）</title><g class="pop" style="--d:3"><rect x="948" y="19" width="110" height="26" rx="4" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="1003" y="36" text-anchor="middle" font-size="11" class="mono mut">CKO_PRIVATE_KEY</text></g></a>
+      <a class="chip" href="ref-attributes.html#secret"><title>CKO_SECRET_KEY の属性一覧（属性リファレンス）</title><g class="pop" style="--d:4"><rect x="1064" y="19" width="110" height="26" rx="4" fill="var(--panel2)" stroke="var(--brass)"/>
+        <text x="1119" y="36" text-anchor="middle" font-size="11" class="mono brass">CKO_SECRET_KEY</text></g></a>
     </g>
     <g data-only="2"><rect x="564" y="93" width="603" height="26" rx="4" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
 
@@ -280,7 +280,7 @@ runSteps({
      b:"トークンの中身はすべてオブジェクト。オブジェクトは「属性（<code>CKA_*</code>）と値」の組の集まりで、それ以外の中身はない。鍵の値も <code>CKA_VALUE</code> という属性の1つにすぎない。",
      c:[C("// 属性は「型」と「値」の組"),"Attribute::Label(\"ch1-sealed\".into())",C("// = CKA_LABEL と、そのバイト列")]},
     {t:"CKA_CLASS が種類を決める",
-     b:"どの種類のオブジェクトかは <code>CKA_CLASS</code> で決まる。データ・証明書・公開鍵・秘密鍵・共通鍵などがあり、種類によって持てる属性が変わる。AES の鍵は共通鍵 <code>CKO_SECRET_KEY</code>。",
+     b:"どの種類のオブジェクトかは <code>CKA_CLASS</code> で決まる。データ・証明書・公開鍵・秘密鍵・共通鍵などがあり、種類によって持てる属性が変わる。AES の鍵は共通鍵 <code>CKO_SECRET_KEY</code>。図の上の種類を押すと、その属性一覧へ移動する。",
      c:["Attribute::Class(ObjectClass::SECRET_KEY)",C("// CKA_CLASS = CKO_SECRET_KEY")]},
     {t:"種類ごとに持つ属性が決まる",
      b:"どの属性を持つかは種類で決まる。仕様は属性を層に分けて定義していて、この AES 鍵は Object から AES までの全層の属性を持つ。RSA や EC の鍵では下の層が入れ替わる。一覧は<a href=\"ref-attributes.html\">属性リファレンス</a>へ。",

@@ -21,6 +21,10 @@ svg .brass{fill:var(--brass)} svg .cy{fill:var(--cipher)} svg .wr{fill:var(--war
 g[data-step],g[data-only]{opacity:0;transition:opacity .5s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
 g[data-step].shown,g[data-only].shown{opacity:1;transform:none}
 g[data-step].shown.dim{opacity:.3}
+g[data-step]:not(.shown),g[data-only]:not(.shown){pointer-events:none}
+svg a.chip{cursor:pointer}
+svg a.chip:hover rect,svg a.chip:focus-visible rect{stroke:var(--brass);stroke-width:2}
+svg a.chip:hover text{fill:var(--brass)}
 g[data-step].now{filter:drop-shadow(0 0 7px var(--brass))}
 .pop{opacity:0;transform:scale(.9);transform-box:fill-box;transform-origin:center;
   transition:opacity .4s ease calc(var(--d,0)*.12s),transform .4s ease calc(var(--d,0)*.12s)}
