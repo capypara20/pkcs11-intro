@@ -1,9 +1,7 @@
-/* 共通トークン：全章で共有する。ダーク固定で、説明文の面（--paper*）だけライトの色合いを使う */
+/* 共通トークン：全章で共有する。ダーク固定 */
 :root{
   --bg:#0F1724; --panel:#172235; --panel2:#1E2B42; --line:#2C3D58;
   --ink:#E7EBF1; --muted:#97A3B6; --brass:#D6AB4C; --cipher:#4CC2B1; --warn:#E07A6A;
-  --paper:#F3F4F1; --paper-ink:#16202E; --paper-muted:#56637A; --paper-line:#D5DAE1;
-  --paper-brass:#9A7420; --paper-cipher:#137A6C; --paper-warn:#B4473A;
   --font:"IBM Plex Sans JP","Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
   --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
   color-scheme:dark;
@@ -21,3 +19,12 @@ button{background:var(--panel);color:var(--ink);border:1px solid var(--line);bor
 button:hover{border-color:var(--brass)}
 button:focus-visible,a:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 button[aria-pressed="true"]{border-color:var(--brass);color:var(--brass)}
+
+/* ページ間ナビ（前の章／目次／次の章） */
+nav.sitenav{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;font-size:14px}
+nav.sitenav a{text-decoration:none}
+nav.sitenav a:hover{text-decoration:underline}
+nav.sitenav .prev{justify-self:start}
+nav.sitenav .home{justify-self:center;color:var(--muted)}
+nav.sitenav .next{justify-self:end}
+nav.sitenav .off{color:var(--muted);opacity:.6}

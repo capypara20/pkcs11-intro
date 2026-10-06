@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/base.css">
 <link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
 <script src="../assets/steps.js"></script>
 </head>
 <body>
@@ -16,7 +17,7 @@
   <header>
     <h1><a href="../index.html">PKCS#11 入門</a>　第1章 オブジェクトと属性<span class="ver" title="この章の関数と属性は v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
     <div class="ctl">
-      <a class="ref" href="ref-attributes.html">属性リファレンス</a>
+      <a class="ref" href="ref-attributes.html" target="_blank" rel="noopener">属性リファレンス</a>
       <button id="prev">前へ</button>
       <button id="next">次へ</button>
       <button id="all" aria-pressed="false">全体を表示</button>
@@ -286,7 +287,7 @@
 <path d="M552,236 L558,236 L558,312 L552,312" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
         <text x="546" y="278.0" text-anchor="end" font-size="12" class="brass">Data</text>
       <text x="574" y="346" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
-      <a href="ref-attributes.html#data"><text x="1163" y="346" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#data"><text x="1163" y="346" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
     </g>
     <g class="alt" data-cls="cert" aria-hidden="true">
       <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
@@ -345,7 +346,7 @@
 <path d="M552,292 L558,292 L558,396 L552,396" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
         <text x="546" y="348.0" text-anchor="end" font-size="12" class="brass">X.509</text>
       <text x="574" y="430" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
-      <a href="ref-attributes.html#x509"><text x="1163" y="430" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#x509"><text x="1163" y="430" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
     </g>
     <g class="alt" data-cls="pub" aria-hidden="true">
       <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
@@ -410,7 +411,7 @@
 <path d="M552,348 L558,348 L558,424 L552,424" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
         <text x="546" y="390.0" text-anchor="end" font-size="12" class="brass">RSA</text>
       <text x="574" y="452" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
-      <a href="ref-attributes.html#rsa-public"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#rsa-public"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
     </g>
     <g class="alt" data-cls="priv" aria-hidden="true">
       <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
@@ -475,7 +476,7 @@
 <path d="M552,376 L558,376 L558,424 L552,424" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
         <text x="546" y="404.0" text-anchor="end" font-size="12" class="brass">RSA</text>
       <text x="574" y="452" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
-      <a href="ref-attributes.html#rsa-private"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#rsa-private"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
     </g>
     <g class="alt-t" data-cls="secret" aria-hidden="true">
       <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
@@ -568,6 +569,7 @@
     <div class="body" id="body"></div>
     <pre id="code"></pre>
   </section>
+  <nav class="sitenav" data-page="docs/01-objects.html" data-root="../" aria-label="章の移動"></nav>
 </div>
 
 <script>
