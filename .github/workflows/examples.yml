@@ -19,4 +19,6 @@ jobs:
           echo "SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf" >> "$GITHUB_ENV"
       - name: Run examples
         working-directory: examples
-        run: cargo run -p overview
+        run: |
+          cargo run -p overview
+          cargo run -p objects

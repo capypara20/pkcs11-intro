@@ -23,6 +23,7 @@ li .s{font-size:13px;color:var(--muted)}
 li.todo span:nth-child(2){color:var(--muted)}
 .bar{display:flex;justify-content:flex-end;margin-bottom:24px}
 footer{margin-top:40px;font-size:14px;color:var(--muted)}
+h2{font-size:18px;margin:40px 0 12px;color:var(--muted);font-weight:500}
 </style>
 </head>
 <body>
@@ -33,15 +34,20 @@ footer{margin-top:40px;font-size:14px;color:var(--muted)}
   <p class="lead">暗号デバイスを操作する共通API「Cryptoki」を、図と Rust のコードで1段階ずつ組み立てて理解する。</p>
   <ol>
     <li><span class="n">第0章</span><a href="docs/00-overview.html">全体像</a><span class="s">公開中</span></li>
-    <li class="todo"><span class="n">第1章</span><span>初期化と終了</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第2章</span><span>セッションとログイン</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第3章</span><span>オブジェクトと属性</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第4章</span><span>鍵の生成・検索・削除</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第5章</span><span>署名と暗号化</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第6章</span><span>メカニズム</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第7章</span><span>エラーコード</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">第8章</span><span>ハンズオン：SoftHSM2</span><span class="s">準備中</span></li>
-    <li class="todo"><span class="n">付録</span><span>仕様バージョンの違い</span><span class="s">準備中</span></li>
+    <li><span class="n">第1章</span><a href="docs/01-objects.html">オブジェクトと属性</a><span class="s">公開中</span></li>
+    <li class="todo"><span class="n">第2章</span><span>鍵ペアの生成</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第3章</span><span>署名と検証</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第4章</span><span>暗号化と復号</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第5章</span><span>エラーコード</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第6章</span><span>初期化とセッションの詳細</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">付録</span><span>cryptoki の下で何が起きているか（生 FFI）</span><span class="s">準備中</span></li>
+  </ol>
+  <h2>リファレンス</h2>
+  <ol>
+    <li><span class="n">属性</span><a href="docs/ref-attributes.html">属性リファレンス</a><span class="s">公開中</span></li>
+    <li class="todo"><span class="n">メカニズム</span><span>メカニズムリファレンス</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">関数</span><span>関数リファレンス</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">用語</span><span>用語・略語集</span><span class="s">準備中</span></li>
   </ol>
   <footer>根拠は OASIS PKCS 11 TC の公開仕様書のみ。サンプルは SoftHSM2 で動作確認している。</footer>
 </main>

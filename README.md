@@ -18,8 +18,8 @@ PKCS#11（Cryptoki）を、図とアニメーションで段階的に説明す�
 
 ```
 index.html            目次
-docs/                 各章（HTML）
-assets/               全章共通のスタイルとスクリプト
+docs/                 各章（NN-*.html）とリファレンス（ref-*.html）
+assets/               共通のスタイルとスクリプト（chapter.css / steps.js は第1章以降の章ページ用）
 diagrams/             図の元データ（draw.io）
 examples/             Rust サンプル（Cargo workspace）
 scripts/              SoftHSM2 のテスト用トークン作成
@@ -33,7 +33,7 @@ Ubuntu の場合：
 sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
-cd examples && cargo run -p overview
+cd examples && cargo run -p overview && cargo run -p objects
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。
