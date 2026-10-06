@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>第0章 全体像 | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<script src="../assets/base.js"></script>
+<style>
+html,body{height:100%}
+body{overflow:hidden}
+.stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;
+  transform:translate(-50%,-50%) scale(var(--s,1));display:grid;
+  grid-template-rows:auto 1fr auto;padding:28px 48px 20px;gap:10px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+header h1{margin:0;font-size:24px;padding-left:14px;border-left:5px solid var(--brass)}
+header h1 a{color:inherit;text-decoration:none}
+header .ctl{display:flex;gap:8px;flex-wrap:wrap}
+header .ver{font-size:13px;font-weight:400;color:var(--muted);margin-left:12px}
+
+.diagram{min-height:0;display:flex;align-items:center;justify-content:center}
+.diagram svg{width:100%;height:100%}
+svg text{font-family:var(--font);fill:var(--ink)}
+svg .mono{font-family:var(--mono)} svg .mut{fill:var(--muted)}
+svg .brass{fill:var(--brass)} svg .cy{fill:var(--cipher)} svg .wr{fill:var(--warn)}
+svg rect,svg text{transition:opacity .4s ease}
+
+/* 出現アニメ */
+g[data-step]{opacity:0;transition:opacity .5s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+g[data-step="1"]{transform:translateX(-40px)}
+g[data-step="2"]{transform:translateY(16px)}
+g[data-step="4"]{transform:translateX(90px)}
+g[data-step="6"],g[data-step="7"],g[data-step="8"],g[data-step="9"]{transform:translateY(6px)}
+g[data-step].shown{opacity:1;transform:none}
+g[data-step].shown.dim{opacity:.3}
+g[data-step].now{filter:drop-shadow(0 0 7px var(--brass))}
+.pop{opacity:0;transform:scale(.9);transform-box:fill-box;transform-origin:center;
+  transition:opacity .4s ease calc(var(--d)*.18s),transform .4s ease calc(var(--d)*.18s)}
+.shown .pop{opacity:1;transform:none}
+.draw{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .9s ease .2s}
+.shown .draw{stroke-dashoffset:0}
+
+/* ループ演出（現在の手順だけ動く） */
+.loop{display:none}
+.loop.on{display:inline}
+.flowdash{stroke-dasharray:6 6;animation:dash .8s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-12}}
+.scan{opacity:0}
+svg[data-cur="3"] .scan{animation:scan 3s ease-in-out infinite}
+svg[data-cur="3"] .scan.s1{animation-delay:1s}
+svg[data-cur="3"] .scan.s2{animation-delay:2s}
+@keyframes scan{0%,100%{opacity:0}8%,26%{opacity:.14}34%{opacity:0}}
+svg[data-cur="8"] .badge,svg[data-cur="8"] .brace{animation:glow 1.8s ease-in-out infinite}
+svg[data-cur="9"] .hidden-key{animation:glow 1.8s ease-in-out infinite}
+@keyframes glow{0%,100%{stroke-width:1}50%{stroke-width:3.5}}
+
+/* 後片付け（手順10）の逆再生 */
+svg.teardown g[data-step="8"].shown{opacity:0;transition:opacity .4s ease}
+svg.teardown .sess .draw{stroke-dashoffset:1;opacity:0;transition:stroke-dashoffset .6s ease .7s,opacity .2s ease 1.3s}
+svg.teardown .sess .sbox{opacity:.15;transition:opacity .4s ease 1.3s}
+svg.teardown g[data-step="2"].shown{opacity:.3;transition:opacity .5s ease 2.2s}
+
+/* 一時停止 */
+.paused *{animation-play-state:paused!important}
+
+/* 説明パネル */
+.panel{display:grid;grid-template-columns:270px 1fr 390px;gap:24px;align-items:start;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 22px;min-height:156px}
+.count{font-family:var(--mono);color:var(--brass);font-size:15px}
+.panel h2{margin:2px 0 0;font-size:24px;line-height:1.35}
+.body p{margin:0;font-size:17px}
+pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  padding:12px 14px;font-family:var(--mono);font-size:13.5px;line-height:1.55;overflow:auto;color:var(--ink)}
+.ln{display:block;white-space:pre;border-left:3px solid transparent;padding-left:8px;margin-left:-11px;transition:color .3s,border-color .3s}
+.ln.hot{border-left-color:var(--brass);color:var(--brass)}
+.ln .c{color:var(--cipher)}
+.dots{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.dots button{width:14px;height:14px;padding:0;border-radius:50%;background:var(--panel2)}
+.dots button.on{background:var(--brass);border-color:var(--brass)}
+.fade{animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+@media (max-width:820px),(orientation:portrait){
+  body{overflow:auto}
+  .stage{position:static;transform:none;width:auto;height:auto;padding:20px 14px 40px;display:flex;flex-direction:column}
+  header{flex-direction:column;align-items:flex-start}
+  header h1{font-size:19px}
+  header .ver{display:block;margin:4px 0 0}
+  .diagram{display:block;overflow-x:auto}
+  .diagram svg{width:960px;height:auto}
+  .panel{grid-template-columns:1fr;gap:10px}
+  .panel h2{font-size:20px}
+  .body p{font-size:15px}
+  pre{font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  g[data-step],.pop,.draw,.fade,svg rect,svg text{transition:none!important;animation:none!important}
+  .draw{stroke-dashoffset:0}
+  .loop{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　第0章 全体像<span class="ver" title="この章の関数は OASIS 版で最も古い v2.40 にあり、v3.0 / v3.1 でも呼び出し方は変わらない">仕様 v2.40〜</span></h1>
+    <div class="ctl">
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+      <button id="pause" aria-pressed="false">一時停止</button>
+      <button id="theme">テーマ</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 480" role="img" aria-labelledby="dt">
+    <title id="dt">PKCS#11 の全体構成図。手順に沿って要素が順に表示される。</title>
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/>
+      </marker>
+    </defs>
+
+    <g data-step="1">
+      <rect x="10" y="10" width="230" height="460" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="125" y="44" text-anchor="middle" font-size="19" font-weight="700">アプリケーション</text>
+      <text x="125" y="66" text-anchor="middle" font-size="13" class="mut">1 プロセス</text>
+    </g>
+
+    <g data-step="2">
+      <rect x="290" y="10" width="200" height="460" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+      <text x="390" y="44" text-anchor="middle" font-size="19" font-weight="700">Cryptoki ライブラリ</text>
+      <text x="390" y="66" text-anchor="middle" font-size="13" class="mut mono">libsofthsm2.so 等</text>
+      <text x="390" y="450" text-anchor="middle" font-size="13" class="mut">C_* 関数の実体</text>
+    </g>
+    <g class="loop" data-loop="2">
+      <path class="flowdash" d="M240,420 L290,420" stroke="var(--brass)" stroke-width="3" fill="none"/>
+      <text x="265" y="408" text-anchor="middle" font-size="12" class="brass">ロード</text>
+    </g>
+
+    <g data-step="3">
+      <g class="pop" style="--d:0">
+        <rect x="550" y="10" width="640" height="260" rx="6" fill="none" stroke="var(--line)" stroke-width="2"/>
+        <rect class="scan" x="550" y="10" width="640" height="260" rx="6" fill="var(--brass)"/>
+        <text x="566" y="34" font-size="14" class="mut mono">Slot 0</text>
+      </g>
+      <g class="pop" style="--d:1">
+        <rect x="550" y="285" width="640" height="115" rx="6" fill="none" stroke="var(--line)" stroke-width="2"/>
+        <rect class="scan s1" x="550" y="285" width="640" height="115" rx="6" fill="var(--brass)"/>
+        <text x="566" y="309" font-size="14" class="mut mono">Slot 1</text>
+      </g>
+      <g class="pop" style="--d:2">
+        <rect x="550" y="415" width="640" height="55" rx="6" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="6 5"/>
+        <rect class="scan s2" x="550" y="415" width="640" height="55" rx="6" fill="var(--warn)"/>
+        <text x="566" y="447" font-size="14" class="mut mono">Slot 2</text>
+        <text x="870" y="447" text-anchor="middle" font-size="13" class="mut">トークンなし（差し込み口だけ）</text>
+      </g>
+    </g>
+
+    <g data-step="4">
+      <rect x="585" y="44" width="590" height="212" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="605" y="78" font-size="20" font-weight="700">トークン A</text>
+      <text x="605" y="102" font-size="13" class="mut">鍵を保管・計算する実体</text>
+      <rect x="585" y="318" width="590" height="70" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="605" y="350" font-size="20" font-weight="700">トークン B</text>
+    </g>
+
+    <g data-step="5" font-size="14">
+      <text x="977" y="61" text-anchor="middle" font-size="12" class="mut">オブジェクト（中身）</text>
+      <g class="pop" style="--d:0"><rect x="795" y="68" width="180" height="76" rx="4" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="885" y="100" text-anchor="middle" font-weight="700">秘密鍵</text>
+        <text x="885" y="124" text-anchor="middle" class="mono cy" font-size="12">CKO_PRIVATE_KEY</text></g>
+      <g class="pop" style="--d:1"><rect x="985" y="68" width="175" height="76" rx="4" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="1072" y="100" text-anchor="middle" font-weight="700">公開鍵</text>
+        <text x="1072" y="124" text-anchor="middle" class="mono cy" font-size="12">CKO_PUBLIC_KEY</text></g>
+      <g class="pop" style="--d:2"><rect x="795" y="154" width="180" height="76" rx="4" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="885" y="186" text-anchor="middle" font-weight="700">証明書</text>
+        <text x="885" y="210" text-anchor="middle" class="mono cy" font-size="12">CKO_CERTIFICATE</text></g>
+      <g class="pop" style="--d:3"><rect x="985" y="154" width="175" height="76" rx="4" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="1072" y="186" text-anchor="middle" font-weight="700">データ</text>
+        <text x="1072" y="210" text-anchor="middle" class="mono cy" font-size="12">CKO_DATA</text></g>
+    </g>
+
+    <g data-step="6" class="sess">
+      <rect class="sbox" x="44" y="114" width="162" height="40" rx="4" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text class="sbox mono" x="125" y="139" text-anchor="middle" font-size="14">Session A (R/W)</text>
+      <path id="pA" class="draw" pathLength="1" d="M206,134 C420,134 420,120 585,120" stroke="var(--cipher)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+    </g>
+
+    <g data-step="7" class="sess">
+      <rect class="sbox" x="44" y="176" width="162" height="40" rx="4" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text class="sbox mono" x="125" y="201" text-anchor="middle" font-size="14">Session B (R/O)</text>
+      <path id="pB" class="draw" pathLength="1" d="M206,196 C420,196 420,180 585,180" stroke="var(--cipher)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+      <rect class="sbox" x="44" y="330" width="162" height="40" rx="4" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text class="sbox mono" x="125" y="355" text-anchor="middle" font-size="14">Session C (R/O)</text>
+      <path id="pC" class="draw" pathLength="1" d="M206,350 C420,350 420,350 585,350" stroke="var(--cipher)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+    </g>
+
+    <!-- 通信のループ：セッション上を流れる要求 -->
+    <g class="loop" data-loop="6 7 all">
+      <circle r="5" fill="var(--cipher)"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#pA"/></animateMotion></circle>
+    </g>
+    <g class="loop" data-loop="7 all">
+      <circle r="5" fill="var(--cipher)"><animateMotion dur="1.8s" begin="0.6s" repeatCount="indefinite"><mpath href="#pB"/></animateMotion></circle>
+      <circle r="5" fill="var(--cipher)"><animateMotion dur="1.8s" begin="1.2s" repeatCount="indefinite"><mpath href="#pC"/></animateMotion></circle>
+    </g>
+
+    <g data-step="8">
+      <rect class="brace" x="28" y="100" width="194" height="160" rx="6" fill="none" stroke="var(--brass)" stroke-dasharray="6 5"/>
+      <text x="125" y="248" text-anchor="middle" font-size="13" class="brass">ログイン状態を共有</text>
+      <rect class="badge" x="605" y="206" width="170" height="36" rx="4" fill="var(--bg)" stroke="var(--brass)"/>
+      <text x="690" y="229" text-anchor="middle" font-size="13" class="brass">ログイン中：User</text>
+    </g>
+    <g class="loop" data-loop="8">
+      <circle r="7" fill="var(--brass)"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#pA"/></animateMotion></circle>
+    </g>
+
+    <g data-step="9">
+      <text x="605" y="374" font-size="13" class="mut">未ログイン</text>
+      <rect class="hidden-key" x="985" y="327" width="175" height="52" rx="4" fill="none" stroke="var(--warn)" stroke-dasharray="5 4"/>
+      <text x="1072" y="350" text-anchor="middle" font-size="13" class="wr">秘密鍵</text>
+      <text x="1072" y="368" text-anchor="middle" font-size="11" class="wr">検索しても返らない</text>
+    </g>
+    <g class="loop" data-loop="9">
+      <circle r="5" fill="var(--cipher)"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#pC"/></animateMotion></circle>
+    </g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+</div>
+
+<script>
+(function(){
+  const C=s=>`<span class=c>${s}</span>`;
+  const steps=[
+    {t:"アプリケーション",
+     b:"あなたが書くプログラム。鍵の中身は持たず、あとで出てくる「ハンドル（番号）」だけで鍵を扱う。",
+     c:["fn main() {", "    "+C("// ここから PKCS#11 を呼ぶ"), "}"]},
+    {t:"Cryptoki ライブラリ",
+     b:"デバイス側が提供する <code>.so</code> / <code>.dll</code>。<code>C_*</code> 関数の実体はここにある。アプリはこれをロードして呼ぶだけ。",
+     c:["let lib = Pkcs11::new(path)?; "+C("// ロード"), "lib.initialize(CInitializeArgs::new(", "    CInitializeFlags::OS_LOCKING_OK))?;", C("// C_Initialize")]},
+    {t:"スロット",
+     b:"トークンの差し込み口。カードリーダーやHSMの区画に相当する。トークンが入ったスロットだけを列挙すると、空の Slot 2 は返らない。",
+     c:["let slots = lib.get_slots_with_token()?;", C("// C_GetSlotList(tokenPresent=TRUE)"), C("// → Slot 0, Slot 1")]},
+    {t:"トークン",
+     b:"鍵を保管し、署名や暗号の計算を行う実体。スロットに差し込まれている。ラベルやPINを持つ。",
+     c:["let info = lib.get_token_info(slot)?;", C("// C_GetTokenInfo"), "println!(\"{}\", info.label());"]},
+    {t:"オブジェクト",
+     b:"トークンの中身。鍵・証明書・データなどで、正体は「属性の集まり」。種類は <code>CKO_*</code> で区別する。",
+     c:["let handles = session.find_objects(&template)?;", C("// C_FindObjectsInit / C_FindObjects"), C("// 返るのはハンドル。鍵の値ではない")]},
+    {t:"セッション",
+     b:"アプリとトークンの間の通り道。ライブラリを経由して開き、要求はこの上を流れる。読み書きできる R/W と読むだけの R/O がある。",
+     c:["let a = lib.open_rw_session(slot)?;", C("// C_OpenSession(CKF_SERIAL_SESSION | CKF_RW_SESSION)")]},
+    {t:"セッションは複数持てる",
+     b:"1つのアプリが同じトークンに複数、別のトークンにも同時に開ける。上限はトークンが <code>ulMaxSessionCount</code> で示す。",
+     c:["let b = lib.open_ro_session(slot)?;", C("// 同じトークンに2本目")]},
+    {t:"ログインは共有される",
+     b:"ログインはセッション単位ではない。Session A でログインすると、同じアプリが同じトークンに開いた Session B もログイン済みになる。",
+     c:["a.login(UserType::User, Some(&pin))?;", C("// C_Login(CKU_USER)"), "b.get_session_info()?.session_state();", C("// RoPublic → RoUser に変わる")]},
+    {t:"未ログイン時の見え方",
+     b:"ログインしていないトークン B では、<code>CKA_PRIVATE=TRUE</code> のオブジェクトは検索しても返らない。見えるのは公開オブジェクトだけ。秘密鍵の <code>CKA_PRIVATE</code> の既定値はトークン次第なので、隠したい鍵は作成時に TRUE を指定する。",
+     c:[C("// Session C で秘密鍵を検索"), "c.find_objects(&[Attribute::Class(", "    ObjectClass::PRIVATE_KEY)])?;", C("// → 0 件")]},
+    {t:"後片付けは逆順",
+     b:"ログアウト → セッションを閉じる → ライブラリ終了。開いた順の逆で片付ける。",
+     c:["a.logout()?;       "+C("// C_Logout"), "a.close()?;        "+C("// C_CloseSession"), "lib.finalize()?;   "+C("// C_Finalize")],
+     hl:[6,7,8]}
+  ];
+  const $=id=>document.getElementById(id);
+  const svg=$('svg'), groups=[...svg.querySelectorAll('g[data-step]')], loops=[...svg.querySelectorAll('.loop')];
+  const dots=$('dots');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i=0, all=false, paused=reduce, timers=[];
+
+  steps.forEach((s,k)=>{
+    const d=document.createElement('button');
+    d.setAttribute('aria-label',`手順 ${k+1}：${s.t}`);
+    d.onclick=()=>{all=false;show(k)};
+    dots.appendChild(d);
+  });
+
+  function fit(){document.documentElement.style.setProperty('--s',Math.min(innerWidth/1280,innerHeight/720))}
+  function clearTimers(){timers.forEach(clearTimeout);timers=[];svg.classList.remove('teardown')}
+  function hot(n){[...$('code').children].forEach((l,k)=>l.classList.toggle('hot',k===n))}
+
+  // 手順10：後片付けを繰り返し再生
+  function teardownCycle(){
+    if(paused)return;
+    svg.classList.add('teardown');hot(0);
+    timers.push(setTimeout(()=>hot(1),700));
+    timers.push(setTimeout(()=>hot(2),2200));
+    timers.push(setTimeout(()=>{svg.classList.remove('teardown');hot(-1)},3800));
+    timers.push(setTimeout(teardownCycle,5200));
+  }
+
+  function show(n){
+    clearTimers();
+    i=Math.max(0,Math.min(steps.length-1,n));
+    const s=steps[i], cur=i+1, hl=s.hl||[cur], key=all?'all':String(cur);
+    svg.dataset.cur=key;
+    groups.forEach(g=>{
+      const k=+g.dataset.step;
+      g.classList.toggle('shown',all||k<=cur);
+      g.classList.toggle('now',!all&&hl.includes(k));
+      g.classList.toggle('dim',!!(!all&&s.hl&&k<=cur&&!hl.includes(k)));
+    });
+    loops.forEach(l=>l.classList.toggle('on',l.dataset.loop.split(' ').includes(key)));
+    $('count').textContent=all?'全体':`${cur} / ${steps.length}`;
+    $('title').textContent=all?'全体像':s.t;
+    $('body').innerHTML=all?'<p>アプリはライブラリを通じてトークンにセッションを開き、トークン内のオブジェクトをハンドルで操作する。ログイン状態はアプリとトークンの組で共有される。</p>':`<p>${s.b}</p>`;
+    const lines=all?[C("// この章の関数はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも呼び出し方は同じ"),C("// 手順ボタンで1つずつ確認できる")]:s.c;
+    $('code').innerHTML=lines.map(l=>`<span class="ln">${l}</span>`).join('');
+    ['title','body','code'].forEach(id=>{const e=$(id);e.classList.remove('fade');void e.offsetWidth;e.classList.add('fade')});
+    [...dots.children].forEach((d,k)=>d.classList.toggle('on',!all&&k===i));
+    $('all').setAttribute('aria-pressed',all);
+    if(!all&&cur===10)timers.push(setTimeout(teardownCycle,900));
+    const h=all?'#all':'#'+cur;
+    if(location.hash!==h)history.replaceState(null,'',h);
+  }
+
+  function setPaused(p){
+    paused=p;
+    $('stage').classList.toggle('paused',p);
+    p?svg.pauseAnimations():svg.unpauseAnimations();
+    $('pause').setAttribute('aria-pressed',p);
+    $('pause').textContent=p?'再生':'一時停止';
+    if(!p&&!all&&i===9){clearTimers();teardownCycle()}
+  }
+
+  $('prev').onclick=()=>{all=false;show(i-1)};
+  $('next').onclick=()=>{all=false;show(i+1)};
+  $('all').onclick=()=>{all=!all;show(i)};
+  $('pause').onclick=()=>setPaused(!paused);
+  $('theme').onclick=()=>toggleTheme();
+  addEventListener('keydown',e=>{
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.key===' '&&e.target.closest('button'))return;
+    if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();all=false;show(i+1)}
+    else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();all=false;show(i-1)}
+    else if(e.key==='a'||e.key==='A'){all=!all;show(i)}
+    else if(e.key==='p'||e.key==='P')setPaused(!paused);
+    else if(e.key==='t'||e.key==='T')toggleTheme();
+  });
+  addEventListener('resize',fit);
+  addEventListener('hashchange',()=>{all=location.hash==='#all';const m=parseInt(location.hash.slice(1),10);show(isNaN(m)?i:m-1)});
+  if(location.hash==='#all')all=true;
+  const n=parseInt(location.hash.slice(1),10);
+  fit();show(isNaN(n)?0:n-1);
+  if(paused)setPaused(true);
+})();
+</script>
+</body>
+</html>

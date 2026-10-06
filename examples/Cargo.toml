@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = ["00-overview"]
+
+[workspace.dependencies]
+cryptoki = "0.12"

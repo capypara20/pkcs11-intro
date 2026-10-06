@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/base.css">
+<script src="assets/base.js"></script>
+<style>
+main{max-width:46rem;margin:0 auto;padding:64px 24px 80px}
+.hex{font-family:var(--mono);color:var(--muted);font-size:13px;letter-spacing:.06em;word-break:break-all;opacity:.7;margin:0}
+h1{font-size:44px;line-height:1.2;margin:18px 0 8px}
+.lead{color:var(--muted);margin:0 0 40px}
+ol{list-style:none;padding:0;margin:0;border-top:1px solid var(--line)}
+li{display:grid;grid-template-columns:4.5rem 1fr auto;gap:12px;align-items:baseline;padding:14px 4px;border-bottom:1px solid var(--line)}
+li .n{font-family:var(--mono);color:var(--brass)}
+li a{color:var(--ink);text-decoration:none;font-weight:500}
+li a:hover{color:var(--brass)}
+li .s{font-size:13px;color:var(--muted)}
+li.todo span:nth-child(2){color:var(--muted)}
+.bar{display:flex;justify-content:flex-end;margin-bottom:24px}
+footer{margin-top:40px;font-size:14px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="bar"><button onclick="toggleTheme()">テーマ</button></div>
+  <p class="hex" aria-hidden="true">43 72 79 70 74 6f 6b 69 20 2d 20 43 72 79 70 74 6f 67 72 61 70 68 69 63 20 54 6f 6b 65 6e 20 49 6e 74 65 72 66 61 63 65</p>
+  <h1>PKCS#11 入門</h1>
+  <p class="lead">暗号デバイスを操作する共通API「Cryptoki」を、図と Rust のコードで1段階ずつ組み立てて理解する。</p>
+  <ol>
+    <li><span class="n">第0章</span><a href="docs/00-overview.html">全体像</a><span class="s">公開中</span></li>
+    <li class="todo"><span class="n">第1章</span><span>初期化と終了</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第2章</span><span>セッションとログイン</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第3章</span><span>オブジェクトと属性</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第4章</span><span>鍵の生成・検索・削除</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第5章</span><span>署名と暗号化</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第6章</span><span>メカニズム</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第7章</span><span>エラーコード</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">第8章</span><span>ハンズオン：SoftHSM2</span><span class="s">準備中</span></li>
+    <li class="todo"><span class="n">付録</span><span>仕様バージョンの違い</span><span class="s">準備中</span></li>
+  </ol>
+  <footer>根拠は OASIS PKCS 11 TC の公開仕様書のみ。サンプルは SoftHSM2 で動作確認している。</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,22 @@
+name: examples
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SoftHSM2 and OpenSC
+        run: sudo apt-get update && sudo apt-get install -y softhsm2 opensc
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Prepare token
+        run: |
+          bash scripts/setup-softhsm.sh
+          echo "SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf" >> "$GITHUB_ENV"
+      - name: Run examples
+        working-directory: examples
+        run: cargo run -p overview
