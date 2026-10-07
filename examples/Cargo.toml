@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["00-overview", "01-objects", "02-keypair", "03-sign", "04-crypt"]
+members = ["00-overview", "01-objects", "02-keygen", "03-sign", "04-crypt"]
 
 [workspace.dependencies]
 cryptoki = "0.12"

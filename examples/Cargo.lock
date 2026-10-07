@@ -44,7 +44,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "keypair"
+name = "keygen"
 version = "0.1.0"
 dependencies = [
  "cryptoki",
