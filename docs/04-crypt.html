@@ -207,7 +207,7 @@ svg [data-k].lit>.box{stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 
     <div class="body" id="body"></div>
     <pre id="code"></pre>
   </section>
-  <nav class="sitenav" data-page="docs/04-crypt.html" data-root="../" aria-label="章の移動"></nav>
+  <nav class="sitenav" data-page="docs/04-crypt.html" data-root="../" data-spec="base curr latest" aria-label="章の移動"></nav>
 </div>
 
 <script>
@@ -268,7 +268,7 @@ const STEPS=[
 ];
 const ALL={t:"全体像",
   b:"暗号化は <code>C_EncryptInit</code> → <code>C_Encrypt</code>、復号は逆向き。方式はメカニズムで選び、IV などのパラメータを渡す。ECB は模様が残り、CBC と CTR は改ざんに気づかない。改ざんも見つけたいなら GCM。3DES と RSA PKCS#1 v1.5 は古い相手とつなぐときだけ。公開鍵で暗号化するなら RSA-OAEP。",
-  c:[C("// この章の関数・メカニズムは v2.40 で定義済み"),C("// 挙動は examples/04-crypt で CI 確認（SoftHSM2 2.6.1）")]};
+  c:[C("// この章の関数・メカニズムは v2.40 で定義済み"),C("// 挙動は examples/04-crypt で CI 確認（SoftHSM2 2.6.1）"),C("// 根拠：Base v2.40「Encryption functions」「Decryption functions」")]};
 
 const svgEl=document.getElementById('svg'), stageEl=document.getElementById('stage');
 let cycle=null, step=1;

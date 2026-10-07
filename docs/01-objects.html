@@ -569,7 +569,7 @@
     <div class="body" id="body"></div>
     <pre id="code"></pre>
   </section>
-  <nav class="sitenav" data-page="docs/01-objects.html" data-root="../" aria-label="章の移動"></nav>
+  <nav class="sitenav" data-page="docs/01-objects.html" data-root="../" data-spec="base latest" aria-label="章の移動"></nav>
 </div>
 
 <script>
@@ -635,7 +635,7 @@ runSteps({
   onShow:(cur,all)=>{stopCycle();pick('secret');if(cur===3&&!all)startCycle()},
   all:{t:"全体像",
     b:"オブジェクトは属性の集まり。アプリはテンプレートで属性を指定して作り、残りはメカニズムとトークンが埋める。アプリが持つのはハンドルだけで、<code>CKA_SENSITIVE</code> などの属性が「何を読ませ、何を変えさせるか」を決める。各属性の詳細は属性リファレンスへ。",
-    c:[C("// この章の関数と属性はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも使い方は同じ"),C("// 挙動は examples/01-objects で CI 確認")]}
+    c:[C("// この章の関数と属性はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも使い方は同じ"),C("// 挙動は examples/01-objects で CI 確認"),C("// 根拠：Base v2.40「Objects」の章")]}
 });
 </script>
 </body>

@@ -14,7 +14,7 @@ main{max-width:46rem;margin:0 auto;padding:64px 24px 80px}
 h1{font-size:44px;line-height:1.2;margin:18px 0 8px}
 .lead{color:var(--muted);margin:0 0 40px}
 ol{list-style:none;padding:0;margin:0;border-top:1px solid var(--line)}
-li{display:grid;grid-template-columns:4.5rem 1fr auto;gap:12px;align-items:baseline;padding:14px 4px;border-bottom:1px solid var(--line)}
+li{display:grid;grid-template-columns:6rem 1fr auto;gap:12px;align-items:baseline;padding:14px 4px;border-bottom:1px solid var(--line)}
 li .n{font-family:var(--mono);color:var(--brass)}
 li a{color:var(--ink);text-decoration:none;font-weight:500}
 li a:hover{color:var(--brass)}
@@ -22,6 +22,10 @@ li .s{font-size:13px;color:var(--muted)}
 li.todo span:nth-child(2){color:var(--muted)}
 .bar{display:flex;justify-content:flex-end;margin-bottom:24px}
 footer{margin-top:40px;font-size:14px;color:var(--muted)}
+.specs{list-style:none;padding:0;margin:0;border-top:1px solid var(--line)}
+.specs li{display:grid;grid-template-columns:1fr;gap:2px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.specs a{font-weight:500}
+.specs .s{font-size:13px;color:var(--muted)}
 h2{font-size:18px;margin:40px 0 12px;color:var(--muted);font-weight:500}
 </style>
 </head>
@@ -47,6 +51,15 @@ h2{font-size:18px;margin:40px 0 12px;color:var(--muted);font-weight:500}
     <li class="todo"><span class="n">関数</span><span>関数リファレンス</span><span class="s">準備中</span></li>
     <li class="todo"><span class="n">用語</span><span>用語・略語集</span><span class="s">準備中</span></li>
   </ol>
+  <h2>参考資料（OASIS 公式・英語）</h2>
+  <ul class="specs">
+    <li><a href="https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/errata01/os/pkcs11-base-v2.40-errata01-os-complete.html" target="_blank" rel="noopener">PKCS #11 Base Specification Version 2.40（エラッタ 01 反映版）</a><span class="s">関数・データ型・オブジェクトと属性。このサイトの基準</span></li>
+    <li><a href="https://docs.oasis-open.org/pkcs11/pkcs11-curr/v2.40/os/pkcs11-curr-v2.40-os.html" target="_blank" rel="noopener">PKCS #11 Current Mechanisms Specification Version 2.40</a><span class="s">RSA・EC・AES・3DES などのメカニズムとパラメータ</span></li>
+    <li><a href="https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html" target="_blank" rel="noopener">PKCS #11 Base Specification Version 3.0</a><span class="s">v3.0 で追加された関数・属性（CKA_UNIQUE_ID など）</span></li>
+    <li><a href="https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/os/pkcs11-spec-v3.1-os.html" target="_blank" rel="noopener">PKCS #11 Specification Version 3.1</a><span class="s">Base と Mechanisms を1冊にまとめた版</span></li>
+    <li><a href="https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/pkcs11-spec-v3.2.html" target="_blank" rel="noopener">PKCS #11 Specification Version 3.2</a><span class="s">最新版</span></li>
+    <li><a href="https://www.oasis-open.org/committees/pkcs11" target="_blank" rel="noopener">OASIS PKCS 11 TC</a><span class="s">仕様を作っている技術委員会のページ（版の一覧・ヘッダファイル）</span></li>
+  </ul>
   <footer>根拠は OASIS PKCS 11 TC の公開仕様書のみ。サンプルは SoftHSM2 で動作確認している。</footer>
 </main>
 </body>

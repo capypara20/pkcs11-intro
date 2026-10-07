@@ -76,7 +76,7 @@ footer p{margin:4px 0}
 </head>
 <body>
 <main>
-  <nav class="sitenav" data-page="docs/ref-attributes.html" data-root="../" aria-label="ページの移動"></nav>
+  <nav class="sitenav" data-page="docs/ref-attributes.html" data-root="../" data-spec="base curr latest" aria-label="ページの移動"></nav>
   <h1>属性リファレンス</h1>
   <p class="lead">属性を「どの種類のオブジェクトに定義され、どこへ受け継がれるか」の系譜で並べた引き表。考え方は<a href="01-objects.html" target="_blank" rel="noopener">第1章</a>を参照。</p>
 
@@ -154,10 +154,10 @@ footer p{margin:4px 0}
 <div class="inh">＋ <a href="#object">Object</a> › <a href="#storage">Storage</a> › <a href="#key">Key</a> › <a href="#secret">共通鍵</a> の属性も持つ</div><div class="attrs"><div class="attr" data-w><div class="name"><code>CKA_VALUE_LEN</code></div><div class="badges"><span class="bd b-w" title="アプリがテンプレートに書いて値を決める">指定する</span><span class="bd b-req" title="作成時に書かないとエラーになる（条件は説明欄）">必須</span></div><div class="desc">鍵長（16 / 24 / 32 バイト）。<code>C_GenerateKey</code> のテンプレートで指定。生成後は読むだけ</div><div class="cic"><a class="ci" target="_blank" rel="noopener" href="01-objects.html" title="第1章のサンプルが SoftHSM2 で挙動を確認">✓ 第1章で確認</a></div></div><div class="attr"><div class="name"><code>CKA_VALUE</code></div><div class="badges"><span class="bd b-g" title="鍵生成などで、トークン・メカニズムが値を作る">トークンが生成</span></div><div class="desc">鍵の値。生成ではトークンが作る（<code>C_CreateObject</code> で持ち込むときだけ自分で書く）</div><div class="cic"><a class="ci" target="_blank" rel="noopener" href="01-objects.html" title="第1章のサンプルが SoftHSM2 で挙動を確認">✓ 第1章で確認</a></div></div></div>
 </details></div></details></div></details></div></details></div></details>
 
-  <nav class="sitenav" data-page="docs/ref-attributes.html" data-root="../" aria-label="ページの移動" style="margin-top:28px"></nav>
+  <nav class="sitenav" data-page="docs/ref-attributes.html" data-root="../" data-spec="base curr latest" aria-label="ページの移動" style="margin-top:28px"></nav>
   <footer>
     <p>元にしたもの：study_pkcs「09. PKCS#11 属性階層リファレンス」を移植し、誤りを直した。</p>
-    <p>根拠：OASIS PKCS #11 Base Specification（v2.40 / v3.0 / v3.1）の Objects の章、Current Mechanisms Specification の RSA / EC / AES の節。「✓ 確認」のない項目は仕様の表に基づく記述で、既定値や強制のしかたはトークンによって異なることがある。</p>
+    <p>根拠：<a href="https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/errata01/os/pkcs11-base-v2.40-errata01-os-complete.html" target="_blank" rel="noopener">PKCS #11 Base Specification v2.40</a> の Objects の章と、<a href="https://docs.oasis-open.org/pkcs11/pkcs11-curr/v2.40/os/pkcs11-curr-v2.40-os.html" target="_blank" rel="noopener">Current Mechanisms Specification v2.40</a> の各鍵種別の節。v3.0 以降で追加された属性は <a href="https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html" target="_blank" rel="noopener">Base v3.0</a> と <a href="https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/pkcs11-spec-v3.2.html" target="_blank" rel="noopener">最新の v3.2</a> を参照。「✓ 確認」のない項目は仕様の表に基づく記述で、既定値や強制のしかたはトークンによって異なることがある。</p>
     <p>DH・DSA など他の鍵種別と、<code>CKO_MECHANISM</code> / <code>CKO_HW_FEATURE</code> / <code>CKO_PROFILE</code> など保存されないオブジェクトは扱っていない。</p>
   </footer>
 </main>

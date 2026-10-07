@@ -241,7 +241,7 @@ pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:6px
     <div class="body" id="body"></div>
     <pre id="code"></pre>
   </section>
-  <nav class="sitenav" data-page="docs/00-overview.html" data-root="../" aria-label="章の移動"></nav>
+  <nav class="sitenav" data-page="docs/00-overview.html" data-root="../" data-spec="base latest" aria-label="章の移動"></nav>
 </div>
 
 <script>
@@ -321,7 +321,7 @@ pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:6px
     $('count').textContent=all?'全体':`${cur} / ${steps.length}`;
     $('title').textContent=all?'全体像':s.t;
     $('body').innerHTML=all?'<p>アプリはライブラリを通じてトークンにセッションを開き、トークン内のオブジェクトをハンドルで操作する。ログイン状態はアプリとトークンの組で共有される。</p>':`<p>${s.b}</p>`;
-    const lines=all?[C("// この章の関数はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも呼び出し方は同じ"),C("// 手順ボタンで1つずつ確認できる")]:s.c;
+    const lines=all?[C("// この章の関数はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも呼び出し方は同じ"),C("// 根拠：Base v2.40「General-purpose functions」"),C("//   「Session management functions」")]:s.c;
     $('code').innerHTML=lines.map(l=>`<span class="ln">${l}</span>`).join('');
     ['title','body','code'].forEach(id=>{const e=$(id);e.classList.remove('fade');void e.offsetWidth;e.classList.add('fade')});
     [...dots.children].forEach((d,k)=>d.classList.toggle('on',!all&&k===i));

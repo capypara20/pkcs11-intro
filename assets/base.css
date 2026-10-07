@@ -25,6 +25,8 @@ nav.sitenav{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items
 nav.sitenav a{text-decoration:none}
 nav.sitenav a:hover{text-decoration:underline}
 nav.sitenav .prev{justify-self:start}
-nav.sitenav .home{justify-self:center;color:var(--muted)}
+nav.sitenav .mid{justify-self:center;display:flex;gap:18px;align-items:center;flex-wrap:wrap;justify-content:center}
+nav.sitenav .home{color:var(--muted)}
+nav.sitenav .spec{color:var(--muted);font-size:13px}
 nav.sitenav .next{justify-self:end}
 nav.sitenav .off{color:var(--muted);opacity:.6}

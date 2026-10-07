@@ -14,6 +14,15 @@ PKCS#11（Cryptoki）を、図とアニメーションで段階的に説明す�
 - 関数がどの版の仕様から存在するかを、章ごとに明記します
 - サンプルは CI で SoftHSM2 に対して実際に実行し、記述と挙動のずれを防ぎます
 
+## 根拠にしている仕様書（OASIS）
+
+- [PKCS #11 Base Specification Version 2.40（エラッタ 01 反映版）](https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/errata01/os/pkcs11-base-v2.40-errata01-os-complete.html) … 関数・データ型・オブジェクトと属性。このサイトの基準
+- [PKCS #11 Current Mechanisms Specification Version 2.40](https://docs.oasis-open.org/pkcs11/pkcs11-curr/v2.40/os/pkcs11-curr-v2.40-os.html) … RSA・EC・AES・3DES などのメカニズムとパラメータ
+- [PKCS #11 Base Specification Version 3.0](https://docs.oasis-open.org/pkcs11/pkcs11-base/v3.0/os/pkcs11-base-v3.0-os.html) … v3.0 で追加された関数・属性（CKA_UNIQUE_ID など）
+- [PKCS #11 Specification Version 3.1](https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.1/os/pkcs11-spec-v3.1-os.html) … Base と Mechanisms を1冊にまとめた版
+- [PKCS #11 Specification Version 3.2](https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/pkcs11-spec-v3.2.html) … 最新版
+- [OASIS PKCS 11 TC](https://www.oasis-open.org/committees/pkcs11) … 仕様を作っている技術委員会のページ（版の一覧・ヘッダファイル）
+
 ## 構成
 
 ```

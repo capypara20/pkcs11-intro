@@ -11,14 +11,22 @@
   const REFS=[
     ['docs/ref-attributes.html','属性リファレンス'],
   ];
+  // 根拠にしている OASIS の仕様書（新しいタブで開く）。index.html の参考資料も合わせて更新すること
+  const SPEC={
+    base:['https://docs.oasis-open.org/pkcs11/pkcs11-base/v2.40/errata01/os/pkcs11-base-v2.40-errata01-os-complete.html','Base v2.40'],
+    curr:['https://docs.oasis-open.org/pkcs11/pkcs11-curr/v2.40/os/pkcs11-curr-v2.40-os.html','Mechanisms v2.40'],
+    latest:['https://docs.oasis-open.org/pkcs11/pkcs11-spec/v3.2/pkcs11-spec-v3.2.html','最新 v3.2'],
+  };
   document.querySelectorAll('nav.sitenav').forEach(n=>{
     const root=n.dataset.root||'', me=n.dataset.page;
     const list=CHAPTERS.some(c=>c[0]===me)?CHAPTERS:REFS;
     const k=list.findIndex(c=>c[0]===me), prev=list[k-1], next=list[k+1];
     const link=(x,cls,text)=>x?`<a class="${cls}" href="${root}${x[0]}">${text}</a>`:`<span class="${cls} off">${text}</span>`;
     const kind=list===CHAPTERS?'章':'リファレンス';
+    // data-spec="base curr latest" のように、そのページの根拠になる仕様書を並べる
+    const spec=(n.dataset.spec||'base latest').split(' ').map(s=>`<a href="${SPEC[s][0]}" target="_blank" rel="noopener">${SPEC[s][1]}</a>`).join(' ／ ');
     n.innerHTML=link(prev,'prev',prev?`← ${prev[1]}`:`← 前の${kind}はなし`)
-      +`<a class="home" href="${root}index.html">目次へ戻る</a>`
+      +`<span class="mid"><a class="home" href="${root}index.html">目次へ戻る</a><span class="spec">仕様書（OASIS）：${spec}</span></span>`
       +link(next,'next',next?`${next[1]} →`:`次の${kind}は準備中 →`);
   });
 })();
