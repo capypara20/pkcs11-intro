@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>第4章 暗号化と復号 | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/steps.js"></script>
+<style>
+svg g.v-cbc,svg g.v-ecb,svg g.v-gcm,svg g.v-oaep{display:none}
+svg[data-v="cbc"] g.v-cbc,svg[data-v="ecb"] g.v-ecb,svg[data-v="gcm"] g.v-gcm,svg[data-v="oaep"] g.v-oaep{display:inline}
+/* 手順ごとに光らせる部分 */
+/* 手順全体を光らせる共通の演出は使わず、関係する部分だけを光らせる */
+g[data-step].now{filter:none}
+svg [data-k].lit>.box{stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 0 6px var(--brass))}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　第4章 暗号化と復号<span class="ver" title="この章の関数・メカニズムは v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
+    <div class="ctl">
+      <a class="ref" href="ref-attributes.html#secret" target="_blank" rel="noopener">属性リファレンス</a>
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 480" role="img" aria-labelledby="dt" data-v="cbc">
+    <title id="dt">暗号化の図。アプリの平文がセッションを通ってトークンのメカニズムと鍵で暗号文になる。</title>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/></marker></defs>
+
+    <g data-step="1">
+      <rect class="frame" x="10" y="8" width="290" height="464" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="24" y="34" font-size="16" font-weight="700">アプリ</text>
+      <g data-k="data"><rect class="box" x="24" y="50" width="262" height="56" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="70" font-size="12" class="mut">平文</text></g>
+      <g data-k="calls"><rect class="box" x="312" y="50" width="160" height="250" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="324" y="74" font-size="14" font-weight="700">セッション</text><text x="324" y="98" font-size="11.5" class="mut">進行中の操作は 1 つ</text>
+        <rect x="324" y="106" width="136" height="30" rx="4" fill="var(--panel2)" stroke="var(--cipher)"/><text x="392" y="126" font-size="13" text-anchor="middle" class="cy">暗号化</text>
+        <text x="324" y="170" font-size="12.5" class="mono cy">① C_EncryptInit</text><text x="324" y="194" font-size="11.5" class="mut">　メカニズム＋鍵</text><text x="324" y="218" font-size="12.5" class="mono cy">② C_Encrypt</text><text x="324" y="242" font-size="11.5" class="mut">　平文 → 暗号文</text></g>
+      <rect class="frame" x="484" y="8" width="706" height="464" rx="6" fill="none" stroke="var(--line)"/>
+      <text x="498" y="30" font-size="14" class="mut mono">トークン</text>
+      <g data-k="pipe"><rect class="box" x="498" y="44" width="680" height="126" rx="6" fill="var(--panel)" stroke="var(--line)"/></g>
+      <path class="draw" pathLength="1" d="M286,78 L310,78" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <path class="draw" pathLength="1" d="M472,96 L496,96" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <path class="draw" pathLength="1" d="M496,320 L290,320" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <g class="chip on" data-v="cbc" role="button" tabindex="0" aria-label="CBC_PAD を見る"><rect x="880" y="14" width="72" height="22" rx="4"/><text x="916" y="29" font-size="12" text-anchor="middle" class="mono">CBC_PAD</text></g>
+      <g class="chip" data-v="ecb" role="button" tabindex="0" aria-label="ECB を見る"><rect x="956" y="14" width="48" height="22" rx="4"/><text x="980" y="29" font-size="12" text-anchor="middle" class="mono">ECB</text></g>
+      <g class="chip" data-v="gcm" role="button" tabindex="0" aria-label="GCM を見る"><rect x="1008" y="14" width="48" height="22" rx="4"/><text x="1032" y="29" font-size="12" text-anchor="middle" class="mono">GCM</text></g>
+      <g class="chip" data-v="oaep" role="button" tabindex="0" aria-label="RSA-OAEP を見る"><rect x="1060" y="14" width="120" height="22" rx="4"/><text x="1120" y="29" font-size="12" text-anchor="middle" class="mono">RSA-OAEP</text></g>
+    </g>
+    <g class="v-cbc"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_AES_CBC_PAD</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">IV が必要・改ざんは検知しない</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">埋める</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">9 → 16 バイト（PKCS #7）</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">前のブロックと XOR</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">最初のブロックは IV と</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">AES で暗号化</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">鍵は外に出ない</text><g data-k="key"><rect class="box" x="498" y="186" width="450" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">共通鍵</text><text x="934" y="210" font-size="11.5" text-anchor="end" class="mono mut">CKO_SECRET_KEY</text>
+          <text x="512" y="234" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="712" y="234" font-size="12" class="mono cy">CKK_AES</text>
+          <text x="512" y="256" font-size="12" class="mono">CKA_VALUE_LEN</text><text x="712" y="256" font-size="12" class="mono cy">32（AES-256）</text>
+          <text x="512" y="278" font-size="12" class="mono">CKA_ENCRYPT</text><text x="712" y="278" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="300" font-size="12" class="mono">CKA_DECRYPT</text><text x="712" y="300" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="326" font-size="11.5" class="mut">暗号化も復号も、この同じ鍵</text></g><text x="36" y="94" font-size="13" class="mono">"hello hsm"（9 バイト）</text>
+      <g data-k="param"><rect class="box" x="24" y="116" width="262" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="136" font-size="12" class="mut">メカニズムのパラメータ</text><text x="36" y="160" font-size="12.5" class="mono">IV 16 バイト</text><text x="36" y="180" font-size="11.5" class="mut">C_GenerateRandom で毎回作る</text></g>
+      <g data-k="ct"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="258" font-size="12" class="mut">暗号文</text><rect x="36" y="270" width="112" height="22" rx="3" fill="var(--brass)"/><text x="36" y="318" font-size="12">16 バイト（9 バイト＋埋め 7 バイト）</text></g></g></g><g class="v-ecb"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_AES_ECB</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">パラメータなし</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">16 バイトずつ切る</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">ブロックに分ける</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">ブロックごとに AES</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">前後のつながりなし</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">同じ入力 → 同じ出力</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">模様が残る</text><g data-k="key"><rect class="box" x="498" y="186" width="450" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">共通鍵</text><text x="934" y="210" font-size="11.5" text-anchor="end" class="mono mut">CKO_SECRET_KEY</text>
+          <text x="512" y="234" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="712" y="234" font-size="12" class="mono cy">CKK_AES</text>
+          <text x="512" y="256" font-size="12" class="mono">CKA_VALUE_LEN</text><text x="712" y="256" font-size="12" class="mono cy">32（AES-256）</text>
+          <text x="512" y="278" font-size="12" class="mono">CKA_ENCRYPT</text><text x="712" y="278" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="300" font-size="12" class="mono">CKA_DECRYPT</text><text x="712" y="300" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="326" font-size="11.5" class="mut">暗号化も復号も、この同じ鍵</text></g><text x="36" y="94" font-size="13" class="mono">"AAAA…"（32 バイト＝2 ブロック）</text>
+      <g data-k="param"><rect class="box" x="24" y="116" width="262" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="136" font-size="12" class="mut">メカニズムのパラメータ</text><text x="36" y="160" font-size="12.5" class="mono">なし</text><text x="36" y="180" font-size="11.5" class="wr">だから同じ入力 → 同じ出力</text></g>
+      <g data-k="ct"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="258" font-size="12" class="mut">暗号文</text><rect x="36" y="270" width="112" height="22" rx="3" fill="var(--brass)"/><text x="92.0" y="285.5" font-size="11" text-anchor="middle">ブロック1</text><text x="160" y="286" font-size="14" text-anchor="middle" class="wr">＝</text><rect x="172" y="270" width="112" height="22" rx="3" fill="var(--brass)"/><text x="228.0" y="285.5" font-size="11" text-anchor="middle">ブロック2</text><text x="36" y="318" font-size="12">32 バイト。2 つのブロックが同じ</text></g></g></g><g class="v-gcm"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_AES_GCM</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">暗号化＋改ざん検知</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">IV からカウンタ</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">ブロックごとに +1</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">AES で鍵の流れを作る</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">平文と XOR</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">タグを付ける</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">16 バイトの改ざん検知</text><g data-k="key"><rect class="box" x="498" y="186" width="450" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">共通鍵</text><text x="934" y="210" font-size="11.5" text-anchor="end" class="mono mut">CKO_SECRET_KEY</text>
+          <text x="512" y="234" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="712" y="234" font-size="12" class="mono cy">CKK_AES</text>
+          <text x="512" y="256" font-size="12" class="mono">CKA_VALUE_LEN</text><text x="712" y="256" font-size="12" class="mono cy">32（AES-256）</text>
+          <text x="512" y="278" font-size="12" class="mono">CKA_ENCRYPT</text><text x="712" y="278" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="300" font-size="12" class="mono">CKA_DECRYPT</text><text x="712" y="300" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="326" font-size="11.5" class="mut">暗号化も復号も、この同じ鍵</text></g><text x="36" y="94" font-size="13" class="mono">"hello hsm"（9 バイト）</text>
+      <g data-k="param"><rect class="box" x="24" y="116" width="262" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="136" font-size="12" class="mut">メカニズムのパラメータ</text><text x="36" y="160" font-size="12" class="mono">IV 12 バイト ／ 付随データ "header"</text><text x="36" y="180" font-size="12" class="mono">タグ 128 ビット</text></g>
+      <g data-k="ct"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="258" font-size="12" class="mut">暗号文</text><rect x="36" y="270" width="63" height="22" rx="3" fill="var(--brass)"/><rect x="103" y="270" width="112" height="22" rx="3" fill="var(--cipher)"/><text x="159.0" y="285.5" font-size="11" text-anchor="middle" class="mono">タグ</text><text x="36" y="318" font-size="12">25 バイト（暗号文 9＋タグ 16）</text></g></g></g><g class="v-oaep"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_RSA_PKCS_OAEP</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">公開鍵で暗号化・秘密鍵で復号</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">乱数とハッシュで整形</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">毎回違う形になる</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">公開鍵で RSA 演算</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">誰でも暗号化できる</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">256 バイト</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">鍵の長さと同じ</text><g data-k="key"><rect class="box" x="498" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">公開鍵</text>
+          <text x="512" y="238" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="640" y="238" font-size="12" class="mono cy">CKK_RSA</text>
+          <text x="512" y="262" font-size="12" class="mono">CKA_ENCRYPT</text><text x="640" y="262" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="318" font-size="11.5" class="mut">暗号化に使う（誰でも）</text></g>
+        <g data-k="key2"><rect class="box" x="728" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="742" y="210" font-size="15" font-weight="700">秘密鍵</text>
+          <text x="742" y="238" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="870" y="238" font-size="12" class="mono cy">CKK_RSA</text>
+          <text x="742" y="262" font-size="12" class="mono">CKA_DECRYPT</text><text x="870" y="262" font-size="12" class="mono cy">TRUE</text>
+          <text x="742" y="286" font-size="12" class="mono">CKA_SENSITIVE</text><text x="870" y="286" font-size="12" class="mono cy">TRUE</text>
+          <text x="742" y="318" font-size="11.5" class="mut">復号に使う（トークンの中だけ）</text></g><text x="36" y="94" font-size="13" class="mono">"hello hsm"（9 バイト）</text>
+      <g data-k="param"><rect class="box" x="24" y="116" width="262" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="136" font-size="12" class="mut">メカニズムのパラメータ</text><text x="36" y="160" font-size="12" class="mono">ハッシュ SHA-1 ／ MGF1-SHA1</text><text x="36" y="180" font-size="11.5" class="mut">SoftHSM2 2.6.1 は SHA-1 だけ</text></g>
+      <g data-k="ct"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="258" font-size="12" class="mut">暗号文</text><rect x="36" y="270" width="238" height="22" rx="3" fill="var(--brass)"/><text x="36" y="318" font-size="12">256 バイト（RSA 2048 の長さ）</text></g></g></g>
+
+    <!-- 1. 復号は逆向き -->
+    <g data-only="1"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="512" y="376" font-size="13" font-weight="700">復号は逆向き</text>
+      <text x="512" y="402" font-size="12.5" class="mono">C_DecryptInit（同じメカニズム・同じパラメータ・鍵）→ C_Decrypt（暗号文 → 平文）</text><text x="512" y="428" font-size="12" class="mut">cryptoki の encrypt / decrypt は、Init と本体を続けて呼ぶ</text></g>
+
+    <!-- 2. 鍵を作る -->
+    <g data-only="2"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" class="mono brass">C_GenerateKey(CKM_AES_KEY_GEN)</text>
+      <text x="512" y="402" font-size="12" class="mono">CKA_VALUE_LEN = 32, CKA_ENCRYPT = TRUE, CKA_DECRYPT = TRUE,</text>
+      <text x="512" y="422" font-size="12" class="mono">CKA_SENSITIVE = TRUE, CKA_EXTRACTABLE = FALSE</text>
+      <text x="512" y="450" font-size="12" class="mono wr">CKA_ENCRYPT のない鍵で暗号化 → CKR_KEY_FUNCTION_NOT_PERMITTED</text></g>
+
+    <!-- 3. 方式とパラメータ -->
+    <g data-only="3"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" font-weight="700">メカニズムが方式を決め、方式ごとにパラメータが違う</text>
+      <text x="512" y="400" font-size="12" class="mono cy">CKM_AES_ECB</text><text x="512" y="417" font-size="12" class="mono cy">CKM_AES_CBC / _PAD</text><text x="512" y="434" font-size="12" class="mono cy">CKM_AES_GCM</text><text x="512" y="451" font-size="12" class="mono cy">CKM_RSA_PKCS_OAEP</text>
+      <text x="700" y="400" font-size="12">なし</text><text x="700" y="417" font-size="12">IV 16 バイト</text><text x="700" y="434" font-size="12">IV・付随データ・タグの長さ</text><text x="700" y="451" font-size="12">ハッシュと MGF</text></g>
+
+    <!-- 4. ECB と CBC -->
+    <g data-only="4"><rect class="box" x="24" y="350" width="262" height="112" rx="6" fill="var(--panel2)" stroke="var(--warn)"/>
+      <text x="36" y="372" font-size="12">同じ 32 バイト（AAAA…）を暗号化</text>
+      <text x="36" y="398" font-size="12" class="mono">ECB</text><rect x="80" y="385" width="80" height="22" rx="3" fill="var(--brass)"/><rect x="166" y="385" width="80" height="22" rx="3" fill="var(--brass)"/><text x="254" y="400" font-size="11.5" class="wr">同じ</text>
+      <text x="36" y="428" font-size="12" class="mono">CBC</text><rect x="80" y="415" width="80" height="22" rx="3" fill="var(--brass)"/><rect x="166" y="415" width="80" height="22" rx="3" fill="var(--cipher)"/><text x="254" y="430" font-size="11.5" class="cy">違う</text>
+      <text x="36" y="454" font-size="11.5" class="mut">ECB は平文の模様が残る</text></g>
+
+    <!-- 5. IV -->
+    <g data-only="5"><rect class="box" x="24" y="350" width="262" height="112" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="36" y="374" font-size="12" class="wr">同じ IV → 同じ暗号文</text><text x="36" y="396" font-size="11.5" class="mut">（同じ平文を送ったとばれる）</text><text x="36" y="418" font-size="12" class="cy">IV を毎回変える → 違う暗号文</text><text x="36" y="440" font-size="11.5" class="mut">IV は秘密ではない。暗号文と一緒に送る</text></g>
+
+    <!-- 6. パディング -->
+    <g data-only="6"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" font-weight="700">ブロック暗号は 16 バイト単位</text>
+      <text x="512" y="402" font-size="12.5" class="mono wr">CKM_AES_CBC に 9 バイト → CKR_DATA_LEN_RANGE（16 の倍数だけ）</text><text x="512" y="426" font-size="12.5" class="mono cy">CKM_AES_CBC_PAD → 16 バイトに埋めてから暗号化し、復号で取り除く</text><text x="512" y="450" font-size="11.5" class="mut">埋め方は PKCS #7 と同じ（足りないバイト数の値で埋める）</text></g>
+
+    <!-- 7. CBC は改ざんに気づかない -->
+    <g data-only="7"><rect class="box" x="24" y="350" width="262" height="112" rx="6" fill="var(--panel2)" stroke="var(--warn)"/>
+      <text x="36" y="374" font-size="12">IV を 1 ビット変えて復号すると</text><text x="36" y="396" font-size="13" class="mono wr">→ "iello hsm"</text><text x="36" y="418" font-size="12" class="wr">エラーにならず、黙って変わる</text><text x="36" y="440" font-size="11.5" class="mut">気づくには GCM か MAC（第3章）</text></g>
+
+    <!-- 8. GCM は改ざんを見つける -->
+    <g data-only="8"><rect class="box" x="24" y="350" width="262" height="112" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="36" y="374" font-size="12" class="cy">暗号文を 1 ビット変える → 復号エラー</text><text x="36" y="396" font-size="12" class="cy">付随データを変える → 復号エラー</text><text x="36" y="418" font-size="11.5" class="mut">（SoftHSM2 は CKR_GENERAL_ERROR）</text><text x="36" y="440" font-size="12" class="wr">同じ鍵で IV を使い回さないこと</text></g>
+
+    <!-- 9. 分けて渡す -->
+    <g data-only="9"><rect class="box" x="316" y="150" width="152" height="146" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="324" y="172" font-size="12" class="mono cy">① C_EncryptInit</text><text x="324" y="193" font-size="12" class="mono cy">② C_EncryptUpdate</text><text x="324" y="214" font-size="11" class="mut">　出力 0 バイトのことも</text><text x="324" y="235" font-size="12" class="mono cy">③ C_EncryptFinal</text><text x="324" y="256" font-size="11" class="mut">　残りを出す</text><text x="324" y="277" font-size="11">→ 一度に渡したときと同じ</text></g>
+
+    <!-- 10. 公開鍵で暗号化 -->
+    <g data-only="10"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" font-weight="700">暗号化は公開鍵（誰でも）、復号は秘密鍵（トークンの中だけ）</text>
+      <text x="512" y="400" font-size="12">2048 ビット・SHA-1 なら 214 バイトまで。長いデータは AES で暗号化し、その AES 鍵を RSA で包む</text><text x="512" y="422" font-size="11.5" class="mono mut">公開鍵で復号 → CKR_KEY_FUNCTION_NOT_PERMITTED</text><text x="512" y="444" font-size="11.5" class="mono mut">SHA-256 の OAEP → CKR_ARGUMENTS_BAD（SoftHSM2 2.6.1 は SHA-1 だけ）</text></g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+  <nav class="sitenav" data-page="docs/04-crypt.html" data-root="../" aria-label="章の移動"></nav>
+</div>
+
+<script>
+const C=code;
+const STEPS=[
+  {t:"暗号化も2段階で頼む",
+   b:"<code>C_EncryptInit</code> でメカニズムと鍵を決め、<code>C_Encrypt</code> で平文を渡すと暗号文が返る。復号は逆向きに <code>C_DecryptInit</code> と <code>C_Decrypt</code>。鍵はトークンの外に出ない。",
+   c:["let m = Mechanism::AesCbcPad(iv);","let ct = s.encrypt(&m, key, data)?;","let pt = s.decrypt(&m, key, &ct)?; "+C("// pt == data")],
+   k:["data","calls","pipe","key","ct"], v:"cbc"},
+  {t:"共通鍵は C_GenerateKey で作る",
+   b:"AES の鍵は、第1章と同じくテンプレート1つの <code>C_GenerateKey</code> で作る。暗号化に使うなら <code>CKA_ENCRYPT</code>、復号に使うなら <code>CKA_DECRYPT</code>。付いていない鍵で暗号化しようとすると断られる。",
+   c:["let key = s.generate_key(&Mechanism::AesKeyGen, &[","    Attribute::ValueLen(32.into()),","    Attribute::Encrypt(true), Attribute::Decrypt(true),","    /* SENSITIVE, EXTRACTABLE */ ])?;"],
+   k:["key"], v:"cbc"},
+  {t:"メカニズムで方式を選ぶ",
+   b:"どう暗号化するか（ECB・CBC・GCM・RSA-OAEP など）はメカニズムで決まり、方式ごとに必要なパラメータが違う。この手順では4つの方式が順に切り替わる。右上で選ぶとそこで止まる。",
+   c:["Mechanism::AesEcb                 "+C("// パラメータなし"),"Mechanism::AesCbcPad(iv)          "+C("// IV 16 バイト"),"Mechanism::AesGcm(GcmParams::new(...))"],
+   k:["pipe","param"], cycle:["cbc","ecb","gcm","oaep"]},
+  {t:"ECB は模様が残る",
+   b:"<code>CKM_AES_ECB</code> は 16 バイトごとに独立して暗号化するので、同じ平文ブロックは同じ暗号文ブロックになる。データの暗号化には使わない。",
+   c:["let ct = s.encrypt(&Mechanism::AesEcb, key, &[b'A'; 32])?;","ct[..16] == ct[16..]; "+C("// true（模様が残る）")],
+   k:["ct"], v:"ecb"},
+  {t:"IV は毎回変える",
+   b:"CBC や GCM は IV（初期化ベクトル）をパラメータに取る。同じ鍵と同じ IV なら同じ暗号文になるので、IV は暗号化のたびに <code>C_GenerateRandom</code> で作る。IV は秘密ではないので、暗号文と一緒に送ってよい。",
+   c:["let iv: [u8; 16] = s.generate_random_vec(16)?","    .try_into().unwrap(); "+C("// C_GenerateRandom"),"s.encrypt(&Mechanism::AesCbcPad(iv), key, data)?;"],
+   k:["param"], v:"cbc"},
+  {t:"16 バイトにそろえる",
+   b:"AES は 16 バイト単位で暗号化する。<code>CKM_AES_CBC</code> は 16 の倍数しか受け付けず、9 バイトだと <code>CKR_DATA_LEN_RANGE</code>。<code>CKM_AES_CBC_PAD</code> なら埋めてから暗号化し、復号で取り除く。",
+   c:["s.encrypt(&Mechanism::AesCbc(iv), key, b\"hello hsm\")",C("// → CKR_DATA_LEN_RANGE"),"s.encrypt(&Mechanism::AesCbcPad(iv), key, data)?;",C("// → 16 バイト")],
+   k:["ct","pipe"], v:"cbc"},
+  {t:"CBC は改ざんに気づかない",
+   b:"CBC は暗号化しかしない。IV や暗号文を書き換えられても復号はエラーにならず、平文が黙って変わる。改ざんに気づくには、GCM を使うか、暗号文に MAC（第3章）を付ける。",
+   c:["iv[0] ^= 1; "+C("// 1 ビットだけ変える"),"s.decrypt(&Mechanism::AesCbcPad(iv), key, &ct)?;",C("// → \"iello hsm\"（エラーにならない）")],
+   k:["param"], v:"cbc"},
+  {t:"GCM は改ざんを見つける",
+   b:"<code>CKM_AES_GCM</code> は暗号文に 16 バイトのタグを付ける。暗号文や付随データ（暗号化はしないが守りたいヘッダなど）が書き換えられていれば、復号が失敗する。同じ鍵で IV を使い回すと安全性が崩れるので、IV は必ず毎回変える。",
+   c:["let p = GcmParams::new(","    &mut iv12, b\"header\", 128.into())?;","let ct = s.encrypt(&Mechanism::AesGcm(p), key, data)?;",C("// 9 → 25 バイト（タグ 16 を含む）")],
+   k:["ct","pipe","param"], v:"gcm"},
+  {t:"長いデータは分けて渡す",
+   b:"<code>C_EncryptUpdate</code> で少しずつ渡し、<code>C_EncryptFinal</code> で残りを受け取る。途中の出力は、ブロックがそろうまで 0 バイトのこともある。つなげれば一度に暗号化したときと同じになる。",
+   c:["s.encrypt_init(&Mechanism::AesCbcPad(iv), key)?;","let mut ct = s.encrypt_update(b\"hello \")?; "+C("// 0 バイト"),"ct.extend(s.encrypt_update(b\"hsm\")?);","ct.extend(s.encrypt_final()?);"],
+   k:["calls"], v:"cbc"},
+  {t:"公開鍵で暗号化する",
+   b:"RSA-OAEP は公開鍵で暗号化し、秘密鍵で復号する。暗号化は誰でもできるが、復号はトークンの中の秘密鍵だけ。暗号化できる長さは短い（2048 ビット・SHA-1 なら 214 バイト）ので、長いデータは AES で暗号化し、その AES 鍵を RSA で包む。",
+   c:["let p = PkcsOaepParams::new(MechanismType::SHA1,","    PkcsMgfType::MGF1_SHA1, PkcsOaepSource::empty());","let m = Mechanism::RsaPkcsOaep(p);","let ct = s.encrypt(&m, pub_h, data)?; "+C("// 256 バイト")],
+   k:["key","key2","pipe","ct"], v:"oaep"}
+];
+const ALL={t:"全体像",
+  b:"暗号化は <code>C_EncryptInit</code> → <code>C_Encrypt</code>、復号は逆向き。方式はメカニズムで選び、IV などのパラメータを渡す。ECB は模様が残り、CBC は改ざんに気づかない。改ざんも見つけたいなら GCM。公開鍵で暗号化するなら RSA-OAEP。",
+  c:[C("// この章の関数・メカニズムは v2.40 で定義済み"),C("// 挙動は examples/04-crypt で CI 確認（SoftHSM2 2.6.1）")]};
+
+const svgEl=document.getElementById('svg'), stageEl=document.getElementById('stage');
+let cycle=null, step=1;
+function setV(v){
+  svgEl.dataset.v=v;
+  svgEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===v));
+}
+function lightUp(){
+  const ks=(step===0?[]:STEPS[step-1].k)||[];
+  svgEl.querySelectorAll('[data-k]').forEach(g=>g.classList.toggle('lit',ks.includes(g.dataset.k)));
+}
+function stopCycle(){clearInterval(cycle);cycle=null}
+svgEl.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>{stopCycle();setV(c.dataset.v)});
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();stopCycle();setV(c.dataset.v)}});
+});
+runSteps({
+  steps:STEPS, all:ALL,
+  onShow:(cur,all)=>{
+    stopCycle(); step=all?0:cur; lightUp();
+    if(all)return;
+    const st=STEPS[cur-1];
+    if(st.v)setV(st.v);
+    if(st.cycle){
+      setV(st.cycle[0]); let i=0;
+      cycle=setInterval(()=>{if(!stageEl.classList.contains('paused')){i=(i+1)%st.cycle.length;setV(st.cycle[i])}},3500);
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -33,7 +33,7 @@ Ubuntu の場合：
 sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
-cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keypair && cargo run -p sign
+cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keypair && cargo run -p sign && cargo run -p crypt
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。

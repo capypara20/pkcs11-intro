@@ -46,14 +46,16 @@ g[data-step].now{filter:drop-shadow(0 0 7px var(--brass))}
 .paused *{animation-play-state:paused!important}
 
 /* 説明パネル */
-.panel{display:grid;grid-template-columns:270px minmax(0,1fr) minmax(390px,34%);gap:24px;align-items:start;
+.panel{display:grid;grid-template-columns:250px minmax(0,1fr) minmax(400px,38%);gap:24px;align-items:start;
   background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 22px;min-height:156px}
 .count{font-family:var(--mono);color:var(--brass);font-size:15px}
 .panel h2{margin:2px 0 0;font-size:24px;line-height:1.35}
 .body p{margin:0;font-size:17px}
 pre{margin:0;background:var(--bg);border:1px solid var(--line);border-radius:6px;
   padding:12px 14px;font-family:var(--mono);font-size:13.5px;line-height:1.55;overflow:auto;color:var(--ink)}
-.ln{display:block;white-space:pre}
+/* 長い行は折り返し、続きの行は字下げして1行の続きだとわかるようにする */
+.ln{display:block;white-space:pre-wrap;overflow-wrap:anywhere;padding-left:3ch;text-indent:-3ch}
+@media (max-width:1400px){pre{font-size:12.5px}}
 .ln .c{color:var(--cipher)}
 .dots{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
 .dots button{width:14px;height:14px;padding:0;border-radius:50%;background:var(--panel2)}
