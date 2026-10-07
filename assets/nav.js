@@ -6,7 +6,7 @@
     ['docs/01-init.html','第1章 初期化'],
     ['docs/02-connect.html','第2章 アプリからつなぐ'],
     ['docs/03-objects.html','第3章 オブジェクトと属性'],
-    ['docs/04-keygen.html','第4章 鍵の生成'],
+    ['docs/04-keygen.html','第4章 鍵を作る'],
     ['docs/05-find.html','第5章 鍵の探し方と名前の付け方'],
     ['docs/06-crypt.html','第6章 暗号化と復号'],
     ['docs/07-sign.html','第7章 署名と検証'],

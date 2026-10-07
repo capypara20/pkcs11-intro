@@ -1,5 +1,6 @@
-//! 第4章 鍵の生成：共通鍵は C_GenerateKey（テンプレート1つ）、鍵ペアは C_GenerateKeyPair（2つ）で作る。
-//! 長さの書き方は鍵の種類で違うこと、生成した鍵と持ち込んだ鍵の違い、テンプレートのどちら側に何を書くか、
+//! 第4章 鍵を作る：共通鍵は C_GenerateKey（テンプレート1つ）、鍵ペアは C_GenerateKeyPair（2つ）で作り、
+//! 外で作った鍵は C_CreateObject（値・公開鍵）や C_UnwrapKey（包んだ鍵）で取り込む。
+//! 長さの書き方は鍵の種類で違うこと、生成した鍵と取り込んだ鍵の違い、テンプレートのどちら側に何を書くか、
 //! トークンが何を作るかを確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
@@ -259,6 +260,10 @@ fn main() -> Result<()> {
         Some(RvError::TemplateIncomplete),
         "持ち込むときは CKA_CLASS を自分で書く"
     );
+    assert!(matches!(
+        info(&s, imported, AttributeType::Value)?,
+        AttributeInfo::Sensitive
+    )); // CKA_SENSITIVE = TRUE なので、書いた値ももう読めない
     println!("生成: LOCAL/ALWAYS_SENSITIVE/NEVER_EXTRACTABLE = TRUE、持ち込み: すべて FALSE");
 
     let keys = [Attribute::Class(ObjectClass::PRIVATE_KEY)];
@@ -382,6 +387,114 @@ fn main() -> Result<()> {
         info(&s, ec_priv, AttributeType::Value)?,
         AttributeInfo::Sensitive
     ));
+
+    // 10. 公開鍵を取り込む：相手から受け取った公開鍵（ここでは EC の Q）を C_CreateObject で入れ、検証に使う
+    let q = match read(&s, ec_pub, AttributeType::EcPoint)? {
+        Attribute::EcPoint(q) => q,
+        other => panic!("{other:?}"),
+    };
+    let partner = s.create_object(&[
+        Attribute::Token(false),
+        Attribute::Class(ObjectClass::PUBLIC_KEY),
+        Attribute::KeyType(KeyType::EC),
+        Attribute::EcParams(P256.to_vec()),
+        Attribute::EcPoint(q),
+        Attribute::Verify(true),
+        Attribute::Label(b"partner".to_vec()),
+    ])?; // C_CreateObject
+    assert_eq!(
+        read(&s, partner, AttributeType::Local)?,
+        Attribute::Local(false)
+    );
+    let digest = [0x5a; 32];
+    let sig = s.sign(&Mechanism::Ecdsa, ec_priv, &digest)?; // 相手の HSM で署名したもの
+    s.verify(&Mechanism::Ecdsa, partner, &digest, &sig)?; // 取り込んだ公開鍵で検証できる
+    s.destroy_object(partner)?;
+    println!("公開鍵の取り込み: C_CreateObject で入れた公開鍵で検証できた（CKA_LOCAL = FALSE）");
+
+    // 11. 包んで取り込む：C_UnwrapKey。値はアプリを通らず、トークンの中で鍵に戻る
+    let kek = s.generate_key(
+        &Mechanism::AesKeyGen,
+        &[
+            Attribute::Token(false),
+            Attribute::ValueLen(32.into()),
+            Attribute::Wrap(true),
+            Attribute::Unwrap(true),
+        ],
+    )?; // 包む鍵（両側の HSM に同じものを用意しておく）
+    let moving = s.generate_key(
+        &Mechanism::AesKeyGen,
+        &[
+            Attribute::Token(false),
+            Attribute::ValueLen(32.into()),
+            Attribute::Encrypt(true),
+            Attribute::Sensitive(true),
+            Attribute::Extractable(true),
+        ],
+    )?;
+    let wrapped = s.wrap_key(&Mechanism::AesKeyWrap, kek, moving)?; // C_WrapKey（送る側の作業）
+    assert_eq!(wrapped.len(), 40, "32 バイトの鍵 + 8 バイト");
+    assert_eq!(
+        rv(s.wrap_key(&Mechanism::AesKeyWrap, kek, imported)),
+        Some(RvError::KeyUnextractable),
+        "CKA_EXTRACTABLE = FALSE の鍵は包めない"
+    );
+    let unwrapped = s.unwrap_key(
+        &Mechanism::AesKeyWrap,
+        kek,
+        &wrapped,
+        &[
+            Attribute::Token(false),
+            Attribute::Class(ObjectClass::SECRET_KEY),
+            Attribute::KeyType(KeyType::AES),
+            Attribute::Decrypt(true),
+            Attribute::Sensitive(true),
+            Attribute::Extractable(false),
+        ],
+    )?; // C_UnwrapKey
+    assert_eq!(
+        (
+            read(&s, unwrapped, AttributeType::Local)?,
+            read(&s, unwrapped, AttributeType::AlwaysSensitive)?,
+            read(&s, unwrapped, AttributeType::NeverExtractable)?
+        ),
+        (
+            Attribute::Local(false),
+            Attribute::AlwaysSensitive(false),
+            Attribute::NeverExtractable(false)
+        ),
+        "一度包まれて外に出たので、記録はすべて FALSE"
+    );
+    assert!(matches!(
+        info(&s, unwrapped, AttributeType::Value)?,
+        AttributeInfo::Sensitive
+    ));
+    let block = [7u8; 16];
+    let ct = s.encrypt(&Mechanism::AesEcb, moving, &block)?;
+    assert_eq!(s.decrypt(&Mechanism::AesEcb, unwrapped, &ct)?, block); // 同じ鍵に戻った
+    let no_unwrap = s.generate_key(
+        &Mechanism::AesKeyGen,
+        &[
+            Attribute::Token(false),
+            Attribute::ValueLen(32.into()),
+            Attribute::Unwrap(false),
+        ],
+    )?;
+    assert!(
+        s.unwrap_key(
+            &Mechanism::AesKeyWrap,
+            no_unwrap,
+            &wrapped,
+            &[
+                Attribute::Token(false),
+                Attribute::Class(ObjectClass::SECRET_KEY),
+                Attribute::KeyType(KeyType::AES),
+            ]
+        )
+        .is_err(),
+        "CKA_UNWRAP のない鍵では、ほどけない"
+    );
+    println!("包んで取り込む: C_UnwrapKey で同じ鍵に戻った。LOCAL などはすべて FALSE");
 
     for h in [rsa_pub, rsa_priv, ec_pub, ec_priv] {
         s.destroy_object(h)?; // C_DestroyObject

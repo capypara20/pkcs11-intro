@@ -1,5 +1,5 @@
 //! 第7章 署名と検証：Init → 本体の2段階、メカニズムと鍵の組み合わせ、検証の失敗、
-//! 分けて渡す署名、1セッション1操作、共通鍵での MAC を確かめる。
+//! 分けて渡す署名、1セッション1操作、共通鍵での MAC、鍵を使わないハッシュと乱数を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
 //!   PKCS11_MODULE      … Cryptoki ライブラリのパス（既定: SoftHSM2）
@@ -90,7 +90,7 @@ fn main() -> Result<()> {
     assert_eq!(rsa_sig.len(), 256, "RSA 2048 の署名は 256 バイト");
     println!("RSA（CKM_SHA256_RSA_PKCS）: 署名 {} バイト", rsa_sig.len());
 
-    // 2. 使えるメカニズムはトークン次第。SoftHSM2 2.6 には CKM_ECDSA_SHA256 がない
+    // 2. 使えるメカニズムはトークン次第。ないメカニズムを使うと CKR_MECHANISM_INVALID
     let mechs = lib.get_mechanism_list(slot)?; // C_GetMechanismList
     assert!(mechs.contains(&MechanismType::SHA256_RSA_PKCS));
     assert!(mechs.contains(&MechanismType::ECDSA));
@@ -118,14 +118,8 @@ fn main() -> Result<()> {
 
     // 4. 鍵とメカニズムが合わない・用途がない
     let mismatch = rv(s.sign(&Mechanism::Ecdsa, rsa_priv, &hash));
-    // 仕様では CKR_KEY_TYPE_INCONSISTENT。SoftHSM2 2.6 は CKR_GENERAL_ERROR を返す
-    assert!(
-        matches!(
-            mismatch,
-            Some(RvError::KeyTypeInconsistent | RvError::GeneralError)
-        ),
-        "{mismatch:?}"
-    );
+    // 仕様では CKR_KEY_TYPE_INCONSISTENT。返すエラーはトークン次第なので、失敗したことだけを確かめる
+    assert!(mismatch.is_some());
     let (_, no_sign) = key_pair(&s, false, false)?;
     assert_eq!(
         rv(s.sign(&Mechanism::Sha256RsaPkcs, no_sign, DATA)),
@@ -199,6 +193,47 @@ fn main() -> Result<()> {
         "HMAC（CKM_SHA256_HMAC）: {} バイト。同じ共通鍵で検証する",
         mac.len()
     );
+
+    // 10. MAC は同じデータなら毎回同じ値。鍵を持つ人なら誰でも作れる
+    assert_eq!(s.sign(&Mechanism::Sha256Hmac, mac_key, DATA)?, mac);
+    // 分けて渡すのも、署名と同じ形（C_SignUpdate / C_SignFinal、C_VerifyUpdate / C_VerifyFinal）
+    s.sign_init(&Mechanism::Sha256Hmac, mac_key)?;
+    s.sign_update(b"hello ")?;
+    s.sign_update(b"hsm")?;
+    assert_eq!(s.sign_final()?, mac);
+    s.verify_init(&Mechanism::Sha256Hmac, mac_key)?;
+    s.verify_update(b"hello ")?;
+    s.verify_update(b"hsm")?;
+    s.verify_final(&mac)?;
+    s.verify_init(&Mechanism::Sha256RsaPkcs, rsa_pub)?;
+    s.verify_update(b"hello ")?;
+    s.verify_update(b"hsm")?;
+    s.verify_final(&rsa_sig)?;
+    println!("HMAC は毎回同じ値。MAC も検証も分けて渡せる");
+
+    // 11. ハッシュは鍵を使わない：C_DigestInit → C_Digest。標準の SHA-256 と同じ値になる
+    let h = s.digest(&Mechanism::Sha256, DATA)?;
+    let hex: String = h.iter().map(|b| format!("{b:02x}")).collect();
+    assert_eq!(
+        hex,
+        "a26275f66cab7104b8af28e676d6d1dbff44dbb8b6ba3c595123c63e0d1a6005"
+    );
+    s.digest_init(&Mechanism::Sha256)?; // 分けて渡しても同じ
+    s.digest_update(b"hello ")?;
+    s.digest_update(b"hsm")?;
+    assert_eq!(s.digest_final()?, h);
+    println!("SHA-256: {hex}");
+
+    // 12. 乱数：C_GenerateRandom は長さだけを渡す。C_SeedRandom に対応するかはトークン次第
+    let r1 = s.generate_random_vec(32)?;
+    let r2 = s.generate_random_vec(32)?;
+    assert_eq!(r1.len(), 32);
+    assert_ne!(r1, r2, "呼ぶたびに違う値");
+    match s.seed_random(&[0x01, 0x02, 0x03, 0x04]) {
+        Ok(()) | Err(Error::Pkcs11(RvError::RandomSeedNotSupported, _)) => {}
+        Err(e) => return Err(e.into()),
+    }
+    println!("乱数: 32 バイト・毎回違う");
 
     s.logout()?;
     s.close()?; // セッションオブジェクトの鍵はここで消える

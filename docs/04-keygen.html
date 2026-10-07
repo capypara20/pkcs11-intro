@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>第4章 鍵の生成 | PKCS#11 入門</title>
+<title>第4章 鍵を作る | PKCS#11 入門</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,8 +13,12 @@
 <script src="../assets/steps.js"></script>
 <style>
 /* RSA / EC の切り替え */
-svg g.v-aes,svg g.v-des3,svg g.v-hmac,svg g.v-rsa,svg g.v-ec{display:none}
-svg[data-v="aes"] g.v-aes,svg[data-v="des3"] g.v-des3,svg[data-v="hmac"] g.v-hmac,svg[data-v="rsa"] g.v-rsa,svg[data-v="ec"] g.v-ec{display:inline}
+svg g[class^="v-"]{display:none}
+svg[data-v="aes"] g.v-aes,svg[data-v="des3"] g.v-des3,svg[data-v="hmac"] g.v-hmac,svg[data-v="rsa"] g.v-rsa,svg[data-v="ec"] g.v-ec,
+svg[data-v="imp"] g.v-imp,svg[data-v="pubimp"] g.v-pubimp,svg[data-v="unwrap"] g.v-unwrap{display:inline}
+/* 線ごとのチップ */
+svg .chips{display:none}
+svg[data-track="sym"] .chips-sym,svg[data-track="pair"] .chips-pair,svg[data-track="imp"] .chips-imp,svg[data-track="all"] .chips-all{display:inline}
 /* 手順ごとに光らせる行 */
 svg .row .hl{fill:none;stroke:none;stroke-width:2}
 svg .row.lit .hl{stroke:var(--brass)}
@@ -25,7 +29,7 @@ svg .row.lit.ng .hl{stroke:var(--warn)}
 <body>
 <div class="stage" id="stage">
   <header>
-    <h1><a href="../index.html">PKCS#11 入門</a>　第4章 鍵の生成<span class="ver" title="この章の関数・メカニズム・属性は v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
+    <h1><a href="../index.html">PKCS#11 入門</a>　第4章 鍵を作る<span class="ver" title="この章の関数・メカニズム・属性は v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
     <div class="ctl">
       <a class="ref" href="ref-attributes.html#key" target="_blank" rel="noopener">属性リファレンス</a>
       <button id="prev">前へ</button>
@@ -601,13 +605,242 @@ svg .row.lit.ng .hl{stroke:var(--warn)}
           <rect class="hl" x="849" y="386" width="330" height="22" rx="3"/>
           <rect x="854" y="391" width="4" height="12" rx="2" fill="var(--cipher)"/>
           <text x="864" y="402" font-size="12" class="mono">CKA_VALUE</text>
-          <text x="1032" y="402" font-size="12" class="mut">（秘密値・読めない）</text></g></g>
+          <text x="1032" y="402" font-size="12" class="mut">（秘密値・読めない）</text></g></g><g class="v-imp"><rect class="box" x="10" y="8" width="300" height="226" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="22" y="34" font-size="15" font-weight="700">テンプレート</text><text x="22" y="54" font-size="12" class="mut">値も自分で書く</text>
+        <g class="row" data-a="CLASS" data-side="sect"><rect class="hl" x="18" y="65" width="286" height="20" rx="3"/>
+          <text x="26" y="80" font-size="12" class="mono">CKA_CLASS = CKO_SECRET_KEY</text></g>
+<g class="row" data-a="KEY_TYPE" data-side="sect"><rect class="hl" x="18" y="87" width="286" height="20" rx="3"/>
+          <text x="26" y="102" font-size="12" class="mono">CKA_KEY_TYPE = CKK_AES</text></g>
+<g class="row" data-a="TOKEN" data-side="sect"><rect class="hl" x="18" y="109" width="286" height="20" rx="3"/>
+          <text x="26" y="124" font-size="12" class="mono">CKA_TOKEN = TRUE</text></g>
+<g class="row" data-a="LABEL" data-side="sect"><rect class="hl" x="18" y="131" width="286" height="20" rx="3"/>
+          <text x="26" y="146" font-size="12" class="mono">CKA_LABEL = &quot;imported&quot;</text></g>
+<g class="row" data-a="VALUE" data-side="sect"><rect class="hl" x="18" y="153" width="286" height="20" rx="3"/>
+          <text x="26" y="168" font-size="12" class="mut">CKA_VALUE = （外で作った 32 バイト）</text></g>
+<g class="row" data-a="ENCRYPT" data-side="sect"><rect class="hl" x="18" y="175" width="286" height="20" rx="3"/>
+          <text x="26" y="190" font-size="12" class="mono">CKA_ENCRYPT = TRUE</text></g>
+<g class="row" data-a="SENSITIVE" data-side="sect"><rect class="hl" x="18" y="197" width="286" height="20" rx="3"/>
+          <text x="26" y="212" font-size="12" class="mono">CKA_SENSITIVE = TRUE</text></g>
+        <rect class="box" x="10" y="244" width="300" height="90" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+        <text x="22" y="270" font-size="14" font-weight="700">外で作った値</text><text x="22" y="294" font-size="12">32 バイトの AES 鍵</text><text x="22" y="314" font-size="11.5" class="mut">アプリのメモリを通る</text>
+        <path class="draw" pathLength="1" d="M310,290 C318,290 312,236 318,236" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <rect x="320" y="150" width="164" height="94" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="402" y="176" font-size="13" text-anchor="middle" class="mono cy">C_CreateObject</text>
+      <g class="row" data-a="MECH"><rect class="hl" x="326" y="196" width="152" height="24" rx="3"/><text x="402" y="212" font-size="11" text-anchor="middle" class="mono brass">（メカニズムなし）</text></g>
+      <rect x="320" y="262" width="164" height="40" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="402" y="287" font-size="13.5" text-anchor="middle" font-weight="700">ハンドルが 1 つ</text>
+      <rect x="502" y="40" width="334" height="400" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="516" y="63" font-size="16" font-weight="700">共通鍵</text><text x="824" y="63" font-size="11.5" text-anchor="end" class="mono mut">CKO_SECRET_KEY</text><g class="row" data-a="CLASS" data-side="sec">
+          <rect class="hl" x="505" y="74" width="328" height="22" rx="3"/>
+          <rect x="510" y="79" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="90" font-size="12" class="mono">CKA_CLASS</text>
+          <text x="688" y="90" font-size="12" class="mono cy">CKO_SECRET_KEY</text></g>
+<g class="row" data-a="KEY_TYPE" data-side="sec">
+          <rect class="hl" x="505" y="98" width="328" height="22" rx="3"/>
+          <rect x="510" y="103" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="114" font-size="12" class="mono">CKA_KEY_TYPE</text>
+          <text x="688" y="114" font-size="12" class="mono cy">CKK_AES</text></g>
+<g class="row" data-a="TOKEN" data-side="sec">
+          <rect class="hl" x="505" y="122" width="328" height="22" rx="3"/>
+          <rect x="510" y="127" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="138" font-size="12" class="mono">CKA_TOKEN</text>
+          <text x="688" y="138" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="LABEL" data-side="sec">
+          <rect class="hl" x="505" y="146" width="328" height="22" rx="3"/>
+          <rect x="510" y="151" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="162" font-size="12" class="mono">CKA_LABEL</text>
+          <text x="688" y="162" font-size="12" class="mono cy">&quot;imported&quot;</text></g>
+<g class="row" data-a="ENCRYPT" data-side="sec">
+          <rect class="hl" x="505" y="170" width="328" height="22" rx="3"/>
+          <rect x="510" y="175" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="186" font-size="12" class="mono">CKA_ENCRYPT</text>
+          <text x="688" y="186" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="SENSITIVE" data-side="sec">
+          <rect class="hl" x="505" y="194" width="328" height="22" rx="3"/>
+          <rect x="510" y="199" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="210" font-size="12" class="mono">CKA_SENSITIVE</text>
+          <text x="688" y="210" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="LOCAL" data-side="sec">
+          <rect class="hl" x="505" y="218" width="328" height="22" rx="3"/>
+          <rect x="510" y="223" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="234" font-size="12" class="mono">CKA_LOCAL</text>
+          <text x="688" y="234" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="ALWAYS_SENSITIVE" data-side="sec">
+          <rect class="hl" x="505" y="242" width="328" height="22" rx="3"/>
+          <rect x="510" y="247" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="258" font-size="12" class="mono">CKA_ALWAYS_SENSITIVE</text>
+          <text x="688" y="258" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="NEVER_EXTRACTABLE" data-side="sec">
+          <rect class="hl" x="505" y="266" width="328" height="22" rx="3"/>
+          <rect x="510" y="271" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="282" font-size="12" class="mono">CKA_NEVER_EXTRACTABLE</text>
+          <text x="688" y="282" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="VALUE" data-side="sec">
+          <rect class="hl" x="505" y="290" width="328" height="22" rx="3"/>
+          <rect x="510" y="295" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="306" font-size="12" class="mono">CKA_VALUE</text>
+          <text x="688" y="306" font-size="12" class="mut">（32 バイト・読めない）</text></g>
+        <g class="note"><rect class="box" x="846" y="40" width="336" height="400" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+          <text x="860" y="63" font-size="16" font-weight="700" class="wr">値を取り込んだ鍵</text><text x="1170" y="63" font-size="11.5" text-anchor="end" class="mono mut">C_CreateObject</text>
+          <text x="864" y="96" font-size="12">値を外で作り、テンプレートに書く</text><text x="864" y="120" font-size="12">CKA_CLASS も自分で書く</text><text x="864" y="144" font-size="11.5" class="mut">（書かないと CKR_TEMPLATE_INCOMPLETE）</text><text x="864" y="168" font-size="12"></text><text x="864" y="192" font-size="12">値が一度トークンの外にあったので、</text><text x="864" y="216" font-size="12">「ずっと中だけにあった」とは言えない。</text><text x="864" y="240" font-size="12">記録の属性がそれを示す</text>
+          <text x="864" y="420" font-size="12" font-weight="700" class="cy">生成した鍵（共通鍵・鍵ペアの線）は TRUE</text></g></g><g class="v-pubimp"><rect class="box" x="10" y="8" width="300" height="226" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="22" y="34" font-size="15" font-weight="700">テンプレート</text><text x="22" y="54" font-size="12" class="mut">公開鍵の値を書く</text>
+        <g class="row" data-a="CLASS" data-side="sect"><rect class="hl" x="18" y="65" width="286" height="20" rx="3"/>
+          <text x="26" y="80" font-size="12" class="mono">CKA_CLASS = CKO_PUBLIC_KEY</text></g>
+<g class="row" data-a="KEY_TYPE" data-side="sect"><rect class="hl" x="18" y="87" width="286" height="20" rx="3"/>
+          <text x="26" y="102" font-size="12" class="mono">CKA_KEY_TYPE = CKK_EC</text></g>
+<g class="row" data-a="TOKEN" data-side="sect"><rect class="hl" x="18" y="109" width="286" height="20" rx="3"/>
+          <text x="26" y="124" font-size="12" class="mono">CKA_TOKEN = TRUE</text></g>
+<g class="row" data-a="LABEL" data-side="sect"><rect class="hl" x="18" y="131" width="286" height="20" rx="3"/>
+          <text x="26" y="146" font-size="12" class="mono">CKA_LABEL = &quot;partner&quot;</text></g>
+<g class="row" data-a="EC_PARAMS" data-side="sect"><rect class="hl" x="18" y="153" width="286" height="20" rx="3"/>
+          <text x="26" y="168" font-size="12" class="mut">CKA_EC_PARAMS = （P-256 の OID）</text></g>
+<g class="row" data-a="EC_POINT" data-side="sect"><rect class="hl" x="18" y="175" width="286" height="20" rx="3"/>
+          <text x="26" y="190" font-size="12" class="mut">CKA_EC_POINT = （相手の Q）</text></g>
+<g class="row" data-a="VERIFY" data-side="sect"><rect class="hl" x="18" y="197" width="286" height="20" rx="3"/>
+          <text x="26" y="212" font-size="12" class="mono">CKA_VERIFY = TRUE</text></g>
+        <rect class="box" x="10" y="244" width="300" height="90" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="22" y="270" font-size="14" font-weight="700">相手の公開鍵</text><text x="22" y="294" font-size="12">証明書の中の公開鍵など</text><text x="22" y="314" font-size="11.5" class="mut">秘密ではない</text>
+        <path class="draw" pathLength="1" d="M310,290 C318,290 312,236 318,236" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <rect x="320" y="150" width="164" height="94" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="402" y="176" font-size="13" text-anchor="middle" class="mono cy">C_CreateObject</text>
+      <g class="row" data-a="MECH"><rect class="hl" x="326" y="196" width="152" height="24" rx="3"/><text x="402" y="212" font-size="11" text-anchor="middle" class="mono brass">（メカニズムなし）</text></g>
+      <rect x="320" y="262" width="164" height="40" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="402" y="287" font-size="13.5" text-anchor="middle" font-weight="700">ハンドルが 1 つ</text>
+      <rect x="502" y="40" width="334" height="400" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="516" y="63" font-size="16" font-weight="700">公開鍵</text><text x="824" y="63" font-size="11.5" text-anchor="end" class="mono mut">CKO_PUBLIC_KEY</text><g class="row" data-a="CLASS" data-side="sec">
+          <rect class="hl" x="505" y="74" width="328" height="22" rx="3"/>
+          <rect x="510" y="79" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="90" font-size="12" class="mono">CKA_CLASS</text>
+          <text x="688" y="90" font-size="12" class="mono cy">CKO_PUBLIC_KEY</text></g>
+<g class="row" data-a="KEY_TYPE" data-side="sec">
+          <rect class="hl" x="505" y="98" width="328" height="22" rx="3"/>
+          <rect x="510" y="103" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="114" font-size="12" class="mono">CKA_KEY_TYPE</text>
+          <text x="688" y="114" font-size="12" class="mono cy">CKK_EC</text></g>
+<g class="row" data-a="TOKEN" data-side="sec">
+          <rect class="hl" x="505" y="122" width="328" height="22" rx="3"/>
+          <rect x="510" y="127" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="138" font-size="12" class="mono">CKA_TOKEN</text>
+          <text x="688" y="138" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="LABEL" data-side="sec">
+          <rect class="hl" x="505" y="146" width="328" height="22" rx="3"/>
+          <rect x="510" y="151" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="162" font-size="12" class="mono">CKA_LABEL</text>
+          <text x="688" y="162" font-size="12" class="mono cy">&quot;partner&quot;</text></g>
+<g class="row" data-a="VERIFY" data-side="sec">
+          <rect class="hl" x="505" y="170" width="328" height="22" rx="3"/>
+          <rect x="510" y="175" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="186" font-size="12" class="mono">CKA_VERIFY</text>
+          <text x="688" y="186" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="LOCAL" data-side="sec">
+          <rect class="hl" x="505" y="194" width="328" height="22" rx="3"/>
+          <rect x="510" y="199" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="210" font-size="12" class="mono">CKA_LOCAL</text>
+          <text x="688" y="210" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="EC_PARAMS" data-side="sec">
+          <rect class="hl" x="505" y="218" width="328" height="22" rx="3"/>
+          <rect x="510" y="223" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="234" font-size="12" class="mono">CKA_EC_PARAMS</text>
+          <text x="688" y="234" font-size="12" class="mut">（P-256 の OID）</text></g>
+<g class="row" data-a="EC_POINT" data-side="sec">
+          <rect class="hl" x="505" y="242" width="328" height="22" rx="3"/>
+          <rect x="510" y="247" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="258" font-size="12" class="mono">CKA_EC_POINT</text>
+          <text x="688" y="258" font-size="12" class="mut">（相手の Q・67 バイト）</text></g>
+        <g class="note"><rect class="box" x="846" y="40" width="336" height="400" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+          <text x="860" y="63" font-size="16" font-weight="700" class="wr">取り込んだ公開鍵</text><text x="1170" y="63" font-size="11.5" text-anchor="end" class="mono mut">C_CreateObject</text>
+          <text x="864" y="96" font-size="12">相手から受け取った公開鍵を入れる</text><text x="864" y="120" font-size="12">秘密の値はないので、守りの属性は要らない</text><text x="864" y="144" font-size="12"></text><text x="864" y="168" font-size="12" class="cy">この公開鍵で、相手の署名を検証できる</text><text x="864" y="192" font-size="11.5" class="mono cy">C_Verify(CKM_ECDSA, partner, …) → OK</text><text x="864" y="216" font-size="12"></text><text x="864" y="240" font-size="12">トークンで生成していないので</text><text x="864" y="264" font-size="12" class="mono wr">CKA_LOCAL = FALSE</text>
+          </g></g><g class="v-unwrap"><rect class="box" x="10" y="8" width="300" height="226" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="22" y="34" font-size="15" font-weight="700">テンプレート</text><text x="22" y="54" font-size="12" class="mut">包まれた鍵と一緒に渡す</text>
+        <g class="row" data-a="CLASS" data-side="sect"><rect class="hl" x="18" y="65" width="286" height="20" rx="3"/>
+          <text x="26" y="80" font-size="12" class="mono">CKA_CLASS = CKO_SECRET_KEY</text></g>
+<g class="row" data-a="KEY_TYPE" data-side="sect"><rect class="hl" x="18" y="87" width="286" height="20" rx="3"/>
+          <text x="26" y="102" font-size="12" class="mono">CKA_KEY_TYPE = CKK_AES</text></g>
+<g class="row" data-a="TOKEN" data-side="sect"><rect class="hl" x="18" y="109" width="286" height="20" rx="3"/>
+          <text x="26" y="124" font-size="12" class="mono">CKA_TOKEN = TRUE</text></g>
+<g class="row" data-a="LABEL" data-side="sect"><rect class="hl" x="18" y="131" width="286" height="20" rx="3"/>
+          <text x="26" y="146" font-size="12" class="mono">CKA_LABEL = &quot;moved&quot;</text></g>
+<g class="row" data-a="DECRYPT" data-side="sect"><rect class="hl" x="18" y="153" width="286" height="20" rx="3"/>
+          <text x="26" y="168" font-size="12" class="mono">CKA_DECRYPT = TRUE</text></g>
+<g class="row" data-a="SENSITIVE" data-side="sect"><rect class="hl" x="18" y="175" width="286" height="20" rx="3"/>
+          <text x="26" y="190" font-size="12" class="mono">CKA_SENSITIVE = TRUE</text></g>
+<g class="row" data-a="EXTRACTABLE" data-side="sect"><rect class="hl" x="18" y="197" width="286" height="20" rx="3"/>
+          <text x="26" y="212" font-size="12" class="mono">CKA_EXTRACTABLE = FALSE</text></g>
+        <rect class="box" x="10" y="244" width="300" height="90" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+        <text x="22" y="270" font-size="14" font-weight="700">包まれた鍵（40 バイト）</text><text x="22" y="294" font-size="12">＋ 包む鍵（CKA_UNWRAP = TRUE）</text><text x="22" y="314" font-size="11.5" class="mut">中身はアプリから見えない</text>
+        <path class="draw" pathLength="1" d="M310,290 C318,290 312,236 318,236" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <rect x="320" y="150" width="164" height="94" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="402" y="176" font-size="13" text-anchor="middle" class="mono cy">C_UnwrapKey</text>
+      <g class="row" data-a="MECH"><rect class="hl" x="326" y="196" width="152" height="24" rx="3"/><text x="402" y="212" font-size="11" text-anchor="middle" class="mono brass">CKM_AES_KEY_WRAP</text></g>
+      <rect x="320" y="262" width="164" height="40" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="402" y="287" font-size="13.5" text-anchor="middle" font-weight="700">ハンドルが 1 つ</text>
+      <rect x="502" y="40" width="334" height="400" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="516" y="63" font-size="16" font-weight="700">共通鍵</text><text x="824" y="63" font-size="11.5" text-anchor="end" class="mono mut">CKO_SECRET_KEY</text><g class="row" data-a="CLASS" data-side="sec">
+          <rect class="hl" x="505" y="74" width="328" height="22" rx="3"/>
+          <rect x="510" y="79" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="90" font-size="12" class="mono">CKA_CLASS</text>
+          <text x="688" y="90" font-size="12" class="mono cy">CKO_SECRET_KEY</text></g>
+<g class="row" data-a="KEY_TYPE" data-side="sec">
+          <rect class="hl" x="505" y="98" width="328" height="22" rx="3"/>
+          <rect x="510" y="103" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="114" font-size="12" class="mono">CKA_KEY_TYPE</text>
+          <text x="688" y="114" font-size="12" class="mono cy">CKK_AES</text></g>
+<g class="row" data-a="TOKEN" data-side="sec">
+          <rect class="hl" x="505" y="122" width="328" height="22" rx="3"/>
+          <rect x="510" y="127" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="138" font-size="12" class="mono">CKA_TOKEN</text>
+          <text x="688" y="138" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="LABEL" data-side="sec">
+          <rect class="hl" x="505" y="146" width="328" height="22" rx="3"/>
+          <rect x="510" y="151" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="162" font-size="12" class="mono">CKA_LABEL</text>
+          <text x="688" y="162" font-size="12" class="mono cy">&quot;moved&quot;</text></g>
+<g class="row" data-a="DECRYPT" data-side="sec">
+          <rect class="hl" x="505" y="170" width="328" height="22" rx="3"/>
+          <rect x="510" y="175" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="186" font-size="12" class="mono">CKA_DECRYPT</text>
+          <text x="688" y="186" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="SENSITIVE" data-side="sec">
+          <rect class="hl" x="505" y="194" width="328" height="22" rx="3"/>
+          <rect x="510" y="199" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="210" font-size="12" class="mono">CKA_SENSITIVE</text>
+          <text x="688" y="210" font-size="12" class="mono cy">TRUE</text></g>
+<g class="row" data-a="EXTRACTABLE" data-side="sec">
+          <rect class="hl" x="505" y="218" width="328" height="22" rx="3"/>
+          <rect x="510" y="223" width="4" height="12" rx="2" fill="var(--brass)"/>
+          <text x="520" y="234" font-size="12" class="mono">CKA_EXTRACTABLE</text>
+          <text x="688" y="234" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="LOCAL" data-side="sec">
+          <rect class="hl" x="505" y="242" width="328" height="22" rx="3"/>
+          <rect x="510" y="247" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="258" font-size="12" class="mono">CKA_LOCAL</text>
+          <text x="688" y="258" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="ALWAYS_SENSITIVE" data-side="sec">
+          <rect class="hl" x="505" y="266" width="328" height="22" rx="3"/>
+          <rect x="510" y="271" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="282" font-size="12" class="mono">CKA_ALWAYS_SENSITIVE</text>
+          <text x="688" y="282" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="NEVER_EXTRACTABLE" data-side="sec">
+          <rect class="hl" x="505" y="290" width="328" height="22" rx="3"/>
+          <rect x="510" y="295" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="306" font-size="12" class="mono">CKA_NEVER_EXTRACTABLE</text>
+          <text x="688" y="306" font-size="12" class="mono cy">FALSE</text></g>
+<g class="row" data-a="VALUE" data-side="sec">
+          <rect class="hl" x="505" y="314" width="328" height="22" rx="3"/>
+          <rect x="510" y="319" width="4" height="12" rx="2" fill="var(--cipher)"/>
+          <text x="520" y="330" font-size="12" class="mono">CKA_VALUE</text>
+          <text x="688" y="330" font-size="12" class="mut">（ほどいた値・読めない）</text></g>
+        <g class="note"><rect class="box" x="846" y="40" width="336" height="400" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+          <text x="860" y="63" font-size="16" font-weight="700" class="wr">包んで取り込んだ鍵</text><text x="1170" y="63" font-size="11.5" text-anchor="end" class="mono mut">C_UnwrapKey</text>
+          <text x="864" y="96" font-size="12">送る側：C_WrapKey で包む</text><text x="864" y="120" font-size="11.5">包めるのは CKA_EXTRACTABLE = TRUE の鍵だけ</text><text x="864" y="144" font-size="11.5" class="mut">（FALSE なら CKR_KEY_UNEXTRACTABLE）</text><text x="864" y="168" font-size="12"></text><text x="864" y="192" font-size="12">受け取る側：C_UnwrapKey でほどく</text><text x="864" y="216" font-size="11.5" class="cy">値はアプリを通らず、トークンの中で鍵に戻る</text><text x="864" y="240" font-size="11.5">包む鍵に CKA_UNWRAP がなければ失敗する</text><text x="864" y="264" font-size="12"></text><text x="864" y="288" font-size="12">一度包まれて外に出たので、記録は FALSE</text>
+          <text x="864" y="420" font-size="12" font-weight="700" class="cy">別の HSM へ移す流れはシナリオ1</text></g></g>
       <path class="draw" pathLength="1" d="M310,120 C318,120 312,180 318,180" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
       <path class="draw" pathLength="1" d="M484,198 L500,198" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
       <path class="draw" pathLength="1" d="M402,244 L402,260" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
       <rect x="512" y="452" width="10" height="10" rx="2" fill="var(--brass)"/><text x="528" y="461" font-size="12" class="mut">アプリがテンプレートに書いた</text>
       <rect x="722" y="452" width="10" height="10" rx="2" fill="var(--cipher)"/><text x="738" y="461" font-size="12" class="mut">メカニズム・トークンが決めた</text>
-      <g class="chip on" data-v="aes" role="button" tabindex="0" aria-label="AES の鍵を見る"><rect x="944" y="14" width="42" height="22" rx="4"/><text x="965.0" y="29" font-size="12" text-anchor="middle" class="mono">AES</text></g><g class="chip" data-v="des3" role="button" tabindex="0" aria-label="3DES の鍵を見る"><rect x="991" y="14" width="49" height="22" rx="4"/><text x="1015.5" y="29" font-size="12" text-anchor="middle" class="mono">3DES</text></g><g class="chip" data-v="hmac" role="button" tabindex="0" aria-label="HMAC の鍵を見る"><rect x="1045" y="14" width="49" height="22" rx="4"/><text x="1069.5" y="29" font-size="12" text-anchor="middle" class="mono">HMAC</text></g><g class="chip" data-v="rsa" role="button" tabindex="0" aria-label="RSA の鍵を見る"><rect x="1099" y="14" width="42" height="22" rx="4"/><text x="1120.0" y="29" font-size="12" text-anchor="middle" class="mono">RSA</text></g><g class="chip" data-v="ec" role="button" tabindex="0" aria-label="EC の鍵を見る"><rect x="1146" y="14" width="34" height="22" rx="4"/><text x="1163.0" y="29" font-size="12" text-anchor="middle" class="mono">EC</text></g>
+      <g class="chips chips-sym"><g class="chip on" data-v="aes" role="button" tabindex="0" aria-label="AES の鍵を見る"><rect x="1030" y="14" width="42" height="22" rx="4"/><text x="1051.0" y="29" font-size="12" text-anchor="middle" class="mono">AES</text></g><g class="chip" data-v="des3" role="button" tabindex="0" aria-label="3DES の鍵を見る"><rect x="1077" y="14" width="49" height="22" rx="4"/><text x="1101.5" y="29" font-size="12" text-anchor="middle" class="mono">3DES</text></g><g class="chip" data-v="hmac" role="button" tabindex="0" aria-label="HMAC の鍵を見る"><rect x="1131" y="14" width="49" height="22" rx="4"/><text x="1155.5" y="29" font-size="12" text-anchor="middle" class="mono">HMAC</text></g></g><g class="chips chips-pair"><g class="chip" data-v="rsa" role="button" tabindex="0" aria-label="RSA の鍵を見る"><rect x="1099" y="14" width="42" height="22" rx="4"/><text x="1120.0" y="29" font-size="12" text-anchor="middle" class="mono">RSA</text></g><g class="chip" data-v="ec" role="button" tabindex="0" aria-label="EC の鍵を見る"><rect x="1146" y="14" width="34" height="22" rx="4"/><text x="1163.0" y="29" font-size="12" text-anchor="middle" class="mono">EC</text></g></g><g class="chips chips-imp"><g class="chip" data-v="imp" role="button" tabindex="0" aria-label="値 の鍵を見る"><rect x="1006" y="14" width="33" height="22" rx="4"/><text x="1022.5" y="29" font-size="12" text-anchor="middle" class="mono">値</text></g><g class="chip" data-v="pubimp" role="button" tabindex="0" aria-label="公開鍵 の鍵を見る"><rect x="1044" y="14" width="59" height="22" rx="4"/><text x="1073.5" y="29" font-size="12" text-anchor="middle" class="mono">公開鍵</text></g><g class="chip" data-v="unwrap" role="button" tabindex="0" aria-label="包んだ鍵 の鍵を見る"><rect x="1108" y="14" width="72" height="22" rx="4"/><text x="1144.0" y="29" font-size="12" text-anchor="middle" class="mono">包んだ鍵</text></g></g><g class="chips chips-all"><g class="chip on" data-v="aes" role="button" tabindex="0" aria-label="AES の鍵を見る"><rect x="765" y="14" width="42" height="22" rx="4"/><text x="786.0" y="29" font-size="12" text-anchor="middle" class="mono">AES</text></g><g class="chip" data-v="des3" role="button" tabindex="0" aria-label="3DES の鍵を見る"><rect x="812" y="14" width="49" height="22" rx="4"/><text x="836.5" y="29" font-size="12" text-anchor="middle" class="mono">3DES</text></g><g class="chip" data-v="hmac" role="button" tabindex="0" aria-label="HMAC の鍵を見る"><rect x="866" y="14" width="49" height="22" rx="4"/><text x="890.5" y="29" font-size="12" text-anchor="middle" class="mono">HMAC</text></g><g class="chip" data-v="rsa" role="button" tabindex="0" aria-label="RSA の鍵を見る"><rect x="920" y="14" width="42" height="22" rx="4"/><text x="941.0" y="29" font-size="12" text-anchor="middle" class="mono">RSA</text></g><g class="chip" data-v="ec" role="button" tabindex="0" aria-label="EC の鍵を見る"><rect x="967" y="14" width="34" height="22" rx="4"/><text x="984.0" y="29" font-size="12" text-anchor="middle" class="mono">EC</text></g><g class="chip" data-v="imp" role="button" tabindex="0" aria-label="値 の鍵を見る"><rect x="1006" y="14" width="33" height="22" rx="4"/><text x="1022.5" y="29" font-size="12" text-anchor="middle" class="mono">値</text></g><g class="chip" data-v="pubimp" role="button" tabindex="0" aria-label="公開鍵 の鍵を見る"><rect x="1044" y="14" width="59" height="22" rx="4"/><text x="1073.5" y="29" font-size="12" text-anchor="middle" class="mono">公開鍵</text></g><g class="chip" data-v="unwrap" role="button" tabindex="0" aria-label="包んだ鍵 の鍵を見る"><rect x="1108" y="14" width="72" height="22" rx="4"/><text x="1144.0" y="29" font-size="12" text-anchor="middle" class="mono">包んだ鍵</text></g></g>
     </g>
 
     <!-- 2. 作れるかはトークンに聞く -->
@@ -636,15 +869,6 @@ svg .row.lit.ng .hl{stroke:var(--warn)}
     <g data-only="5"><rect class="box" x="10" y="244" width="300" height="228" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
       <text x="22" y="270" font-size="15" font-weight="700">汎用の共通鍵</text>
       <text x="22" y="298" font-size="12" class="mono cy">CKK_GENERIC_SECRET</text><text x="22" y="322" font-size="12.5">長さは CKA_VALUE_LEN で自由に</text><text x="22" y="346" font-size="11.5" class="mono wr">書き忘れ → CKR_TEMPLATE_INCOMPLETE</text><text x="22" y="370" font-size="12.5">CKA_SIGN / CKA_VERIFY を付けて</text><text x="22" y="394" font-size="12.5">HMAC の鍵にする（第7章）</text><text x="22" y="418" font-size="12" class="mut">暗号化には使わない</text></g>
-
-    <!-- 6. 生成と持ち込み -->
-    <g data-only="6"><rect class="box" x="846" y="40" width="336" height="400" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
-      <text x="860" y="63" font-size="16" font-weight="700" class="wr">持ち込んだ鍵</text><text x="1170" y="63" font-size="11.5" text-anchor="end" class="mono mut">C_CreateObject</text>
-      <text x="864" y="96" font-size="12">値を外で作ってテンプレートに書く</text><text x="864" y="118" font-size="12">CKA_CLASS も自分で書く</text><text x="864" y="140" font-size="11.5" class="mut">（書かないと TEMPLATE_INCOMPLETE）</text>
-      <text x="864" y="182" font-size="12" class="mono">CKA_LOCAL</text><text x="864" y="208" font-size="12" class="mono">CKA_ALWAYS_SENSITIVE</text><text x="864" y="234" font-size="12" class="mono">CKA_NEVER_EXTRACTABLE</text>
-      <text x="1050" y="182" font-size="12" class="mono wr">FALSE</text><text x="1050" y="208" font-size="12" class="mono wr">FALSE</text><text x="1050" y="234" font-size="12" class="mono wr">FALSE</text>
-      <text x="864" y="280" font-size="12">値が一度トークンの外にあったので、</text><text x="864" y="302" font-size="12">「ずっと中だけにあった」とは言えない。</text><text x="864" y="324" font-size="12">記録の属性でそれがわかる。</text>
-      <text x="864" y="380" font-size="12.5" font-weight="700" class="cy">左の生成した鍵はすべて TRUE</text></g>
 
     <!-- 11. CKA_ID で組を探す -->
     <g data-only="11">
@@ -675,10 +899,10 @@ svg .row.lit.ng .hl{stroke:var(--warn)}
 <script>
 const C=code;
 const STEPS=[
-  {t:"鍵を作る関数は2つ",
-   b:"共通鍵は <code>C_GenerateKey</code> にテンプレートを1つ渡して1つ作る。公開鍵と秘密鍵の組は <code>C_GenerateKeyPair</code> にテンプレートを2つ渡して2つ作る。どちらも、何の鍵かはメカニズムで決まる。この手順では AES と RSA が交互に切り替わる。",
-   c:["s.generate_key(&Mechanism::AesKeyGen, &t)?; "+C("// 1 つ"),"s.generate_key_pair(&Mechanism::RsaPkcsKeyPairGen,","    &pub_t, &priv_t)?; "+C("// 2 つ")],
-   lit:{MECH:"on"}, cycle:["aes","rsa"]},
+  {t:"鍵の作り方は3通り",
+   b:"共通鍵は <code>C_GenerateKey</code> にテンプレートを1つ渡して1つ作る。公開鍵と秘密鍵の組は <code>C_GenerateKeyPair</code> にテンプレートを2つ渡して2つ作る。外で作った鍵は <code>C_CreateObject</code> や <code>C_UnwrapKey</code> で取り込む。この章は3通りを別々の線で追う。線の名前を押すか、↑↓ キーで線を替えられる。",
+   c:["s.generate_key(&Mechanism::AesKeyGen, &t)?; "+C("// 共通鍵：1 つ"),"s.generate_key_pair(&Mechanism::RsaPkcsKeyPairGen,","    &pub_t, &priv_t)?; "+C("// 鍵ペア：2 つ"),"s.create_object(&t)?; "+C("// 取り込み")],
+   lit:{MECH:"on"}, cycle:["aes","rsa","imp"]},
   {t:"作れるかはトークンに聞く",
    b:"<code>C_GetMechanismInfo</code> のフラグで、どちらの関数で作れるか（<code>CKF_GENERATE</code> / <code>CKF_GENERATE_KEY_PAIR</code>）と、大きさの範囲がわかる。範囲の単位はメカニズムごとに違い、AES はバイト、RSA はビット。",
    c:["let mi = lib.get_mechanism_info(slot,","    MechanismType::AES_KEY_GEN)?;","mi.generate(); "+C("// true"),"(mi.min_key_size(), mi.max_key_size()); "+C("// (16, 32)")],
@@ -695,12 +919,12 @@ const STEPS=[
    b:"<code>CKM_GENERIC_SECRET_KEY_GEN</code> は、決まった用途のない共通鍵（<code>CKK_GENERIC_SECRET</code>）を作る。長さは <code>CKA_VALUE_LEN</code> で自由に決められる。<code>CKA_SIGN</code> / <code>CKA_VERIFY</code> を付けて HMAC の鍵にする（第7章）。",
    c:["s.generate_key(&Mechanism::GenericSecretKeyGen, &[","    Attribute::ValueLen(32.into()),","    Attribute::Sign(true), Attribute::Verify(true)])?;"],
    lit:{VALUE_LEN:"on",SIGN:"on",VERIFY:"on"}, v:"hmac"},
-  {t:"生成した鍵・持ち込んだ鍵",
-   b:"外で作った鍵の値を <code>C_CreateObject</code> で持ち込むこともできる。その場合は <code>CKA_CLASS</code> も自分で書く。持ち込んだ鍵は値が一度外にあったので、<code>CKA_LOCAL</code>・<code>CKA_ALWAYS_SENSITIVE</code>・<code>CKA_NEVER_EXTRACTABLE</code> が FALSE になり、生成した鍵と見分けられる。",
+  {t:"値を取り込む：C_CreateObject",
+   b:"外で作った鍵の値を、<code>C_CreateObject</code> のテンプレートに <code>CKA_VALUE</code> として書いて取り込む。メカニズムは使わないので、<code>CKA_CLASS</code> と <code>CKA_KEY_TYPE</code> も自分で書く。値が一度トークンの外にあったので、<code>CKA_LOCAL</code>・<code>CKA_ALWAYS_SENSITIVE</code>・<code>CKA_NEVER_EXTRACTABLE</code> は FALSE になり、生成した鍵と見分けられる。",
    c:["s.create_object(&[","    Attribute::Class(ObjectClass::SECRET_KEY),","    Attribute::KeyType(KeyType::AES),","    Attribute::Value(key_bytes), /* ... */])?;",C("// → CKA_LOCAL = FALSE")],
-   lit:{LOCAL:"ok",ALWAYS_SENSITIVE:"ok",NEVER_EXTRACTABLE:"ok"}, v:"aes"},
+   lit:{CLASS:"on",VALUE:"on",LOCAL:"ng",ALWAYS_SENSITIVE:"ng",NEVER_EXTRACTABLE:"ng"}, v:"imp"},
   {t:"鍵ペアは1回の呼び出しで2つできる",
-   b:"ここから鍵ペア。非対称鍵は公開鍵と秘密鍵の組で、<code>C_GenerateKeyPair</code> にメカニズムと、テンプレートを2つ（公開鍵側・秘密鍵側）渡すと、トークンの中に2つのオブジェクトができ、ハンドルが2つ返る。",
+   b:"非対称鍵は公開鍵と秘密鍵の組で、<code>C_GenerateKeyPair</code> にメカニズムと、テンプレートを2つ（公開鍵側・秘密鍵側）渡すと、トークンの中に2つのオブジェクトができ、ハンドルが2つ返る。",
    c:["let (pub_h, priv_h) = s.generate_key_pair(","    &mech, &pub_template, &priv_template)?;",C("// C_GenerateKeyPair")],
    lit:{MECH:"on"}, v:"rsa"},
   {t:"強さは公開鍵側に書く",
@@ -734,10 +958,23 @@ const STEPS=[
   {t:"RSA と EC の違いは強さの書き方だけ",
    b:"RSA と EC で違うのは、強さの書き方（鍵長か曲線か）と、トークンが作る値の名前だけ。用途と守りの書き方は同じ。この手順では RSA と EC が交互に切り替わる。右上で選ぶとそこで止まる。",
    c:["Mechanism::RsaPkcsKeyPairGen "+C("// RSA"),"Mechanism::EccKeyPairGen     "+C("// EC"),C("// テンプレートの違いは強さの1〜2行だけ")],
-   lit:{MODULUS_BITS:"on",PUBLIC_EXPONENT:"on",EC_PARAMS:"pub-on",MECH:"on"}, cycle:["rsa","ec"]}
+   lit:{MODULUS_BITS:"on",PUBLIC_EXPONENT:"on",EC_PARAMS:"pub-on",MECH:"on"}, cycle:["rsa","ec"]},
+  {t:"公開鍵を取り込む",
+   b:"相手から受け取った公開鍵（証明書の中の公開鍵など）も <code>C_CreateObject</code> で入れる。EC なら曲線 <code>CKA_EC_PARAMS</code> と公開点 <code>CKA_EC_POINT</code> を書く。秘密の値はないので守りの属性は要らず、<code>CKA_VERIFY</code> を付ければ相手の署名を検証できる。トークンで生成していないので <code>CKA_LOCAL</code> は FALSE。",
+   c:["let partner = s.create_object(&[","    Attribute::Class(ObjectClass::PUBLIC_KEY),","    Attribute::KeyType(KeyType::EC),","    Attribute::EcParams(p256), Attribute::EcPoint(q),","    Attribute::Verify(true), /* ... */])?;","s.verify(&Mechanism::Ecdsa, partner, &hash, &sig)?; "+C("// OK")],
+   lit:{EC_PARAMS:"on",EC_POINT:"on",VERIFY:"on",LOCAL:"ng"}, v:"pubimp"},
+  {t:"包んで取り込む：C_UnwrapKey",
+   b:"鍵を安全に運ぶときは、送る側が <code>C_WrapKey</code> で別の鍵（包む鍵）を使って暗号化し、受け取る側が <code>C_UnwrapKey</code> でほどく。ほどいた値はアプリを通らず、トークンの中で鍵に戻る。新しい鍵の属性はテンプレートで決める。包めるのは <code>CKA_EXTRACTABLE</code> が TRUE の鍵だけで、一度外に出たので記録の属性は FALSE になる。包む鍵の <code>CKA_WRAP</code> / <code>CKA_UNWRAP</code> は既定値がトークン次第なので、明示しておく。",
+   c:["let wrapped = s.wrap_key(&Mechanism::AesKeyWrap, kek, key)?; "+C("// 送る側"),"let k = s.unwrap_key(&Mechanism::AesKeyWrap, kek,","    &wrapped, &template)?; "+C("// C_UnwrapKey"),C("// 値は読めない・LOCAL = FALSE"),"s.wrap_key(&Mechanism::AesKeyWrap, kek, not_extractable)",C("// → CKR_KEY_UNEXTRACTABLE")],
+   lit:{MECH:"on",EXTRACTABLE:"on",LOCAL:"ng",ALWAYS_SENSITIVE:"ng",NEVER_EXTRACTABLE:"ng"}, v:"unwrap"}
+];
+const TRACKS=[
+  {id:"sym", name:"共通鍵", steps:[1,2,3,4,5]},
+  {id:"pair", name:"鍵ペア", steps:[1,2,7,8,9,10,11,12,13,14,15]},
+  {id:"imp", name:"取り込み", steps:[1,2,6,16,17]}
 ];
 const ALL={t:"全体像",
-  b:"共通鍵は <code>C_GenerateKey</code>（テンプレート1つ）、鍵ペアは <code>C_GenerateKeyPair</code>（公開鍵側と秘密鍵側の2つ）で作る。長さの書き方は鍵の種類で違い、AES と汎用の共通鍵は <code>CKA_VALUE_LEN</code>、DES 系は固定、RSA は公開鍵側の鍵長、EC は曲線。生成した鍵は <code>CKA_LOCAL</code> などの記録で持ち込んだ鍵と見分けられる。",
+  b:"共通鍵は <code>C_GenerateKey</code>（テンプレート1つ）、鍵ペアは <code>C_GenerateKeyPair</code>（公開鍵側と秘密鍵側の2つ）で作る。長さの書き方は鍵の種類で違い、AES と汎用の共通鍵は <code>CKA_VALUE_LEN</code>、DES 系は固定、RSA は公開鍵側の鍵長、EC は曲線。外で作った鍵は <code>C_CreateObject</code>（値・公開鍵）か <code>C_UnwrapKey</code>（包んだ鍵）で取り込み、<code>CKA_LOCAL</code> などの記録で生成した鍵と見分けられる。",
   c:[C("// この章の関数・メカニズム・属性は v2.40 で定義済み"),C("// 挙動は examples/04-keygen で CI 確認"),C("// 根拠：Base v2.40「Key management functions」「Objects」"),C("// メカニズムは Mechanisms v2.40 を CKM_ の名前で検索")]};
 
 const svgEl=document.getElementById('svg'), stageEl=document.getElementById('stage');
@@ -763,7 +1000,7 @@ svgEl.querySelectorAll('.chip').forEach(c=>{
   c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();stopCycle();setV(c.dataset.v)}});
 });
 runSteps({
-  steps:STEPS, all:ALL,
+  steps:STEPS, all:ALL, tracks:TRACKS,
   onShow:(cur,all)=>{
     stopCycle(); step=all?0:cur; lightUp();
     if(all)return;

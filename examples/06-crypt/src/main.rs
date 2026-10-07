@@ -1,5 +1,5 @@
-//! 第6章 暗号化と復号：共通鍵（AES の各モード・3DES）と、公開鍵（RSA-OAEP・RSA PKCS#1 v1.5）での
-//! 暗号化を確かめる。
+//! 第6章 暗号化と復号：共通鍵（AES の各モード・3DES）と、公開鍵（RSA-OAEP・RSA PKCS#1 v1.5、
+//! 長いデータは AES 鍵を RSA で包む）での暗号化を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
 //!   PKCS11_MODULE      … Cryptoki ライブラリのパス（既定: SoftHSM2）
@@ -14,7 +14,7 @@ use cryptoki::mechanism::aead::GcmParams;
 use cryptoki::mechanism::rsa::{PkcsMgfType, PkcsOaepParams, PkcsOaepSource};
 use cryptoki::mechanism::vendor_defined::VendorDefinedMechanism;
 use cryptoki::mechanism::{Mechanism, MechanismType};
-use cryptoki::object::{Attribute, AttributeType, KeyType, ObjectHandle};
+use cryptoki::object::{Attribute, AttributeType, KeyType, ObjectClass, ObjectHandle};
 use cryptoki::session::{Session, UserType};
 use cryptoki::slot::Slot;
 use cryptoki::types::AuthPin;
@@ -244,7 +244,7 @@ fn main() -> Result<()> {
     assert_eq!(parts, ct);
     println!("分けて暗号化 = 一度に暗号化（最初の C_EncryptUpdate の出力は {first} バイト）");
 
-    // 12. 公開鍵で暗号化、秘密鍵で復号（RSA-OAEP）。SoftHSM2 2.6.1 は SHA-1 の OAEP だけに対応
+    // 12. 公開鍵で暗号化、秘密鍵で復号（RSA-OAEP）。OAEP で使えるハッシュはトークン次第
     let (pub_h, priv_h) = s.generate_key_pair(
         &Mechanism::RsaPkcsKeyPairGen,
         &[
@@ -264,16 +264,18 @@ fn main() -> Result<()> {
         PkcsMgfType::MGF1_SHA256,
         PkcsOaepSource::empty(),
     );
-    let sha256_result = rv(s.encrypt(&Mechanism::RsaPkcsOaep(sha256), pub_h, DATA));
-    assert!(
-        sha256_result.is_some(),
-        "SoftHSM2 2.6.1 は SHA-256 の OAEP を受け付けない"
-    );
-    let oaep = PkcsOaepParams::new(
+    let sha1 = PkcsOaepParams::new(
         MechanismType::SHA1,
         PkcsMgfType::MGF1_SHA1,
         PkcsOaepSource::empty(),
     );
+    // SHA-256 が使えればそれを、使えなければ SHA-1 を使う
+    let sha256_result = rv(s.encrypt(&Mechanism::RsaPkcsOaep(sha256), pub_h, DATA));
+    let (oaep, hash_len) = if sha256_result.is_none() {
+        (sha256, 32)
+    } else {
+        (sha1, 20)
+    };
     let rsa1 = s.encrypt(&Mechanism::RsaPkcsOaep(oaep), pub_h, DATA)?;
     let rsa2 = s.encrypt(&Mechanism::RsaPkcsOaep(oaep), pub_h, DATA)?;
     assert_eq!(rsa1.len(), 256);
@@ -287,17 +289,15 @@ fn main() -> Result<()> {
         Some(RvError::KeyFunctionNotPermitted),
         "公開鍵では復号できない"
     );
-    // 2048 ビット・SHA-1 なら 256 - 2×20 - 2 = 214 バイトまで
+    // 2048 ビットなら 256 - 2×(ハッシュの長さ) - 2 バイトまで（SHA-1 なら 214、SHA-256 なら 190）
+    let max = 256 - 2 * hash_len - 2;
     assert_eq!(
-        s.encrypt(&Mechanism::RsaPkcsOaep(oaep), pub_h, &[7u8; 214])?
+        s.encrypt(&Mechanism::RsaPkcsOaep(oaep), pub_h, &vec![7u8; max])?
             .len(),
         256
     );
-    let too_long = rv(s.encrypt(&Mechanism::RsaPkcsOaep(oaep), pub_h, &[7u8; 215]));
-    assert!(too_long.is_some());
-    println!(
-        "RSA-OAEP: 256 バイト・毎回違う。SHA-256 の OAEP → {sha256_result:?}、215 バイト → {too_long:?}"
-    );
+    assert!(rv(s.encrypt(&Mechanism::RsaPkcsOaep(oaep), pub_h, &vec![7u8; max + 1])).is_some());
+    println!("RSA-OAEP: 256 バイト・毎回違う。ハッシュ {hash_len} バイトなら {max} バイトまで");
 
     // 13. RSA PKCS#1 v1.5 の暗号化：古い詰め方。2048 ビットなら 256 - 11 = 245 バイトまで
     let v15 = s.encrypt(&Mechanism::RsaPkcs, pub_h, DATA)?;
@@ -314,6 +314,51 @@ fn main() -> Result<()> {
     );
     assert!(rv(s.encrypt(&Mechanism::RsaPkcs, pub_h, &[7u8; 246])).is_some());
     println!("RSA PKCS#1 v1.5: 256 バイト・毎回違う・245 バイトまで");
+
+    // 14. 長いデータは AES で暗号化し、その AES 鍵を相手の公開鍵で包んで送る（C_WrapKey）
+    let (wrap_pub, wrap_priv) = s.generate_key_pair(
+        &Mechanism::RsaPkcsKeyPairGen,
+        &[
+            Attribute::Token(false),
+            Attribute::ModulusBits(2048.into()),
+            Attribute::PublicExponent(vec![0x01, 0x00, 0x01]),
+            Attribute::Wrap(true), // 既定値はトークン次第なので、包むなら明示する
+        ],
+        &[
+            Attribute::Token(false),
+            Attribute::Unwrap(true),
+            Attribute::Sensitive(true),
+        ],
+    )?;
+    let data_key = s.generate_key(
+        &Mechanism::AesKeyGen,
+        &[
+            Attribute::Token(false),
+            Attribute::ValueLen(32.into()),
+            Attribute::Encrypt(true),
+            Attribute::Extractable(true), // 包めるのは EXTRACTABLE の鍵だけ
+        ],
+    )?;
+    let long = vec![0x61u8; 1000];
+    let iv = [0x24u8; 16];
+    let body = s.encrypt(&Mechanism::AesCbcPad(iv), data_key, &long)?;
+    assert_eq!(body.len(), 1008);
+    let wrapped = s.wrap_key(&Mechanism::RsaPkcsOaep(oaep), wrap_pub, data_key)?; // C_WrapKey
+    assert_eq!(wrapped.len(), 256);
+    // 受け取る側：秘密鍵で AES 鍵をほどき（C_UnwrapKey）、データを復号する
+    let got = s.unwrap_key(
+        &Mechanism::RsaPkcsOaep(oaep),
+        wrap_priv,
+        &wrapped,
+        &[
+            Attribute::Token(false),
+            Attribute::Class(ObjectClass::SECRET_KEY),
+            Attribute::KeyType(KeyType::AES),
+            Attribute::Decrypt(true),
+        ],
+    )?;
+    assert_eq!(s.decrypt(&Mechanism::AesCbcPad(iv), got, &body)?, long);
+    println!("包んで送る: 1000 バイトを AES で暗号化（1008 バイト）、AES 鍵を RSA で包んで 256 バイト。ほどいて復号できた");
 
     s.logout()?;
     s.close()?; // セッションオブジェクトの鍵はここで消える
