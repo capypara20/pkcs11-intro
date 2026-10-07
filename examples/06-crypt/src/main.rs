@@ -1,4 +1,4 @@
-//! 第4章 暗号化と復号：共通鍵（AES の各モード・3DES）と、公開鍵（RSA-OAEP・RSA PKCS#1 v1.5）での
+//! 第6章 暗号化と復号：共通鍵（AES の各モード・3DES）と、公開鍵（RSA-OAEP・RSA PKCS#1 v1.5）での
 //! 暗号化を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
@@ -318,6 +318,6 @@ fn main() -> Result<()> {
     s.logout()?;
     s.close()?; // セッションオブジェクトの鍵はここで消える
     lib.finalize()?;
-    println!("OK: 第4章の記述どおりに動いた");
+    println!("OK: 第6章の記述どおりに動いた");
     Ok(())
 }

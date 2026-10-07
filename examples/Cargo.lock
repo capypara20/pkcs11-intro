@@ -30,6 +30,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
+name = "connect"
+version = "0.1.0"
+dependencies = [
+ "cryptoki",
+]
+
+[[package]]
 name = "crypt"
 version = "0.1.0"
 dependencies = [
@@ -91,6 +98,7 @@ name = "init"
 version = "0.1.0"
 dependencies = [
  "cryptoki",
+ "cryptoki-sys",
 ]
 
 [[package]]

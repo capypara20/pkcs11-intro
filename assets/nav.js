@@ -1,15 +1,15 @@
-// ページ間ナビ：<nav class="sitenav" data-page="docs/01-objects.html" data-root="../"> に「前／目次／次」を入れる
+// ページ間ナビ：<nav class="sitenav" data-page="docs/03-objects.html" data-root="../"> に「前／目次／次」を入れる
 // 章・シナリオ・リファレンスの並びはここで管理する（index.html の一覧も合わせて更新すること）
 (function(){
   const CHAPTERS=[
     ['docs/00-overview.html','第0章 全体像'],
-    ['docs/01-objects.html','第1章 オブジェクトと属性'],
-    ['docs/02-keygen.html','第2章 鍵の生成'],
-    ['docs/03-sign.html','第3章 署名と検証'],
-    ['docs/04-crypt.html','第4章 暗号化と復号'],
-    ['docs/05-errors.html','第5章 エラーコード'],
-    ['docs/06-init.html','第6章 初期化とセッション'],
-    ['docs/07-find.html','第7章 鍵の探し方と名前の付け方'],
+    ['docs/01-init.html','第1章 初期化'],
+    ['docs/02-connect.html','第2章 アプリからつなぐ'],
+    ['docs/03-objects.html','第3章 オブジェクトと属性'],
+    ['docs/04-keygen.html','第4章 鍵の生成'],
+    ['docs/05-find.html','第5章 鍵の探し方と名前の付け方'],
+    ['docs/06-crypt.html','第6章 暗号化と復号'],
+    ['docs/07-sign.html','第7章 署名と検証'],
   ];
   // 1本の鍵を最初から最後まで追う、章をまたいだ通しの例
   const SCENARIOS=[
@@ -20,6 +20,7 @@
     ['docs/ref-mechanisms.html','メカニズムリファレンス'],
     ['docs/ref-functions.html','関数リファレンス'],
     ['docs/ref-maintenance.html','メンテナンス API リファレンス'],
+    ['docs/ref-errors.html','エラーコードリファレンス'],
     ['docs/ref-commands.html','コマンドリファレンス'],
   ];
   // 根拠にしている OASIS の仕様書（新しいタブで開く）。index.html の参考資料も合わせて更新すること

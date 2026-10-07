@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>第1章 初期化 | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/steps.js"></script>
+<style>
+g[data-step].now{filter:none}
+svg [data-k].lit>.box{stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 0 6px var(--brass))}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　第1章 初期化<span class="ver" title="この章の関数は v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
+    <div class="ctl">
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 480" role="img" aria-labelledby="dt">
+    <title id="dt">初期化の図。左にアプリとライブラリ（関数の表）、中央にトークンとそのセッション、右に SO と User の役割、下に手順ごとの補足を置く。</title>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/></marker></defs>
+    <g data-step="1" data-k="app"><rect class="box" x="10" y="8" width="300" height="364" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="24" y="32" font-size="15" font-weight="700">アプリケーション</text><text x="296" y="32" font-size="11" text-anchor="end" class="mut">1つのプロセス</text></g>
+  <g data-step="1" data-k="lib"><rect class="box" x="24" y="44" width="272" height="314" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+  <text x="38" y="68" font-size="13.5" font-weight="700">Cryptoki ライブラリ（.so / .dll）</text>
+  <g class="alt" data-r="1"><text x="38" y="96" font-size="12" class="mut">まだ読み込んでいない</text></g>
+  <g class="alt" data-r="2-9" data-all="1"><text x="38" y="92" font-size="11.5" class="cy">関数の表（CK_FUNCTION_LIST）</text><rect x="34" y="98" width="252" height="118" rx="4" fill="var(--bg)" stroke="var(--line)"/><text x="44" y="112" font-size="11" class="mono">C_Initialize</text><text x="44" y="130" font-size="11" class="mono">C_Finalize</text><text x="44" y="148" font-size="11" class="mono">C_GetInfo</text><text x="44" y="166" font-size="11" class="mono">C_GetSlotList</text><text x="44" y="184" font-size="11" class="mono">C_GetTokenInfo</text><text x="44" y="202" font-size="11" class="mono">C_InitToken</text><text x="172" y="112" font-size="11" class="mono">C_InitPIN</text><text x="172" y="130" font-size="11" class="mono">C_SetPIN</text><text x="172" y="148" font-size="11" class="mono">C_OpenSession</text><text x="172" y="166" font-size="11" class="mono">C_Login</text><text x="172" y="184" font-size="11" class="mut">…（全部で 68 個）</text></g>
+  <g class="alt" data-r="1-2"><text x="38" y="250" font-size="12" class="mut">まだ C_Initialize していない</text></g>
+  <g class="alt" data-r="3-8" data-all="1"><text x="38" y="250" font-size="12.5" font-weight="700" class="cy">C_Initialize 済み</text><rect x="38" y="260" width="150" height="20" rx="4" fill="var(--bg)" stroke="var(--line)"/><text x="46" y="274" font-size="10.5" class="mono">CKF_OS_LOCKING_OK</text></g>
+  <g class="alt" data-r="9"><text x="38" y="250" font-size="12.5" font-weight="700" class="mut">C_Finalize 済み</text><text x="38" y="272" font-size="11.5" class="cy">もう一度 C_Initialize できる</text></g>
+  <g class="alt" data-r="1" data-all="1"><rect x="264.8" y="53" width="23.2" height="21" rx="10" fill="var(--bg)" stroke="var(--brass)"/><text x="276.4" y="68" font-size="11.5" text-anchor="middle" class="mono brass">①</text></g>
+  <g class="alt" data-r="2"><text x="38" y="312" font-size="11.5" class="mono cy">dlopen → C_GetFunctionList</text><text x="38" y="332" font-size="11" class="mut">このあとの関数は、すべてこの表から呼ぶ</text></g>
+  <g class="alt" data-r="3"><text x="38" y="312" font-size="11.5">2回目の C_Initialize は</text><text x="38" y="332" font-size="11" class="mono wr">CKR_CRYPTOKI_ALREADY_INITIALIZED</text></g></g><g data-step="1" data-k="tok"><rect class="box" x="330" y="8" width="430" height="236" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+  <g class="alt" data-r="1-3"><text x="344" y="32" font-size="15" font-weight="700" class="mut">トークン（未初期化）</text></g>
+  <g class="alt" data-r="4-9" data-all="1"><text x="344" y="32" font-size="15" font-weight="700">トークン「ch1」</text></g>
+  <g class="alt" data-r="1" data-all="1"><rect x="722.8" y="17" width="23.2" height="21" rx="10" fill="var(--bg)" stroke="var(--brass)"/><text x="734.4" y="32" font-size="11.5" text-anchor="middle" class="mono brass">②</text></g>
+  <text x="344" y="60" font-size="11.5" class="mut">SO PIN</text><g class="alt" data-r="1-3"><text x="430" y="60" font-size="12" class="mut">なし</text></g><g class="alt" data-r="4-9" data-all="1"><text x="430" y="60" font-size="12">5678（C_InitToken で決めた）</text></g>
+  <g data-k="upin"><rect class="box" x="338" y="67" width="414" height="22" rx="4" fill="none" stroke="none"/>
+  <text x="344" y="82" font-size="11.5" class="mut">User PIN</text>
+  <g class="alt" data-r="1-5 8-9" data-all="1"><text x="430" y="82" font-size="12" class="mut">なし</text></g><g class="alt" data-r="6"><text x="430" y="82" font-size="12">1111（SO が C_InitPIN で決めた）</text></g><g class="alt" data-r="7"><text x="430" y="82" font-size="12">2222（本人が C_SetPIN で変えた）</text></g>
+  <g class="alt" data-r="1" data-all="1"><rect x="722.8" y="67" width="23.2" height="21" rx="10" fill="var(--bg)" stroke="var(--brass)"/><text x="734.4" y="82" font-size="11.5" text-anchor="middle" class="mono brass">③</text></g></g>
+  <rect x="344" y="98" width="200" height="22" rx="4" fill="var(--bg)" stroke="var(--line)"/><text x="352" y="113" font-size="10.5" class="mono">CKF_TOKEN_INITIALIZED</text><g class="alt" data-r="1-3"><text x="536" y="113" font-size="12" text-anchor="end" font-weight="700" class="wr">✗</text></g><g class="alt" data-r="4-9" data-all="1"><text x="536" y="113" font-size="12" text-anchor="end" font-weight="700" class="cy">✓</text></g><rect x="552" y="98" width="200" height="22" rx="4" fill="var(--bg)" stroke="var(--line)"/><text x="560" y="113" font-size="10.5" class="mono">CKF_USER_PIN_INITIALIZED</text><g class="alt" data-r="1-5 8-9" data-all="1"><text x="744" y="113" font-size="12" text-anchor="end" font-weight="700" class="wr">✗</text></g><g class="alt" data-r="6-7"><text x="744" y="113" font-size="12" text-anchor="end" font-weight="700" class="cy">✓</text></g>
+  <text x="344" y="146" font-size="11.5" class="mut">中のオブジェクト</text>
+  <g class="alt" data-r="1-7" data-all="1"><text x="344" y="168" font-size="12" class="mut">（まだない）</text></g>
+  <g class="alt" data-r="8"><rect class="box" x="344" y="154" width="402" height="30" rx="6" fill="var(--bg)" stroke="var(--warn)" stroke-dasharray="5 4"/><text x="358" y="174" font-size="12" class="wr">ch1-key（トークンオブジェクト）→ 初期化し直して消えた</text></g>
+  <g class="alt" data-r="1-3"><text x="344" y="224" font-size="11.5" class="mut">未初期化のトークンには、まだつなげない</text></g>
+  <g class="alt" data-r="4-5"><text x="344" y="224" font-size="11.5" class="mut">User PIN がないので、User はまだログインできない</text></g>
+  <g class="alt" data-r="6-7"><text x="344" y="224" font-size="11.5" class="cy">User がログインできるようになった</text></g>
+  <g class="alt" data-r="8-9" data-all="1"><text x="344" y="224" font-size="11.5" class="wr">初期化し直すと、鍵も User PIN も消える</text></g></g><g data-step="1" data-k="ses"><rect class="box" x="330" y="254" width="430" height="118" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="344" y="276" font-size="13" font-weight="700">このトークンに開いたセッション</text>
+  <g class="alt" data-r="1-3 9" data-all="1"><text x="344" y="312" font-size="12" class="mut">（手順4から、ここに出す）</text></g><g class="alt" data-r="4"><rect class="box" x="344" y="286" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="301" font-size="12" font-weight="700">R/O セッション</text><text x="356" y="316" font-size="11">開いていると C_InitToken できない</text><text x="738" y="316" font-size="10.5" text-anchor="end" class="mono wr">CKR_SESSION_EXISTS</text></g><g class="alt" data-r="5"><rect class="box" x="344" y="286" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="301" font-size="12" font-weight="700">R/W セッション</text><text x="356" y="316" font-size="11">SO でログイン → RwSecurityOfficer</text><rect class="box" x="344" y="328" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="343" font-size="12" font-weight="700">R/O セッション</text><text x="356" y="358" font-size="11">SO のログイン中は開けない</text><text x="738" y="358" font-size="10.5" text-anchor="end" class="mono wr">CKR_SESSION_READ_WRITE_SO_EXISTS</text></g><g class="alt" data-r="6"><rect class="box" x="344" y="286" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="301" font-size="12" font-weight="700">R/W セッション（SO）</text><text x="356" y="316" font-size="11">C_InitPIN で User PIN を決める</text><rect class="box" x="344" y="328" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="343" font-size="12" font-weight="700">別の R/W セッション</text><text x="356" y="358" font-size="11">User でログインしようとすると</text><text x="738" y="358" font-size="10.5" text-anchor="end" class="mono wr">CKR_USER_ANOTHER_ALREADY_LOGGED_IN</text></g><g class="alt" data-r="7"><rect class="box" x="344" y="286" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="301" font-size="12" font-weight="700">R/W セッション（User）</text><text x="356" y="316" font-size="11">C_SetPIN で自分の PIN を変える</text><rect class="box" x="344" y="328" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="343" font-size="12" font-weight="700">R/O セッション</text><text x="356" y="358" font-size="11">C_SetPIN はトークンに残る変更なので</text><text x="738" y="358" font-size="10.5" text-anchor="end" class="mono wr">CKR_SESSION_READ_ONLY</text></g><g class="alt" data-r="8"><rect class="box" x="344" y="286" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="301" font-size="12" font-weight="700">R/W セッション（User）</text><text x="356" y="316" font-size="11">トークンオブジェクトを作り、閉じる</text><rect class="box" x="344" y="328" width="402" height="36" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="356" y="343" font-size="12" font-weight="700">（セッションなし）</text><text x="356" y="358" font-size="11">C_InitToken で初期化し直す</text></g></g><g data-step="1" data-k="so"><rect class="box" x="780" y="8" width="410" height="178" rx="6" fill="var(--panel)" stroke="var(--line)"/><text x="794" y="32" font-size="15" font-weight="700">SO（Security Officer）</text><text x="1176" y="32" font-size="11" text-anchor="end" class="mut">トークンの管理者</text><text x="800" y="56" font-size="12" class="cy">✓ C_InitPIN で User PIN を決める・付け直す</text><text x="800" y="76" font-size="12" class="cy">✓ C_SetPIN で自分の SO PIN を変える</text><text x="800" y="96" font-size="12" class="cy">✓ トークンの初期化に SO PIN を使う</text><text x="800" y="116" font-size="12" class="wr">✗ 非公開の鍵を作る・使う</text><text x="800" y="136" font-size="12" class="wr">✗ R/O セッションでログインする</text><text x="800" y="156" font-size="12" class="wr">✗ SO のまま User としてログインする</text></g><g data-step="1" data-k="user"><rect class="box" x="780" y="196" width="410" height="176" rx="6" fill="var(--panel)" stroke="var(--line)"/><text x="794" y="220" font-size="15" font-weight="700">User</text><text x="1176" y="220" font-size="11" text-anchor="end" class="mut">鍵の利用者</text><text x="800" y="244" font-size="12" class="cy">✓ 鍵を作る・使う（非公開のものも）</text><text x="800" y="264" font-size="12" class="cy">✓ C_SetPIN で自分の PIN を変える</text><text x="800" y="284" font-size="12" class="wr">✗ C_InitPIN（User PIN を決めるのは SO）</text><text x="800" y="304" font-size="12" class="wr">✗ トークンの初期化</text></g><g class="alt" data-r="1" data-all="1"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="28" y="410" font-size="13.5" font-weight="600" class="mono brass">① C_Initialize</text><text x="28" y="434" font-size="12">ライブラリを、このプロセスで使えるようにする</text><text x="28" y="456" font-size="11.5" class="mut">アプリが起動するたびに・何も消えない</text><text x="420" y="410" font-size="13.5" font-weight="600" class="mono brass">② C_InitToken</text><text x="420" y="434" font-size="12">トークンを使える状態にする。SO PIN とラベルを決める</text><text x="420" y="456" font-size="11.5" class="mut">使い始める前に1回・中身はすべて消える</text><text x="812" y="410" font-size="13.5" font-weight="600" class="mono brass">③ C_InitPIN</text><text x="812" y="434" font-size="12">SO が User PIN を決める</text><text x="812" y="456" font-size="11.5" class="mut">トークンを用意するときに1回・鍵は消えない</text></g><g class="alt" data-r="2"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">ライブラリを読み込む</text><text x="36" y="428" font-size="12">dlopen（Windows なら LoadLibrary）で .so を読み込む</text><text x="700" y="428" font-size="11.5" class="mono cy">dlopen</text><text x="36" y="447" font-size="12">C_GetFunctionList で関数の表を受け取る（v2.40 は 68 個）</text><text x="700" y="447" font-size="11.5" class="mono cy">CK_FUNCTION_LIST</text><text x="36" y="466" font-size="12">v3.0 以降のライブラリは C_GetInterface も持つ。cryptoki は先にそちらを探す</text><text x="700" y="466" font-size="11.5" class="mono cy">C_GetInterface</text></g><g class="alt" data-r="3"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">C_Initialize に渡すフラグ（CK_C_INITIALIZE_ARGS）</text><text x="36" y="428" font-size="12">複数のスレッドから呼ぶ。ロックは OS の仕組みを使ってよい</text><text x="680" y="428" font-size="11.5" class="mono cy">CKF_OS_LOCKING_OK</text><text x="36" y="447" font-size="12">ライブラリが自分でスレッドを作ってはいけない</text><text x="680" y="447" font-size="11.5" class="mono cy">CKF_LIBRARY_CANT_CREATE_OS_THREADS</text><text x="36" y="466" font-size="12">フラグもロック関数も渡さない → 複数のスレッドから同時には呼ばない約束</text><text x="680" y="466" font-size="11.5" class="mono cy">（なし）</text></g><g class="alt" data-r="4"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">C_InitToken の決まり</text><text x="36" y="428" font-size="12">そのトークンのセッションが開いている</text><text x="600" y="428" font-size="11.5" class="mono wr">CKR_SESSION_EXISTS</text><text x="36" y="447" font-size="12">初期化済みのトークンで、SO PIN が違う</text><text x="600" y="447" font-size="11.5" class="mono wr">CKR_PIN_INCORRECT</text><text x="36" y="466" font-size="12">初期化しただけで User としてログインする</text><text x="600" y="466" font-size="11.5" class="mono wr">CKR_USER_PIN_NOT_INITIALIZED</text></g><g class="alt" data-r="5"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">SO のログインの決まり</text><text x="36" y="428" font-size="12">同じトークンに R/O セッションがあるときに SO でログイン</text><text x="640" y="428" font-size="11.5" class="mono wr">CKR_SESSION_READ_ONLY_EXISTS</text><text x="36" y="447" font-size="12">SO のログイン中に R/O セッションを開く</text><text x="640" y="447" font-size="11.5" class="mono wr">CKR_SESSION_READ_WRITE_SO_EXISTS</text></g><g class="alt" data-r="6"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">SO は管理者で、鍵の利用者ではない</text><text x="36" y="428" font-size="12">SO のログイン中に、別のセッションから User でログイン</text><text x="640" y="428" font-size="11.5" class="mono wr">CKR_USER_ANOTHER_ALREADY_LOGGED_IN</text><text x="36" y="447" font-size="12">SO が非公開の鍵（CKA_PRIVATE=TRUE）を作る</text><text x="640" y="447" font-size="11.5" class="mono wr">CKR_USER_NOT_LOGGED_IN</text><text x="36" y="466" font-size="12">短すぎる PIN を決める</text><text x="640" y="466" font-size="11.5" class="mono wr">CKR_PIN_LEN_RANGE</text></g><g class="alt" data-r="7"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">C_SetPIN と C_InitPIN の決まり</text><text x="36" y="428" font-size="12">R/O セッションで C_SetPIN</text><text x="640" y="428" font-size="11.5" class="mono wr">CKR_SESSION_READ_ONLY</text><text x="36" y="447" font-size="12">C_SetPIN に渡した今の PIN が違う</text><text x="640" y="447" font-size="11.5" class="mono wr">CKR_PIN_INCORRECT</text><text x="36" y="466" font-size="12">User が C_InitPIN を呼ぶ（SO だけが呼べる）</text><text x="640" y="466" font-size="11.5" class="mono wr">CKR_USER_NOT_LOGGED_IN</text></g><g class="alt" data-r="8"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">初期化し直すと</text><text x="36" y="428" font-size="12">トークンオブジェクト（鍵・証明書）</text><text x="640" y="428" font-size="11.5" class="mono cy">すべて消える</text><text x="36" y="447" font-size="12">User PIN</text><text x="640" y="447" font-size="11.5" class="mono cy">消える（SO が C_InitPIN で決め直す）</text><text x="36" y="466" font-size="12">SO PIN とラベル</text><text x="640" y="466" font-size="11.5" class="mono cy">C_InitToken で渡した値になる</text></g><g class="alt" data-r="9"><rect class="box" x="10" y="384" width="1180" height="88" rx="6" fill="var(--bg)" stroke="var(--line)"/><text x="24" y="406" font-size="13" font-weight="700">使い終える</text><text x="36" y="428" font-size="12">C_Finalize のあとに、ほかの関数を呼ぶ</text><text x="640" y="428" font-size="11.5" class="mono wr">CKR_CRYPTOKI_NOT_INITIALIZED</text><text x="36" y="447" font-size="12">C_Finalize のあとに、もう一度 C_Initialize</text><text x="640" y="447" font-size="11.5" class="mono cy">できる</text></g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+  <nav class="sitenav" data-page="docs/01-init.html" data-root="../" data-spec="base latest" aria-label="章の移動"></nav>
+</div>
+
+<script>
+const C=code;
+const STEPS=[
+  {t:"「初期化」は3つある",
+   b:"PKCS#11 で「初期化」と呼ばれるものは3つあり、対象もタイミングも違う。<code>C_Initialize</code> はライブラリをこのプロセスで使えるようにするもので、アプリが起動するたびに呼ぶ。<code>C_InitToken</code> はトークンそのものを初期化し（中身はすべて消える）、<code>C_InitPIN</code> は SO が User PIN を決める。あとの2つは、トークンを用意する管理者の作業。",
+   c:["lib.initialize(args)?; "+C("// ① C_Initialize"),"lib.init_token(slot, &so_pin, \"ch1\")?;",C("// ② C_InitToken"),"so_session.init_pin(&user_pin)?;",C("// ③ C_InitPIN")],
+   k:["lib","tok","upin"]},
+  {t:"ライブラリを読み込む",
+   b:"最初の一歩は、ベンダーが配る Cryptoki ライブラリ（.so や .dll）を読み込んで <code>C_GetFunctionList</code> を呼ぶこと。返ってくるのは関数ポインタを並べた表（<code>CK_FUNCTION_LIST</code>）で、このあとの関数はすべてこの表から呼ぶ。v3.0 以降のライブラリは <code>C_GetInterface</code> も持ち、cryptoki はそちらを先に探す。cryptoki の <code>Pkcs11::new</code> の中で、ここまでが行われる。",
+   c:["let raw = unsafe { cryptoki_sys::Pkcs11::new(path)? }; "+C("// dlopen"),"unsafe { raw.C_GetFunctionList(&mut list) }; "+C("// CKR_OK"),C("// 表には 68 個の関数（v2.40）"),"let lib = Pkcs11::new(path)?; "+C("// cryptoki ではこの1行")],
+   k:["lib"]},
+  {t:"C_Initialize：プロセスで1回",
+   b:"<code>C_Initialize</code> にはフラグを渡す。複数のスレッドから呼ぶなら <code>CKF_OS_LOCKING_OK</code>。何も渡さないと「複数のスレッドから同時には呼ばない」という約束になる。同じプロセスで2回呼ぶと <code>CKR_CRYPTOKI_ALREADY_INITIALIZED</code> になるので、アプリの中で1か所にまとめる。",
+   c:["lib.initialize(CInitializeArgs::new(","    CInitializeFlags::OS_LOCKING_OK))?; "+C("// C_Initialize"),"lib.initialize(args) "+C("// → CKR_CRYPTOKI_ALREADY_INITIALIZED")],
+   k:["lib"]},
+  {t:"C_InitToken：トークンを初期化する",
+   b:"<code>C_InitToken</code> は SO PIN とラベルを決めて、トークンを使える状態にする。初期化済みのトークンにも使えるが、そのときは今の SO PIN が要り、中身はすべて消える。そのトークンのセッションが開いていると <code>CKR_SESSION_EXISTS</code>。初期化しただけでは User PIN がないので、User はまだログインできない。",
+   c:["lib.init_token(slot, &pin(\"5678\"), \"ch1\")?; "+C("// C_InitToken"),"s.login(UserType::User, Some(&pin(\"1111\")))",C("// → CKR_USER_PIN_NOT_INITIALIZED")],
+   k:["tok","so","ses"]},
+  {t:"SO のログインは R/W だけ",
+   b:"SO（Security Officer）はトークンの管理者。SO でログインできるのは R/W セッションからで、同じトークンに R/O セッションが1つでもあると <code>CKR_SESSION_READ_ONLY_EXISTS</code>。SO のログイン中は R/O セッションを開けない。セッションの状態は <code>RwSecurityOfficer</code> になる（状態の全体は第2章）。",
+   c:["let rw = lib.open_rw_session(slot)?;","rw.login(UserType::So, Some(&pin(\"5678\")))?;",C("// C_Login(CKU_SO) → RwSecurityOfficer"),"lib.open_ro_session(slot)",C("// → CKR_SESSION_READ_WRITE_SO_EXISTS")],
+   k:["so","ses"]},
+  {t:"C_InitPIN：SO が User PIN を決める",
+   b:"SO が <code>C_InitPIN</code> で User PIN を決めると <code>CKF_USER_PIN_INITIALIZED</code> が立ち、User がログインできるようになる。PIN を忘れたりロックされたりしたときも、SO がこれで付け直す。SO は鍵の利用者ではないので、SO のままでは非公開の鍵を作れず、別のセッションから User としてログインすることもできない。",
+   c:["rw.init_pin(&pin(\"1111\"))?; "+C("// C_InitPIN（SO だけ）"),"rw.logout()?;","rw.login(UserType::User, Some(&pin(\"1111\")))?;"],
+   k:["upin","so","ses"]},
+  {t:"C_SetPIN：自分の PIN を変える",
+   b:"ログイン中の本人が <code>C_SetPIN</code> で自分の PIN を変える（SO なら SO PIN）。トークンに残る変更なので R/W セッションが要り、R/O では <code>CKR_SESSION_READ_ONLY</code>。今の PIN が違えば <code>CKR_PIN_INCORRECT</code>。<code>C_InitPIN</code> は SO だけが呼べる。",
+   c:["rw.set_pin(&pin(\"1111\"), &pin(\"2222\"))?; "+C("// C_SetPIN"),"rw.logout()?;","rw.login(UserType::User, Some(&pin(\"1111\")))",C("// → CKR_PIN_INCORRECT（古い PIN）")],
+   k:["upin","user","ses"]},
+  {t:"初期化し直すと、すべて消える",
+   b:"初期化済みのトークンにもう一度 <code>C_InitToken</code> すると、トークンオブジェクト（鍵・証明書）も User PIN もすべて消える。元に戻す方法はない。本番の鍵が入ったトークンでは、先に別の場所へ移すか写すかを決めてから行う（シナリオ1）。",
+   c:["rw.generate_key(&mech, &[Token(true), label(\"ch1-key\"), …])?;","rw.close()?; "+C("// セッションをすべて閉じてから"),"lib.init_token(slot, &so_pin, \"ch1\")?;","s.find_objects(&[label(\"ch1-key\")])? "+C("// 0 件")],
+   k:["tok"]},
+  {t:"C_Finalize：使い終える",
+   b:"アプリを終えるときは <code>C_Finalize</code> でライブラリを手放す。そのあとにほかの関数を呼ぶと <code>CKR_CRYPTOKI_NOT_INITIALIZED</code>。手放したあとなら、もう一度 <code>C_Initialize</code> できる。cryptoki の <code>finalize()</code> は <code>Pkcs11</code> を消費するので、呼んだあとの値は使えない。",
+   c:["let same = lib.clone();","lib.finalize()?; "+C("// C_Finalize"),"same.get_slots_with_token()",C("// → CKR_CRYPTOKI_NOT_INITIALIZED")],
+   k:["lib"]}
+];
+const ALL={t:"全体像",
+  b:"ライブラリを読み込んで関数の表を受け取り（<code>C_GetFunctionList</code>）、<code>C_Initialize</code> で使い始め、<code>C_Finalize</code> で使い終える。トークンは <code>C_InitToken</code> で初期化し、SO が <code>C_InitPIN</code> で User PIN を決める。PIN の変更は本人が <code>C_SetPIN</code> で行う。SO は管理者、User は鍵の利用者。",
+  c:[C("// 挙動は examples/01-init で CI 確認"),C("// 根拠：Base v2.40「General-purpose functions」"),C("//   「Slot and token management functions」")]};
+
+const svgEl=document.getElementById('svg');
+function inRange(r,n){return r.split(' ').some(p=>{const [a,b]=p.split('-').map(Number);return n>=a&&n<=(b||a)})}
+function update(cur,all){
+  const k=all?[]:STEPS[cur-1].k;
+  svgEl.querySelectorAll('[data-k]').forEach(g=>g.classList.toggle('lit',k.includes(g.dataset.k)));
+  svgEl.querySelectorAll('.alt[data-r]').forEach(g=>g.classList.toggle('shown',all?g.dataset.all==='1':inRange(g.dataset.r,cur)));
+}
+runSteps({steps:STEPS, all:ALL, onShow:update});
+</script>
+</body>
+</html>

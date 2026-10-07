@@ -13,6 +13,7 @@ PKCS#11（Cryptoki）を、図とアニメーションで段階的に説明す�
 - 根拠は OASIS が公開している PKCS#11 仕様書のみとし、特定ベンダの製品情報は扱いません
 - 関数がどの版の仕様から存在するかを、章ごとに明記します
 - サンプルは CI で SoftHSM2 に対して実際に実行し、記述と挙動のずれを防ぎます
+- SoftHSM2 はテスト用です。ページにはテスト用トークンだけの挙動は書かず、トークンによって違うところは「トークン次第」と書きます
 
 ## 根拠にしている仕様書（OASIS）
 
@@ -42,13 +43,13 @@ Ubuntu の場合：
 sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
-cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keygen && cargo run -p sign && cargo run -p crypt && cargo run -p errors && cargo run -p init && cargo run -p find && cargo run -p lifecycle
-cargo run -p functions && cargo run -p mechanisms && cargo run -p maintenance   # リファレンスの裏付け
+cd examples && cargo run -p overview && cargo run -p init && cargo run -p connect && cargo run -p objects && cargo run -p keygen && cargo run -p find && cargo run -p crypt && cargo run -p sign && cargo run -p lifecycle
+cargo run -p functions && cargo run -p mechanisms && cargo run -p maintenance && cargo run -p errors   # リファレンスの裏付け
 bash ../scripts/check-commands.sh                   # コマンドリファレンスの全コマンド（専用のトークン置き場を使う）
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。
-第6章のサンプル（`init`）・シナリオ1（`lifecycle`）・`maintenance` は、同じ `.softhsm/` の空きスロットに練習用トークン（`ch6`、`hsm-a`、`hsm-b`、`maint-api`）を作ります（2回目からは初期化し直します）。
+第1章のサンプル（`init`）・シナリオ1（`lifecycle`）・`maintenance` は、同じ `.softhsm/` の空きスロットに練習用トークン（`ch1`、`hsm-a`、`hsm-b`、`maint-api`）を作ります（2回目からは初期化し直します）。
 シナリオ1は、作った証明書と署名を `openssl` コマンドでも検証します（PATH にあるとき）。
 スクリプトは実行のたびにトークンを作り直します。サンプルは結果を assert で確かめるので、章の記述と挙動がずれると CI が失敗します。
 

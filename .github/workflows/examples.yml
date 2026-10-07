@@ -21,16 +21,17 @@ jobs:
         working-directory: examples
         run: |
           cargo run -p overview
+          cargo run -p init
+          cargo run -p connect
           cargo run -p objects
           cargo run -p keygen
-          cargo run -p sign
-          cargo run -p crypt
-          cargo run -p errors
-          cargo run -p init
           cargo run -p find
+          cargo run -p crypt
+          cargo run -p sign
           cargo run -p lifecycle
           cargo run -p functions
           cargo run -p mechanisms
           cargo run -p maintenance
+          cargo run -p errors
       - name: Check maintenance commands
         run: bash scripts/check-commands.sh

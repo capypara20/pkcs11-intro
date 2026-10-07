@@ -1,4 +1,4 @@
-//! 第3章 署名と検証：Init → 本体の2段階、メカニズムと鍵の組み合わせ、検証の失敗、
+//! 第7章 署名と検証：Init → 本体の2段階、メカニズムと鍵の組み合わせ、検証の失敗、
 //! 分けて渡す署名、1セッション1操作、共通鍵での MAC を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
@@ -41,7 +41,7 @@ fn rv<T>(r: cryptoki::error::Result<T>) -> Option<RvError> {
     }
 }
 
-/// 署名用の鍵ペア（第2章と同じ形）。sign=false なら秘密鍵に CKA_SIGN を付けない
+/// 署名用の鍵ペア（第4章と同じ形）。sign=false なら秘密鍵に CKA_SIGN を付けない
 fn key_pair(s: &Session, ec: bool, sign: bool) -> Result<(ObjectHandle, ObjectHandle)> {
     let (mech, strength) = if ec {
         (
@@ -203,6 +203,6 @@ fn main() -> Result<()> {
     s.logout()?;
     s.close()?; // セッションオブジェクトの鍵はここで消える
     lib.finalize()?;
-    println!("OK: 第3章の記述どおりに動いた");
+    println!("OK: 第7章の記述どおりに動いた");
     Ok(())
 }

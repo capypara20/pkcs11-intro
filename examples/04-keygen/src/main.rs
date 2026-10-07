@@ -1,4 +1,4 @@
-//! 第2章 鍵の生成：共通鍵は C_GenerateKey（テンプレート1つ）、鍵ペアは C_GenerateKeyPair（2つ）で作る。
+//! 第4章 鍵の生成：共通鍵は C_GenerateKey（テンプレート1つ）、鍵ペアは C_GenerateKeyPair（2つ）で作る。
 //! 長さの書き方は鍵の種類で違うこと、生成した鍵と持ち込んだ鍵の違い、テンプレートのどちら側に何を書くか、
 //! トークンが何を作るかを確かめる。
 //!
@@ -395,6 +395,6 @@ fn main() -> Result<()> {
     s.logout()?;
     s.close()?;
     lib.finalize()?;
-    println!("OK: 第2章の記述どおりに動いた");
+    println!("OK: 第4章の記述どおりに動いた");
     Ok(())
 }

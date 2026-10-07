@@ -1,5 +1,5 @@
-//! 第5章 エラーコード：どの段階でどの CKR_* が返るか、エラーのあと操作がどうなるか、
-//! 仕様と実装（SoftHSM2）の違いを確かめる。
+//! エラーコードリファレンス：どの段階でどの CKR_* が返るか、エラーのあと操作がどうなるか、
+//! エラーの扱い方を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
 //!   PKCS11_MODULE      … Cryptoki ライブラリのパス（既定: SoftHSM2）
@@ -193,17 +193,14 @@ fn main() -> Result<()> {
     s.encrypt_final()?;
     println!("エラーのあと続きを呼ぶ → OPERATION_NOT_INITIALIZED（Init からやり直す）");
 
-    // 10. 仕様どおりとは限らない（SoftHSM2 2.6.1）
-    // 仕様では CKR_KEY_TYPE_INCONSISTENT
-    assert_eq!(
-        rv(s.sign(&Mechanism::Ecdsa, priv_h, &[0u8; 32])),
-        Some(RvError::GeneralError)
-    );
-    // 仕様では CKR_USER_NOT_LOGGED_IN
-    let fresh = lib.open_ro_session(slot)?;
+    // 10. 仕様どおりとは限らない：返すエラーの名前はトークン次第。失敗したかどうかで判断する
+    // RSA の鍵で ECDSA。仕様では CKR_KEY_TYPE_INCONSISTENT
+    assert!(matches!(
+        s.sign(&Mechanism::Ecdsa, priv_h, &[0u8; 32]),
+        Err(Error::Pkcs11(..))
+    ));
     ro.logout()?;
-    assert!(fresh.logout().is_ok());
-    println!("RSA 鍵で ECDSA → GENERAL_ERROR、ログインしていないのに C_Logout → CKR_OK（どちらも仕様と違う）");
+    println!("RSA 鍵で ECDSA → 失敗した（返すエラーの名前はトークン次第）");
 
     // 1. エラーには失敗した関数の名前も付いている
     let e = s.sign(&Mechanism::Sha256RsaPkcs, pub_h, b"x").unwrap_err();
@@ -222,9 +219,8 @@ fn main() -> Result<()> {
     );
 
     s.close()?;
-    fresh.close()?;
     ro.close()?;
     lib.finalize()?;
-    println!("OK: 第5章の記述どおりに動いた");
+    println!("OK: エラーコードリファレンスの記述どおりに動いた");
     Ok(())
 }

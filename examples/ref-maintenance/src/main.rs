@@ -48,7 +48,7 @@ fn find_slot(lib: &Pkcs11, name: &str) -> Result<Option<Slot>> {
     Ok(None)
 }
 
-/// 練習用トークンを用意する（第6章と同じ）。作り直すと中身は消える
+/// 練習用トークンを用意する（第1章と同じ）。作り直すと中身は消える
 fn prepare(lib: &Pkcs11) -> Result<Slot> {
     let slot = match find_slot(lib, LABEL)? {
         Some(slot) => slot,

@@ -25,7 +25,7 @@ fn observe(label: &str, s: &Session) -> Result<(SessionState, usize)> {
     Ok((state, found))
 }
 
-/// ラベルでトークンを探す。SoftHSM2 は未初期化の空きスロットも「トークンあり」で返すため、
+/// ラベルでトークンを探す。C_GetSlotList(TRUE) は未初期化のトークンが入ったスロットも返すので、
 /// 先頭のスロットを使うと別のトークンを掴むことがある
 fn find_slot(lib: &Pkcs11, label: &str) -> Result<Slot> {
     // C_GetSlotList(tokenPresent = TRUE)

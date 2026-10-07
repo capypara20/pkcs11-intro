@@ -6,3 +6,4 @@ publish = false
 
 [dependencies]
 cryptoki = { workspace = true }
+cryptoki-sys = "0.5"

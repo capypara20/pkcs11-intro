@@ -1,5 +1,5 @@
 //! シナリオ「鍵の一生」：C_GetFunctionList から C_Finalize まで、1本の鍵を最初から最後まで追う。
-//! 2台の HSM（SoftHSM2 のトークン hsm-a と hsm-b）で、
+//! 2台の HSM（テスト用のトークン hsm-a と hsm-b）で、
 //! 作る → 使う → 証明書 → 探す → 別の HSM へ移す → 確かめる → 元を消す を通す。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用の SoftHSM2 を用意すること（空きスロットを使う）。
@@ -60,7 +60,7 @@ fn find_slot(lib: &Pkcs11, label: &str) -> Result<Option<Slot>> {
     Ok(None)
 }
 
-/// HSM を1台用意する（第6章）：トークンを初期化して User PIN を決める
+/// HSM を1台用意する（第1章）：トークンを初期化して User PIN を決める
 fn prepare(lib: &Pkcs11, name: &str) -> Result<Slot> {
     let slot = match find_slot(lib, name)? {
         Some(slot) => slot, // 2回目からは前回のものを初期化し直す
@@ -164,20 +164,18 @@ fn main() -> Result<()> {
     // 1. ライブラリを読み込み、C_GetFunctionList で関数の表を受け取る（cryptoki の Pkcs11::new の中身）
     {
         use cryptoki_sys::{CK_C_Initialize, CKR_OK, CK_FUNCTION_LIST};
+        // v3.0 以降のライブラリは C_GetInterface も持ち、cryptoki はそちらを先に探す（持つかはライブラリ次第）
         let raw = unsafe { cryptoki_sys::Pkcs11::new(&module)? }; // dlopen
-                                                                  // v3.0 の C_GetInterface があればそちらを使う。SoftHSM2 2.6（v2.40）は持っていない
-        assert!(raw.C_GetInterface.is_err());
         let mut list: *mut CK_FUNCTION_LIST = std::ptr::null_mut();
         assert_eq!(unsafe { raw.C_GetFunctionList(&mut list) }, CKR_OK); // C_GetFunctionList
         let table = unsafe { &*list };
-        assert_eq!((table.version.major, table.version.minor), (2, 40));
         let count = (std::mem::size_of::<CK_FUNCTION_LIST>()
             - std::mem::offset_of!(CK_FUNCTION_LIST, C_Initialize))
             / std::mem::size_of::<CK_C_Initialize>();
         assert_eq!(count, 68, "v2.40 の関数の表には 68 個の関数が並ぶ");
         assert!(table.C_Initialize.is_some() && table.C_WrapKey.is_some());
         println!(
-            "C_GetFunctionList: 表の版 {}.{}、関数 {count} 個（C_GetInterface はない）",
+            "C_GetFunctionList: 表の版 {}.{}、関数 {count} 個",
             table.version.major, table.version.minor
         );
     }
@@ -214,7 +212,7 @@ fn main() -> Result<()> {
     let point = bytes(read(&a, sign_pub, AttributeType::EcPoint)?); // DER の OCTET STRING
     let raw_point = point[2..].to_vec(); // 04 || X || Y
     assert_eq!(raw_point.len(), 65);
-    let sign_id = a.digest(&Mechanism::Sha1, &point)?; // 第7章：公開鍵のハッシュを CKA_ID に
+    let sign_id = a.digest(&Mechanism::Sha1, &point)?; // 第5章：公開鍵のハッシュを CKA_ID に
     for h in [sign_pub, sign_priv] {
         a.update_attributes(h, &[Attribute::Id(sign_id.clone())])?;
     }
@@ -367,7 +365,7 @@ fn main() -> Result<()> {
         ],
     )?;
     let oaep = Mechanism::RsaPkcsOaep(PkcsOaepParams::new(
-        MechanismType::SHA1, // SoftHSM2 2.6.1 は SHA-1 の OAEP だけ（第4章）
+        MechanismType::SHA1, // OAEP で使えるハッシュはトークン次第（第6章）
         PkcsMgfType::MGF1_SHA1,
         PkcsOaepSource::empty(),
     ));

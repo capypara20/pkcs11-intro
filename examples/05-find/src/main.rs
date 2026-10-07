@@ -1,4 +1,4 @@
-//! 第7章 鍵の探し方と名前の付け方：ハンドル・CKA_LABEL・CKA_ID の違い、C_FindObjects での探し方、
+//! 第5章 鍵の探し方と名前の付け方：ハンドル・CKA_LABEL・CKA_ID の違い、C_FindObjects での探し方、
 //! ログインと見える範囲、ラベルの重複、CKA_ID で鍵ペアを結ぶこと、1セッション1検索を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
@@ -266,11 +266,16 @@ fn main() -> Result<()> {
     let hex: String = hash_id.iter().map(|b| format!("%{b:02X}")).collect();
     let uri = format!("pkcs11:token={token};object=orders-sign;type=private;id={hex}");
     println!("PKCS#11 URI: {uri}");
-    // v3.0 には変えられない一意の ID（CKA_UNIQUE_ID）がある。SoftHSM2 2.6（v2.40）にはない
+    // v3.0 には変えられない一意の ID（CKA_UNIQUE_ID）がある。使えるかはトークン次第
     let info = s.get_attribute_info(ec_priv, &[AttributeType::UniqueId])?;
-    assert!(
-        !matches!(info.as_slice(), [AttributeInfo::Available(_)]),
-        "{info:?}"
+    let has = matches!(info.as_slice(), [AttributeInfo::Available(_)]);
+    println!(
+        "CKA_UNIQUE_ID: {}",
+        if has {
+            "あり"
+        } else {
+            "このトークンにはない"
+        }
     );
 
     s.destroy_object(next)?;
@@ -278,6 +283,6 @@ fn main() -> Result<()> {
     s.logout()?;
     s.close()?; // セッションオブジェクトはここで消える
     lib.finalize()?;
-    println!("OK: 第7章の記述どおりに動いた");
+    println!("OK: 第5章の記述どおりに動いた");
     Ok(())
 }

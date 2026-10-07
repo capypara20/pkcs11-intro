@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>第3章 オブジェクトと属性 | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/steps.js"></script>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　第3章 オブジェクトと属性<span class="ver" title="この章の関数と属性は v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
+    <div class="ctl">
+      <a class="ref" href="ref-attributes.html" target="_blank" rel="noopener">属性リファレンス</a>
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 480" role="img" aria-labelledby="dt">
+    <title id="dt">オブジェクトと属性の図。テンプレートから鍵が作られ、属性ごとに誰が値を決めたかが順に表示される。</title>
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/>
+      </marker>
+    </defs>
+
+    <rect x="450" y="8" width="740" height="464" rx="6" fill="none" stroke="var(--line)" stroke-width="2"/>
+    <text x="466" y="37" font-size="14" class="mut mono">トークン</text>
+
+    <!-- 1. オブジェクト＝属性の集まり -->
+    <g data-step="1">
+      <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="488" y="81" font-size="16" font-weight="700">オブジェクト</text>
+      <text x="590" y="81" font-size="12.5" class="mut">＝ 属性（CKA_*）と値の組の集まり</text>
+      <text x="1115" y="81" text-anchor="middle" font-size="11" class="mut">誰が決めたか</text>
+      <g class="pop" style="--d:0">
+        <line x1="566" y1="92" x2="1163" y2="92" stroke="var(--line)"/>
+        <text x="574" y="111" font-size="13.5" class="mono">CKA_CLASS</text>
+        <text x="822" y="111" font-size="13.5" class="mono cy">CKO_SECRET_KEY</text>
+      </g>
+      <g class="pop" style="--d:1">
+        <line x1="566" y1="120" x2="1163" y2="120" stroke="var(--line)"/>
+        <text x="574" y="139" font-size="13.5" class="mono">CKA_TOKEN</text>
+        <text x="822" y="139" font-size="13.5" class="mono cy">FALSE</text>
+      </g>
+      <g class="pop" style="--d:2">
+        <line x1="566" y1="148" x2="1163" y2="148" stroke="var(--line)"/>
+        <text x="574" y="167" font-size="13.5" class="mono">CKA_LABEL</text>
+        <text x="822" y="167" font-size="13.5" class="mono cy">&quot;ch1-sealed&quot;</text>
+      </g>
+      <g class="pop" style="--d:3">
+        <line x1="566" y1="176" x2="1163" y2="176" stroke="var(--line)"/>
+        <text x="574" y="195" font-size="13.5" class="mono">CKA_KEY_TYPE</text>
+        <text x="822" y="195" font-size="13.5" class="mono cy">CKK_AES</text>
+      </g>
+      <g class="pop" style="--d:4">
+        <line x1="566" y1="204" x2="1163" y2="204" stroke="var(--line)"/>
+        <text x="574" y="223" font-size="13.5" class="mono">CKA_LOCAL</text>
+        <text x="822" y="223" font-size="13.5" class="mono cy">TRUE</text>
+      </g>
+      <g class="pop" style="--d:5">
+        <line x1="566" y1="232" x2="1163" y2="232" stroke="var(--line)"/>
+        <text x="574" y="251" font-size="13.5" class="mono">CKA_ENCRYPT</text>
+        <text x="822" y="251" font-size="13.5" class="mono cy">TRUE</text>
+      </g>
+      <g class="pop" style="--d:6">
+        <line x1="566" y1="260" x2="1163" y2="260" stroke="var(--line)"/>
+        <text x="574" y="279" font-size="13.5" class="mono">CKA_DECRYPT</text>
+        <text x="822" y="279" font-size="13.5" class="mono cy">TRUE</text>
+      </g>
+      <g class="pop" style="--d:7">
+        <line x1="566" y1="288" x2="1163" y2="288" stroke="var(--line)"/>
+        <text x="574" y="307" font-size="13.5" class="mono">CKA_SENSITIVE</text>
+        <text x="822" y="307" font-size="13.5" class="mono cy">TRUE</text>
+      </g>
+      <g class="pop" style="--d:8">
+        <line x1="566" y1="316" x2="1163" y2="316" stroke="var(--line)"/>
+        <text x="574" y="335" font-size="13.5" class="mono">CKA_EXTRACTABLE</text>
+        <text x="822" y="335" font-size="13.5" class="mono cy">FALSE</text>
+      </g>
+      <g class="pop" style="--d:9">
+        <line x1="566" y1="344" x2="1163" y2="344" stroke="var(--line)"/>
+        <text x="574" y="363" font-size="13.5" class="mono">CKA_ALWAYS_SENSITIVE</text>
+        <text x="822" y="363" font-size="13.5" class="mono cy">TRUE</text>
+      </g>
+      <g class="pop" style="--d:10">
+        <line x1="566" y1="372" x2="1163" y2="372" stroke="var(--line)"/>
+        <text x="574" y="391" font-size="13.5" class="mono">CKA_NEVER_EXTRACTABLE</text>
+        <text x="822" y="391" font-size="13.5" class="mono cy">TRUE</text>
+      </g>
+      <g class="pop" style="--d:11">
+        <line x1="566" y1="400" x2="1163" y2="400" stroke="var(--line)"/>
+        <text x="574" y="419" font-size="13.5" class="mono">CKA_VALUE_LEN</text>
+        <text x="822" y="419" font-size="13.5" class="mono cy">32</text>
+      </g>
+      <g class="pop" style="--d:12">
+        <line x1="566" y1="428" x2="1163" y2="428" stroke="var(--line)"/>
+        <text x="574" y="447" font-size="13.5" class="mono">CKA_VALUE</text>
+        <text x="822" y="447" font-size="13.5" class="mut">（32 バイトの鍵）</text>
+      </g>
+    </g>
+
+    <!-- 2. CKA_CLASS が種類を決める -->
+    <g data-step="2">
+      <g class="chip" data-cls="data" role="button" tabindex="0" aria-label="CKO_DATA のオブジェクトの例を見る"><g class="pop" style="--d:0"><rect x="600" y="19" width="110" height="26" rx="4"/>
+        <text x="655" y="36" text-anchor="middle" font-size="11" class="mono">CKO_DATA</text></g></g>
+      <g class="chip" data-cls="cert" role="button" tabindex="0" aria-label="CKO_CERTIFICATE のオブジェクトの例を見る"><g class="pop" style="--d:1"><rect x="716" y="19" width="110" height="26" rx="4"/>
+        <text x="771" y="36" text-anchor="middle" font-size="11" class="mono">CKO_CERTIFICATE</text></g></g>
+      <g class="chip" data-cls="pub" role="button" tabindex="0" aria-label="CKO_PUBLIC_KEY のオブジェクトの例を見る"><g class="pop" style="--d:2"><rect x="832" y="19" width="110" height="26" rx="4"/>
+        <text x="887" y="36" text-anchor="middle" font-size="11" class="mono">CKO_PUBLIC_KEY</text></g></g>
+      <g class="chip" data-cls="priv" role="button" tabindex="0" aria-label="CKO_PRIVATE_KEY のオブジェクトの例を見る"><g class="pop" style="--d:3"><rect x="948" y="19" width="110" height="26" rx="4"/>
+        <text x="1003" y="36" text-anchor="middle" font-size="11" class="mono">CKO_PRIVATE_KEY</text></g></g>
+      <g class="chip on" data-cls="secret" role="button" tabindex="0" aria-label="CKO_SECRET_KEY のオブジェクトの例を見る"><g class="pop" style="--d:4"><rect x="1064" y="19" width="110" height="26" rx="4"/>
+        <text x="1119" y="36" text-anchor="middle" font-size="11" class="mono">CKO_SECRET_KEY</text></g></g>
+    </g>
+    <g data-only="2"><rect x="564" y="93" width="603" height="26" rx="4" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
+
+    <!-- 3. 層：種類ごとに持つ属性が決まる -->
+    <g data-step="3">
+      <g class="pop" style="--d:0"><path d="M552,96 L558,96 L558,116 L552,116" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="110.0" text-anchor="end" font-size="12" class="brass">Object</text></g>
+      <g class="pop" style="--d:1"><path d="M552,124 L558,124 L558,172 L552,172" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="152.0" text-anchor="end" font-size="12" class="brass">Storage</text></g>
+      <g class="pop" style="--d:2"><path d="M552,180 L558,180 L558,228 L552,228" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="208.0" text-anchor="end" font-size="12" class="brass">Key</text></g>
+      <g class="pop" style="--d:3"><path d="M552,236 L558,236 L558,396 L552,396" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="320.0" text-anchor="end" font-size="12" class="brass">共通鍵</text></g>
+      <g class="pop" style="--d:4"><path d="M552,404 L558,404 L558,452 L552,452" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="432.0" text-anchor="end" font-size="12" class="brass">AES</text></g>
+    </g>
+
+    <!-- 4. テンプレート -->
+    <g data-step="4">
+      <rect x="10" y="8" width="320" height="290" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+      <text x="26" y="72" font-size="12" class="mut">メカニズム</text>
+      <text x="100" y="72" font-size="13" class="mono brass">CKM_AES_KEY_GEN</text>
+      <line x1="26" y1="86" x2="314" y2="86" stroke="var(--line)"/>
+      <text x="30" y="112" font-size="13" class="mono">CKA_TOKEN = FALSE</text>
+      <text x="30" y="137" font-size="13" class="mono">CKA_LABEL = &quot;ch1-sealed&quot;</text>
+      <text x="30" y="162" font-size="13" class="mono">CKA_VALUE_LEN = 32</text>
+      <text x="30" y="187" font-size="13" class="mono">CKA_ENCRYPT = TRUE</text>
+      <text x="30" y="212" font-size="13" class="mono">CKA_DECRYPT = TRUE</text>
+      <text x="30" y="237" font-size="13" class="mono">CKA_SENSITIVE = TRUE</text>
+      <text x="30" y="262" font-size="13" class="mono">CKA_EXTRACTABLE = FALSE</text>
+    </g>
+
+    <!-- 4. C_GenerateKey：書いた属性 -->
+    <g data-step="5">
+      <path class="draw" pathLength="1" d="M330,180 L466,180" stroke="var(--cipher)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+      <text x="398" y="168" text-anchor="middle" font-size="12" class="mono cy">C_GenerateKey</text>
+      <g class="pop" style="--d:0"><rect x="1072" y="124" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="138.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+      <g class="pop" style="--d:1"><rect x="1072" y="152" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="166.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+      <g class="pop" style="--d:2"><rect x="1072" y="236" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="250.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+      <g class="pop" style="--d:3"><rect x="1072" y="264" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="278.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+      <g class="pop" style="--d:4"><rect x="1072" y="292" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="306.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+      <g class="pop" style="--d:5"><rect x="1072" y="320" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="334.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+      <g class="pop" style="--d:6"><rect x="1072" y="404" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/>
+        <text x="1115" y="418.5" text-anchor="middle" font-size="11" class="brass">アプリ</text></g>
+    </g>
+
+    <!-- 5. トークンが埋めた属性 -->
+    <g data-step="6">
+      <g class="pop" style="--d:0"><rect x="1072" y="96" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/>
+        <text x="1115" y="110.5" text-anchor="middle" font-size="11" class="cy">トークン</text></g>
+      <g class="pop" style="--d:1"><rect x="1072" y="180" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/>
+        <text x="1115" y="194.5" text-anchor="middle" font-size="11" class="cy">トークン</text></g>
+      <g class="pop" style="--d:2"><rect x="1072" y="208" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/>
+        <text x="1115" y="222.5" text-anchor="middle" font-size="11" class="cy">トークン</text></g>
+      <g class="pop" style="--d:3"><rect x="1072" y="348" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/>
+        <text x="1115" y="362.5" text-anchor="middle" font-size="11" class="cy">トークン</text></g>
+      <g class="pop" style="--d:4"><rect x="1072" y="376" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/>
+        <text x="1115" y="390.5" text-anchor="middle" font-size="11" class="cy">トークン</text></g>
+      <g class="pop" style="--d:5"><rect x="1072" y="432" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/>
+        <text x="1115" y="446.5" text-anchor="middle" font-size="11" class="cy">トークン</text></g>
+    </g>
+
+    <!-- 6. ハンドル -->
+    <g data-step="7">
+      <path class="draw" pathLength="1" d="M468,340 L324,340" stroke="var(--cipher)" stroke-width="2.5" fill="none" marker-end="url(#ar)"/>
+      <rect x="20" y="318" width="300" height="44" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="36" y="346" font-size="16" font-weight="700" class="mono">ハンドル 3</text>
+      <text x="146" y="346" font-size="12.5" class="mut">アプリが持つのは番号だけ</text>
+    </g>
+
+    <!-- 7. 読める属性・読めない属性 -->
+    <g data-only="8">
+        <rect x="20" y="378" width="300" height="88" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="34" y="400" font-size="13" class="mono brass">C_GetAttributeValue</text>
+        <text x="34" y="424" font-size="12.5" class="mono cy">CKA_LABEL → "ch1-sealed"</text>
+        <text x="34" y="446" font-size="12.5" class="mono wr">CKA_VALUE → CKR_ATTRIBUTE_SENSITIVE</text>
+        <rect x="564" y="149" width="603" height="26" rx="4" fill="none" stroke="var(--cipher)" stroke-width="2"/> <text x="1060" y="167" text-anchor="end" font-size="13" font-weight="700" class="cy">読める ✓</text>
+        <rect x="564" y="429" width="603" height="26" rx="4" fill="none" stroke="var(--warn)" stroke-width="2"/> <text x="1060" y="447" text-anchor="end" font-size="13" font-weight="700" class="wr blink">読めない ✕</text>
+    </g>
+
+    <!-- 8. 変えられる属性・一方通行の属性 -->
+    <g data-only="9">
+        <rect x="20" y="378" width="300" height="88" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="34" y="400" font-size="13" class="mono brass">C_SetAttributeValue</text>
+        <text x="34" y="424" font-size="12.5" class="cy">CKA_LABEL → 変更できる</text>
+        <text x="34" y="446" font-size="12.5" class="wr">CKA_SENSITIVE TRUE→FALSE → READ_ONLY</text>
+        <rect x="564" y="149" width="603" height="26" rx="4" fill="none" stroke="var(--cipher)" stroke-width="2"/> <text x="1060" y="167" text-anchor="end" font-size="13" font-weight="700" class="cy">変更可 ✓</text>
+        <rect x="564" y="289" width="603" height="26" rx="4" fill="none" stroke="var(--warn)" stroke-width="2"/> <text x="1060" y="307" text-anchor="end" font-size="13" font-weight="700" class="wr">FALSE に戻せない ✕</text>
+        <rect x="564" y="317" width="603" height="26" rx="4" fill="none" stroke="var(--warn)" stroke-width="2"/> <text x="1060" y="335" text-anchor="end" font-size="13" font-weight="700" class="wr">TRUE に戻せない ✕</text>
+    </g>
+
+    <!-- 9. セッションオブジェクト -->
+    <g data-only="10">
+        <rect x="20" y="378" width="300" height="88" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="34" y="400" font-size="13" class="mono brass">C_CloseSession</text>
+        <text x="34" y="424" font-size="12.5" class="mut">CKA_TOKEN = FALSE の鍵は</text>
+        <text x="34" y="446" font-size="12.5" class="wr">作ったセッションと一緒に消える</text>
+        <rect x="472" y="148" width="701" height="314" rx="4" fill="var(--bg)" opacity=".88"/>
+        <rect x="640" y="300" width="360" height="66" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+        <rect x="564" y="121" width="603" height="26" rx="4" fill="none" stroke="var(--warn)" stroke-width="2"/>
+        <text x="820" y="326" text-anchor="middle" font-size="18" font-weight="700" class="wr">セッションを閉じると消える</text>
+        <text x="820" y="358" text-anchor="middle" font-size="13" class="mut">CKA_TOKEN = TRUE ならトークンに残る</text>
+    </g>
+
+    <!-- 10. テンプレートで検索 -->
+    <g data-only="11">
+        <rect x="20" y="378" width="300" height="88" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="34" y="400" font-size="13" class="mono brass">C_FindObjects</text>
+        <text x="34" y="424" font-size="12.5" class="mono cy">CKA_CLASS = CKO_SECRET_KEY</text>
+        <text x="34" y="446" font-size="12.5" class="mono cy">CKA_KEY_TYPE = CKK_AES → 一致</text>
+        <rect x="564" y="93" width="603" height="26" rx="4" fill="none" stroke="var(--cipher)" stroke-width="2"/> <text x="1060" y="111" text-anchor="end" font-size="13" font-weight="700" class="cy">一致 ✓</text>
+        <rect x="564" y="177" width="603" height="26" rx="4" fill="none" stroke="var(--cipher)" stroke-width="2"/> <text x="1060" y="195" text-anchor="end" font-size="13" font-weight="700" class="cy">一致 ✓</text>
+    </g>
+
+    <!-- 種類ボタンで切り替わる例の箱（最前面） -->
+    <g class="alt" data-cls="data" aria-hidden="true">
+      <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="488" y="81" font-size="16" font-weight="700">データ（CKO_DATA）の例</text>
+      <text x="1115" y="81" text-anchor="middle" font-size="11" class="mut">誰が決めたか</text>
+        <line x1="566" y1="92" x2="1163" y2="92" stroke="var(--line)"/>
+        <text x="574" y="111" font-size="13.5" class="mono">CKA_CLASS</text>
+        <text x="822" y="111" font-size="13.5" class="mono cy">CKO_DATA</text>
+        <rect x="1072" y="96" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="110.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,96 L558,96 L558,116 L552,116" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="110.0" text-anchor="end" font-size="12" class="brass">Object</text>
+<line x1="566" y1="120" x2="1163" y2="120" stroke="var(--line)"/>
+        <text x="574" y="139" font-size="13.5" class="mono">CKA_TOKEN</text>
+        <text x="822" y="139" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="124" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="138.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="148" x2="1163" y2="148" stroke="var(--line)"/>
+        <text x="574" y="167" font-size="13.5" class="mono">CKA_PRIVATE</text>
+        <text x="822" y="167" font-size="13.5" class="mono cy">FALSE</text>
+        <rect x="1072" y="152" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="166.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="176" x2="1163" y2="176" stroke="var(--line)"/>
+        <text x="574" y="195" font-size="13.5" class="mono">CKA_LABEL</text>
+        <text x="822" y="195" font-size="13.5" class="mono cy">&quot;config&quot;</text>
+        <rect x="1072" y="180" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="194.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="204" x2="1163" y2="204" stroke="var(--line)"/>
+        <text x="574" y="223" font-size="13.5" class="mono">CKA_MODIFIABLE</text>
+        <text x="822" y="223" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="208" width="86" height="20" rx="10" fill="none" stroke="var(--line)"/><text x="1115" y="222.5" text-anchor="middle" font-size="11" class="mut">既定値</text>
+<path d="M552,124 L558,124 L558,228 L552,228" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="180.0" text-anchor="end" font-size="12" class="brass">Storage</text>
+<line x1="566" y1="232" x2="1163" y2="232" stroke="var(--line)"/>
+        <text x="574" y="251" font-size="13.5" class="mono">CKA_APPLICATION</text>
+        <text x="822" y="251" font-size="13.5" class="mono cy">&quot;my-app&quot;</text>
+        <rect x="1072" y="236" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="250.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="260" x2="1163" y2="260" stroke="var(--line)"/>
+        <text x="574" y="279" font-size="13.5" class="mono">CKA_OBJECT_ID</text>
+        <text x="822" y="279" font-size="13.5" class="mut">（空）</text>
+        <rect x="1072" y="264" width="86" height="20" rx="10" fill="none" stroke="var(--line)"/><text x="1115" y="278.5" text-anchor="middle" font-size="11" class="mut">既定値</text>
+<line x1="566" y1="288" x2="1163" y2="288" stroke="var(--line)"/>
+        <text x="574" y="307" font-size="13.5" class="mono">CKA_VALUE</text>
+        <text x="822" y="307" font-size="13.5" class="mut">（任意のバイト列）</text>
+        <rect x="1072" y="292" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="306.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,236 L558,236 L558,312 L552,312" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="278.0" text-anchor="end" font-size="12" class="brass">Data</text>
+      <text x="574" y="346" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#data"><text x="1163" y="346" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+    </g>
+    <g class="alt" data-cls="cert" aria-hidden="true">
+      <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="488" y="81" font-size="16" font-weight="700">X.509 証明書（CKO_CERTIFICATE）の例</text>
+      <text x="1115" y="81" text-anchor="middle" font-size="11" class="mut">誰が決めたか</text>
+        <line x1="566" y1="92" x2="1163" y2="92" stroke="var(--line)"/>
+        <text x="574" y="111" font-size="13.5" class="mono">CKA_CLASS</text>
+        <text x="822" y="111" font-size="13.5" class="mono cy">CKO_CERTIFICATE</text>
+        <rect x="1072" y="96" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="110.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,96 L558,96 L558,116 L552,116" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="110.0" text-anchor="end" font-size="12" class="brass">Object</text>
+<line x1="566" y1="120" x2="1163" y2="120" stroke="var(--line)"/>
+        <text x="574" y="139" font-size="13.5" class="mono">CKA_TOKEN</text>
+        <text x="822" y="139" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="124" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="138.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="148" x2="1163" y2="148" stroke="var(--line)"/>
+        <text x="574" y="167" font-size="13.5" class="mono">CKA_LABEL</text>
+        <text x="822" y="167" font-size="13.5" class="mono cy">&quot;server-cert&quot;</text>
+        <rect x="1072" y="152" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="166.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,124 L558,124 L558,172 L552,172" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="152.0" text-anchor="end" font-size="12" class="brass">Storage</text>
+<line x1="566" y1="176" x2="1163" y2="176" stroke="var(--line)"/>
+        <text x="574" y="195" font-size="13.5" class="mono">CKA_CERTIFICATE_TYPE</text>
+        <text x="822" y="195" font-size="13.5" class="mono cy">CKC_X_509</text>
+        <rect x="1072" y="180" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="194.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="204" x2="1163" y2="204" stroke="var(--line)"/>
+        <text x="574" y="223" font-size="13.5" class="mono">CKA_TRUSTED</text>
+        <text x="822" y="223" font-size="13.5" class="mono cy">FALSE</text>
+        <rect x="1072" y="208" width="86" height="20" rx="10" fill="none" stroke="var(--line)"/><text x="1115" y="222.5" text-anchor="middle" font-size="11" class="mut">既定値</text>
+<line x1="566" y1="232" x2="1163" y2="232" stroke="var(--line)"/>
+        <text x="574" y="251" font-size="13.5" class="mono">CKA_CERTIFICATE_CATEGORY</text>
+        <text x="822" y="251" font-size="13.5" class="mono cy">0（未指定）</text>
+        <rect x="1072" y="236" width="86" height="20" rx="10" fill="none" stroke="var(--line)"/><text x="1115" y="250.5" text-anchor="middle" font-size="11" class="mut">既定値</text>
+<line x1="566" y1="260" x2="1163" y2="260" stroke="var(--line)"/>
+        <text x="574" y="279" font-size="13.5" class="mono">CKA_CHECK_VALUE</text>
+        <text x="822" y="279" font-size="13.5" class="mut">（3 バイト）</text>
+        <rect x="1072" y="264" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="278.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,180 L558,180 L558,284 L552,284" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="236.0" text-anchor="end" font-size="12" class="brass">Certificate</text>
+<line x1="566" y1="288" x2="1163" y2="288" stroke="var(--line)"/>
+        <text x="574" y="307" font-size="13.5" class="mono">CKA_SUBJECT</text>
+        <text x="822" y="307" font-size="13.5" class="mut">（DER の名前）</text>
+        <rect x="1072" y="292" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="306.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="316" x2="1163" y2="316" stroke="var(--line)"/>
+        <text x="574" y="335" font-size="13.5" class="mono">CKA_ID</text>
+        <text x="822" y="335" font-size="13.5" class="mono cy">01</text>
+        <rect x="1072" y="320" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="334.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="344" x2="1163" y2="344" stroke="var(--line)"/>
+        <text x="574" y="363" font-size="13.5" class="mono">CKA_ISSUER</text>
+        <text x="822" y="363" font-size="13.5" class="mut">（DER の名前）</text>
+        <rect x="1072" y="348" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="362.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="372" x2="1163" y2="372" stroke="var(--line)"/>
+        <text x="574" y="391" font-size="13.5" class="mono">CKA_VALUE</text>
+        <text x="822" y="391" font-size="13.5" class="mut">（証明書の BER）</text>
+        <rect x="1072" y="376" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="390.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,292 L558,292 L558,396 L552,396" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="348.0" text-anchor="end" font-size="12" class="brass">X.509</text>
+      <text x="574" y="430" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#x509"><text x="1163" y="430" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+    </g>
+    <g class="alt" data-cls="pub" aria-hidden="true">
+      <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="488" y="81" font-size="16" font-weight="700">RSA 公開鍵（CKO_PUBLIC_KEY）の例</text>
+      <text x="1115" y="81" text-anchor="middle" font-size="11" class="mut">誰が決めたか</text>
+        <line x1="566" y1="92" x2="1163" y2="92" stroke="var(--line)"/>
+        <text x="574" y="111" font-size="13.5" class="mono">CKA_CLASS</text>
+        <text x="822" y="111" font-size="13.5" class="mono cy">CKO_PUBLIC_KEY</text>
+        <rect x="1072" y="96" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="110.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,96 L558,96 L558,116 L552,116" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="110.0" text-anchor="end" font-size="12" class="brass">Object</text>
+<line x1="566" y1="120" x2="1163" y2="120" stroke="var(--line)"/>
+        <text x="574" y="139" font-size="13.5" class="mono">CKA_TOKEN</text>
+        <text x="822" y="139" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="124" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="138.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="148" x2="1163" y2="148" stroke="var(--line)"/>
+        <text x="574" y="167" font-size="13.5" class="mono">CKA_LABEL</text>
+        <text x="822" y="167" font-size="13.5" class="mono cy">&quot;signer&quot;</text>
+        <rect x="1072" y="152" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="166.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,124 L558,124 L558,172 L552,172" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="152.0" text-anchor="end" font-size="12" class="brass">Storage</text>
+<line x1="566" y1="176" x2="1163" y2="176" stroke="var(--line)"/>
+        <text x="574" y="195" font-size="13.5" class="mono">CKA_KEY_TYPE</text>
+        <text x="822" y="195" font-size="13.5" class="mono cy">CKK_RSA</text>
+        <rect x="1072" y="180" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="194.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<line x1="566" y1="204" x2="1163" y2="204" stroke="var(--line)"/>
+        <text x="574" y="223" font-size="13.5" class="mono">CKA_ID</text>
+        <text x="822" y="223" font-size="13.5" class="mono cy">01</text>
+        <rect x="1072" y="208" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="222.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="232" x2="1163" y2="232" stroke="var(--line)"/>
+        <text x="574" y="251" font-size="13.5" class="mono">CKA_LOCAL</text>
+        <text x="822" y="251" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="236" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="250.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,180 L558,180 L558,256 L552,256" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="222.0" text-anchor="end" font-size="12" class="brass">Key</text>
+<line x1="566" y1="260" x2="1163" y2="260" stroke="var(--line)"/>
+        <text x="574" y="279" font-size="13.5" class="mono">CKA_VERIFY</text>
+        <text x="822" y="279" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="264" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="278.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="288" x2="1163" y2="288" stroke="var(--line)"/>
+        <text x="574" y="307" font-size="13.5" class="mono">CKA_ENCRYPT</text>
+        <text x="822" y="307" font-size="13.5" class="mono cy">FALSE</text>
+        <rect x="1072" y="292" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="306.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="316" x2="1163" y2="316" stroke="var(--line)"/>
+        <text x="574" y="335" font-size="13.5" class="mono">CKA_WRAP</text>
+        <text x="822" y="335" font-size="13.5" class="mono cy">FALSE</text>
+        <rect x="1072" y="320" width="86" height="20" rx="10" fill="none" stroke="var(--line)"/><text x="1115" y="334.5" text-anchor="middle" font-size="11" class="mut">既定値</text>
+<path d="M552,264 L558,264 L558,340 L552,340" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="306.0" text-anchor="end" font-size="12" class="brass">公開鍵</text>
+<line x1="566" y1="344" x2="1163" y2="344" stroke="var(--line)"/>
+        <text x="574" y="363" font-size="13.5" class="mono">CKA_MODULUS_BITS</text>
+        <text x="822" y="363" font-size="13.5" class="mono cy">2048</text>
+        <rect x="1072" y="348" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="362.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="372" x2="1163" y2="372" stroke="var(--line)"/>
+        <text x="574" y="391" font-size="13.5" class="mono">CKA_PUBLIC_EXPONENT</text>
+        <text x="822" y="391" font-size="13.5" class="mono cy">65537</text>
+        <rect x="1072" y="376" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="390.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="400" x2="1163" y2="400" stroke="var(--line)"/>
+        <text x="574" y="419" font-size="13.5" class="mono">CKA_MODULUS</text>
+        <text x="822" y="419" font-size="13.5" class="mut">（n）</text>
+        <rect x="1072" y="404" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="418.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,348 L558,348 L558,424 L552,424" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="390.0" text-anchor="end" font-size="12" class="brass">RSA</text>
+      <text x="574" y="452" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#rsa-public"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+    </g>
+    <g class="alt" data-cls="priv" aria-hidden="true">
+      <rect x="470" y="56" width="705" height="408" rx="6" fill="var(--panel)" stroke="var(--brass)" stroke-width="2"/>
+      <text x="488" y="81" font-size="16" font-weight="700">RSA 秘密鍵（CKO_PRIVATE_KEY）の例</text>
+      <text x="1115" y="81" text-anchor="middle" font-size="11" class="mut">誰が決めたか</text>
+        <line x1="566" y1="92" x2="1163" y2="92" stroke="var(--line)"/>
+        <text x="574" y="111" font-size="13.5" class="mono">CKA_CLASS</text>
+        <text x="822" y="111" font-size="13.5" class="mono cy">CKO_PRIVATE_KEY</text>
+        <rect x="1072" y="96" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="110.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,96 L558,96 L558,116 L552,116" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="110.0" text-anchor="end" font-size="12" class="brass">Object</text>
+<line x1="566" y1="120" x2="1163" y2="120" stroke="var(--line)"/>
+        <text x="574" y="139" font-size="13.5" class="mono">CKA_TOKEN</text>
+        <text x="822" y="139" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="124" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="138.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="148" x2="1163" y2="148" stroke="var(--line)"/>
+        <text x="574" y="167" font-size="13.5" class="mono">CKA_LABEL</text>
+        <text x="822" y="167" font-size="13.5" class="mono cy">&quot;signer&quot;</text>
+        <rect x="1072" y="152" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="166.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<path d="M552,124 L558,124 L558,172 L552,172" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="152.0" text-anchor="end" font-size="12" class="brass">Storage</text>
+<line x1="566" y1="176" x2="1163" y2="176" stroke="var(--line)"/>
+        <text x="574" y="195" font-size="13.5" class="mono">CKA_KEY_TYPE</text>
+        <text x="822" y="195" font-size="13.5" class="mono cy">CKK_RSA</text>
+        <rect x="1072" y="180" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="194.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<line x1="566" y1="204" x2="1163" y2="204" stroke="var(--line)"/>
+        <text x="574" y="223" font-size="13.5" class="mono">CKA_ID</text>
+        <text x="822" y="223" font-size="13.5" class="mono cy">01</text>
+        <rect x="1072" y="208" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="222.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="232" x2="1163" y2="232" stroke="var(--line)"/>
+        <text x="574" y="251" font-size="13.5" class="mono">CKA_LOCAL</text>
+        <text x="822" y="251" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="236" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="250.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,180 L558,180 L558,256 L552,256" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="222.0" text-anchor="end" font-size="12" class="brass">Key</text>
+<line x1="566" y1="260" x2="1163" y2="260" stroke="var(--line)"/>
+        <text x="574" y="279" font-size="13.5" class="mono">CKA_SIGN</text>
+        <text x="822" y="279" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="264" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="278.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="288" x2="1163" y2="288" stroke="var(--line)"/>
+        <text x="574" y="307" font-size="13.5" class="mono">CKA_SENSITIVE</text>
+        <text x="822" y="307" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="292" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="306.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="316" x2="1163" y2="316" stroke="var(--line)"/>
+        <text x="574" y="335" font-size="13.5" class="mono">CKA_EXTRACTABLE</text>
+        <text x="822" y="335" font-size="13.5" class="mono cy">FALSE</text>
+        <rect x="1072" y="320" width="86" height="20" rx="10" fill="none" stroke="var(--brass)"/><text x="1115" y="334.5" text-anchor="middle" font-size="11" class="brass">アプリ</text>
+<line x1="566" y1="344" x2="1163" y2="344" stroke="var(--line)"/>
+        <text x="574" y="363" font-size="13.5" class="mono">CKA_ALWAYS_SENSITIVE</text>
+        <text x="822" y="363" font-size="13.5" class="mono cy">TRUE</text>
+        <rect x="1072" y="348" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="362.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,264 L558,264 L558,368 L552,368" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="320.0" text-anchor="end" font-size="12" class="brass">秘密鍵</text>
+<line x1="566" y1="372" x2="1163" y2="372" stroke="var(--line)"/>
+        <text x="574" y="391" font-size="13.5" class="mono">CKA_MODULUS</text>
+        <text x="822" y="391" font-size="13.5" class="mut">（n）</text>
+        <rect x="1072" y="376" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="390.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<line x1="566" y1="400" x2="1163" y2="400" stroke="var(--line)"/>
+        <text x="574" y="419" font-size="13.5" class="mono">CKA_PRIVATE_EXPONENT</text>
+        <text x="822" y="419" font-size="13.5" class="mut">（d・読めない）</text>
+        <rect x="1072" y="404" width="86" height="20" rx="10" fill="none" stroke="var(--cipher)"/><text x="1115" y="418.5" text-anchor="middle" font-size="11" class="cy">トークン</text>
+<path d="M552,376 L558,376 L558,424 L552,424" stroke="var(--brass)" fill="none" stroke-width="1.5"/>
+        <text x="546" y="404.0" text-anchor="end" font-size="12" class="brass">RSA</text>
+      <text x="574" y="452" font-size="12.5" class="mut">主な属性だけを表示。共通鍵を押すか「次へ」で AES の例に戻る。</text>
+      <a target="_blank" rel="noopener" href="ref-attributes.html#rsa-private"><text x="1163" y="452" text-anchor="end" font-size="12.5" class="cy">全属性はリファレンスへ ›</text></a>
+    </g>
+    <g class="alt-t" data-cls="secret" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_GenerateKey</text>
+      <text x="26" y="94" font-size="12.5" class="mono brass">CKM_AES_KEY_GEN</text>
+      <line x1="26" y1="108" x2="314" y2="108" stroke="var(--line)"/>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = FALSE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_LABEL = &quot;ch1-sealed&quot;</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_VALUE_LEN = 32</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_ENCRYPT = TRUE</text>
+      <text x="30" y="228" font-size="12.5" class="mono">CKA_DECRYPT = TRUE</text>
+      <text x="30" y="250" font-size="12.5" class="mono">CKA_SENSITIVE = TRUE</text>
+      <text x="30" y="272" font-size="12.5" class="mono">CKA_EXTRACTABLE = FALSE</text>
+      <text x="26" y="292" font-size="12" class="mut">CLASS と KEY_TYPE はメカニズムが決める</text>
+    </g>
+    <g class="alt-t" data-cls="data" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_CreateObject</text>
+      <line x1="26" y1="86" x2="314" y2="86" stroke="var(--line)"/>
+      <text x="30" y="118" font-size="12.5" class="mono">CKA_CLASS = CKO_DATA</text>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_PRIVATE = FALSE</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_LABEL = &quot;config&quot;</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_APPLICATION = &quot;my-app&quot;</text>
+      <text x="30" y="228" font-size="12.5" class="mut">CKA_VALUE = （中身のバイト列）</text>
+      <text x="26" y="292" font-size="12" class="mut">作るときは CKA_CLASS も自分で書く</text>
+    </g>
+    <g class="alt-t" data-cls="cert" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_CreateObject</text>
+      <line x1="26" y1="86" x2="314" y2="86" stroke="var(--line)"/>
+      <text x="30" y="118" font-size="12.5" class="mono">CKA_CLASS = CKO_CERTIFICATE</text>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_CERTIFICATE_TYPE = CKC_X_509</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_LABEL = &quot;server-cert&quot;</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_ID = 01</text>
+      <text x="30" y="228" font-size="12.5" class="mut">CKA_SUBJECT = （DER の名前）</text>
+      <text x="30" y="250" font-size="12.5" class="mut">CKA_ISSUER = （DER の名前）</text>
+      <text x="30" y="272" font-size="12.5" class="mut">CKA_VALUE = （証明書の BER）</text>
+      <text x="26" y="292" font-size="12" class="mut">鍵と同じ CKA_ID で対応づける</text>
+    </g>
+    <g class="alt-t" data-cls="pub" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_GenerateKeyPair</text>
+      <text x="314" y="72" text-anchor="end" font-size="12" class="brass">公開鍵側</text>
+      <text x="26" y="94" font-size="12.5" class="mono brass">CKM_RSA_PKCS_KEY_PAIR_GEN</text>
+      <line x1="26" y1="108" x2="314" y2="108" stroke="var(--line)"/>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_LABEL = &quot;signer&quot;</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_ID = 01</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_VERIFY = TRUE</text>
+      <text x="30" y="228" font-size="12.5" class="mono">CKA_ENCRYPT = FALSE</text>
+      <text x="30" y="250" font-size="12.5" class="mono">CKA_MODULUS_BITS = 2048</text>
+      <text x="30" y="272" font-size="12.5" class="mono">CKA_PUBLIC_EXPONENT = 65537</text>
+      <text x="26" y="292" font-size="12" class="mut">鍵長はこちら側に書く</text>
+    </g>
+    <g class="alt-t" data-cls="priv" aria-hidden="true">
+      <rect x="10" y="8" width="320" height="298" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="38" font-size="18" font-weight="700">テンプレート</text>
+      <text x="140" y="38" font-size="12.5" class="mut">アプリが書く属性の配列</text>
+            <text x="26" y="72" font-size="13" class="mono cy">C_GenerateKeyPair</text>
+      <text x="314" y="72" text-anchor="end" font-size="12" class="brass">秘密鍵側</text>
+      <text x="26" y="94" font-size="12.5" class="mono brass">CKM_RSA_PKCS_KEY_PAIR_GEN</text>
+      <line x1="26" y1="108" x2="314" y2="108" stroke="var(--line)"/>
+      <text x="30" y="140" font-size="12.5" class="mono">CKA_TOKEN = TRUE</text>
+      <text x="30" y="162" font-size="12.5" class="mono">CKA_LABEL = &quot;signer&quot;</text>
+      <text x="30" y="184" font-size="12.5" class="mono">CKA_ID = 01</text>
+      <text x="30" y="206" font-size="12.5" class="mono">CKA_SIGN = TRUE</text>
+      <text x="30" y="228" font-size="12.5" class="mono">CKA_SENSITIVE = TRUE</text>
+      <text x="30" y="250" font-size="12.5" class="mono">CKA_EXTRACTABLE = FALSE</text>
+      <text x="26" y="292" font-size="12" class="mut">MODULUS_BITS は書かない（持たない属性）</text>
+    </g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+  <nav class="sitenav" data-page="docs/03-objects.html" data-root="../" data-spec="base latest" aria-label="章の移動"></nav>
+</div>
+
+<script>
+const C=code;
+// オブジェクトの種類ボタン：押すとその種類のテンプレートと例の箱に切り替える。CKO_SECRET_KEY は本題の AES の例
+// 手順3では種類を自動で順に切り替える（押すか一時停止で止まる）
+const svgEl=document.getElementById('svg'), stageEl=document.getElementById('stage');
+const ORDER=['secret','data','cert','pub','priv'];
+let cycle=null, curCls='secret';
+function pick(cls){
+  curCls=cls;
+  const step=+svgEl.dataset.cur||0;
+  svgEl.querySelectorAll('.alt').forEach(g=>{const on=g.dataset.cls===cls;g.classList.toggle('shown',on);g.setAttribute('aria-hidden',!on)});
+  // AES のテンプレートは手順4以降なら図の本体にあるので、手順2・3のときだけ重ねる
+  svgEl.querySelectorAll('.alt-t').forEach(g=>{const on=g.dataset.cls===cls&&(cls!=='secret'||(step>=2&&step<=3));g.classList.toggle('shown',on);g.setAttribute('aria-hidden',!on)});
+  svgEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.cls===cls));
+}
+function stopCycle(){clearInterval(cycle);cycle=null}
+function startCycle(){
+  stopCycle();
+  cycle=setInterval(()=>{if(!stageEl.classList.contains('paused'))pick(ORDER[(ORDER.indexOf(curCls)+1)%ORDER.length])},3500);
+}
+svgEl.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>{stopCycle();pick(c.dataset.cls)});
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();stopCycle();pick(c.dataset.cls)}});
+});
+runSteps({
+  steps:[
+    {t:"オブジェクトは属性の集まり",
+     b:"トークンの中身はすべてオブジェクト。オブジェクトは「属性（<code>CKA_*</code>）と値」の組の集まりで、それ以外の中身はない。鍵の値も <code>CKA_VALUE</code> という属性の1つにすぎない。",
+     c:[C("// 属性は「型」と「値」の組"),"Attribute::Label(\"ch1-sealed\".into())",C("// = CKA_LABEL と、そのバイト列")]},
+    {t:"CKA_CLASS が種類を決める",
+     b:"どの種類のオブジェクトかは <code>CKA_CLASS</code> で決まる。データ・証明書・公開鍵・秘密鍵・共通鍵などがあり、種類によって持てる属性が変わる。AES の鍵は共通鍵 <code>CKO_SECRET_KEY</code>。図の上の種類を押すと、その種類のテンプレートとオブジェクトの例に切り替わる。",
+     c:["Attribute::Class(ObjectClass::SECRET_KEY)",C("// CKA_CLASS = CKO_SECRET_KEY")]},
+    {t:"種類が変われば、書くことも変わる",
+     b:"どの属性を持つかは種類で決まる。仕様は属性を層に分けて定義していて、上の Object・Storage は共通、下の層が種類ごとに入れ替わる。この手順では種類が順に切り替わり、左にテンプレート、右にできるオブジェクトが出る。種類を押すとそこで止まる。",
+     c:["session.create_object(&template)?;",C("// データ・証明書：CKA_CLASS も自分で書く"),"session.generate_key_pair(","    &mech, &pub_t, &priv_t)?;",C("// 鍵ペア：公開鍵側と秘密鍵側の2つ")]},
+    {t:"テンプレートで注文する",
+     b:"作るときは、ほしい属性を並べた配列（テンプレート）と、作り方（メカニズム）を渡す。AES 鍵なら <code>CKM_AES_KEY_GEN</code> で、鍵長は <code>CKA_VALUE_LEN</code> で指定する。",
+     c:["let template = [Attribute::Token(false),","    Attribute::Label(\"ch1-sealed\".into()),","    Attribute::ValueLen(32.into()),","    Attribute::Sensitive(true),","    Attribute::Extractable(false), /* ... */];"]},
+    {t:"C_GenerateKey で作る",
+     b:"テンプレートに書いた属性は、そのとおりに設定される。<code>CKA_CLASS</code> と <code>CKA_KEY_TYPE</code> は書いていないが、メカニズムが決める。",
+     c:["let key = a.generate_key(","    &Mechanism::AesKeyGen, &template)?;",C("// C_GenerateKey(CKM_AES_KEY_GEN)")]},
+    {t:"残りはトークンが埋める",
+     b:"鍵の値 <code>CKA_VALUE</code> はトークンが作る。<code>CKA_LOCAL</code>（トークン内で生成した）や <code>CKA_ALWAYS_SENSITIVE</code> のように、アプリには書けず、トークンが事実を記録する属性もある。",
+     c:["a.get_attributes(key,","    &[AttributeType::Local])?;",C("// → Local(true)")]},
+    {t:"アプリに返るのはハンドル",
+     b:"アプリが受け取るのは、オブジェクトを指す番号（ハンドル）だけ。鍵の値はトークンの外に出ない。番号そのものに意味はないので、値を当てにしない。",
+     c:["println!(\"{key}\");",C("// → 3。鍵の値ではなく番号")]},
+    {t:"読める属性・読めない属性",
+     b:"属性は <code>C_GetAttributeValue</code> で、型を指定して1つずつ読む。<code>CKA_SENSITIVE=TRUE</code> または <code>CKA_EXTRACTABLE=FALSE</code> の鍵では、値を求めると <code>CKR_ATTRIBUTE_SENSITIVE</code> が返る。",
+     c:["a.get_attribute_info(key,","    &[AttributeType::Value])?;",C("// → Sensitive（CKR_ATTRIBUTE_SENSITIVE）")]},
+    {t:"守りの属性は一方通行",
+     b:"ラベルなど、あとから <code>C_SetAttributeValue</code> で変えられる属性もある。ただし <code>CKA_SENSITIVE</code> は FALSE→TRUE、<code>CKA_EXTRACTABLE</code> は TRUE→FALSE の向きにしか変えられない。一度封じた鍵は元に戻せない。",
+     c:["a.update_attributes(key,","    &[Attribute::Sensitive(false)])",C("// → CKR_ATTRIBUTE_READ_ONLY")]},
+    {t:"セッションオブジェクトは消える",
+     b:"<code>CKA_TOKEN=FALSE</code>（既定値）で作るとセッションオブジェクトになる。同じアプリの別のセッションからも使えるが、作ったセッションを閉じると消える。<code>TRUE</code> ならトークンに残る。",
+     c:["a.close()?;",C("// A が作ったセッションオブジェクトは消える"),C("// B から検索しても 0 件")]},
+    {t:"検索もテンプレート",
+     b:"<code>C_FindObjects</code> の検索条件もテンプレート。書いた属性がすべて一致するオブジェクトのハンドルが返る。空のテンプレートなら、見えるものすべてが返る。",
+     c:["b.find_objects(&[","    Attribute::Class(ObjectClass::SECRET_KEY),","    Attribute::KeyType(KeyType::AES)])?;",C("// 全部一致したものだけ")]}
+  ],
+  onShow:(cur,all)=>{stopCycle();pick('secret');if(cur===3&&!all)startCycle()},
+  all:{t:"全体像",
+    b:"オブジェクトは属性の集まり。アプリはテンプレートで属性を指定して作り、残りはメカニズムとトークンが埋める。アプリが持つのはハンドルだけで、<code>CKA_SENSITIVE</code> などの属性が「何を読ませ、何を変えさせるか」を決める。各属性の詳細は属性リファレンスへ。",
+    c:[C("// この章の関数と属性はすべて v2.40 で定義済み"),C("// v3.0 / v3.1 でも使い方は同じ"),C("// 挙動は examples/03-objects で CI 確認"),C("// 根拠：Base v2.40「Objects」の章")]}
+});
+</script>
+</body>
+</html>

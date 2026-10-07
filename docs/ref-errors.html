@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>エラーコードリファレンス | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/steps.js"></script>
+<style>
+/* 手順ごとに光らせる行と段階 */
+svg .row .hl{fill:none;stroke:none;stroke-width:2}
+svg .row.lit .hl{stroke:var(--brass)}
+svg .row.lit.ok .hl{stroke:var(--cipher)}
+svg .row.lit.ng .hl{stroke:var(--warn)}
+/* 手順全体を光らせる共通の演出は使わず、関係する部分だけを光らせる */
+g[data-step].now{filter:none}
+svg [data-k].lit>.box{stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 0 6px var(--brass))}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　エラーコードリファレンス<span class="ver" title="この章の関数・メカニズムは v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
+    <div class="ctl">
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 480" role="img" aria-labelledby="dt">
+    <title id="dt">エラーコードの地図。ライブラリ・セッション・ログイン・テンプレート・操作の開始・データの段階ごとに、返りうる CKR_* と番号を並べる。</title>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/></marker></defs>
+    <g data-step="1">
+      <g class="stage" data-k="lib"><rect class="box" x="10" y="8" width="388" height="212" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="24" y="34" font-size="15" font-weight="700">① ライブラリ</text><text x="384" y="34" font-size="11" text-anchor="end" class="mono mut">C_Initialize / C_Finalize</text>
+      <line x1="20" y1="44" x2="388" y2="44" stroke="var(--line)"/>
+      <g class="row" data-a="CRYPTOKI_NOT_INITIALIZED"><rect class="hl" x="16" y="53" width="376" height="21" rx="3"/>
+          <text x="24" y="68" font-size="11.5" class="mono cy">CKR_CRYPTOKI_NOT_INITIALIZED</text><text x="336" y="68" font-size="11" text-anchor="end" class="mono mut">0x190</text><text x="384" y="68" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="CRYPTOKI_ALREADY_INITIALIZED"><rect class="hl" x="16" y="77" width="376" height="21" rx="3"/>
+          <text x="24" y="92" font-size="11.5" class="mono cy">CKR_CRYPTOKI_ALREADY_INITIALIZED</text><text x="336" y="92" font-size="11" text-anchor="end" class="mono mut">0x191</text><text x="384" y="92" font-size="10.5" text-anchor="end" class="cy">✓</text></g></g><path d="M399,34 L405,34" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><g class="stage" data-k="sess"><rect class="box" x="406" y="8" width="388" height="212" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="420" y="34" font-size="15" font-weight="700">② セッション</text><text x="780" y="34" font-size="11" text-anchor="end" class="mono mut">C_OpenSession / C_CloseSession</text>
+      <line x1="416" y1="44" x2="784" y2="44" stroke="var(--line)"/>
+      <g class="row" data-a="SESSION_READ_ONLY"><rect class="hl" x="412" y="53" width="376" height="21" rx="3"/>
+          <text x="420" y="68" font-size="11.5" class="mono cy">CKR_SESSION_READ_ONLY</text><text x="732" y="68" font-size="11" text-anchor="end" class="mono mut">0xB5</text><text x="780" y="68" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="SESSION_HANDLE_INVALID"><rect class="hl" x="412" y="77" width="376" height="21" rx="3"/>
+          <text x="420" y="92" font-size="11.5" class="mono cy">CKR_SESSION_HANDLE_INVALID</text><text x="732" y="92" font-size="11" text-anchor="end" class="mono mut">0xB3</text><text x="780" y="92" font-size="10.5" text-anchor="end" class="mut">仕様</text></g></g><path d="M795,34 L801,34" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><g class="stage" data-k="login"><rect class="box" x="802" y="8" width="388" height="212" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="816" y="34" font-size="15" font-weight="700">③ ログイン</text><text x="1176" y="34" font-size="11" text-anchor="end" class="mono mut">C_Login / C_Logout</text>
+      <line x1="812" y1="44" x2="1180" y2="44" stroke="var(--line)"/>
+      <g class="row" data-a="PIN_INCORRECT"><rect class="hl" x="808" y="53" width="376" height="21" rx="3"/>
+          <text x="816" y="68" font-size="11.5" class="mono cy">CKR_PIN_INCORRECT</text><text x="1128" y="68" font-size="11" text-anchor="end" class="mono mut">0xA0</text><text x="1176" y="68" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="USER_NOT_LOGGED_IN"><rect class="hl" x="808" y="77" width="376" height="21" rx="3"/>
+          <text x="816" y="92" font-size="11.5" class="mono cy">CKR_USER_NOT_LOGGED_IN</text><text x="1128" y="92" font-size="11" text-anchor="end" class="mono mut">0x101</text><text x="1176" y="92" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="USER_ALREADY_LOGGED_IN"><rect class="hl" x="808" y="101" width="376" height="21" rx="3"/>
+          <text x="816" y="116" font-size="11.5" class="mono cy">CKR_USER_ALREADY_LOGGED_IN</text><text x="1128" y="116" font-size="11" text-anchor="end" class="mono mut">0x100</text><text x="1176" y="116" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="PIN_LOCKED"><rect class="hl" x="808" y="125" width="376" height="21" rx="3"/>
+          <text x="816" y="140" font-size="11.5" class="mono cy">CKR_PIN_LOCKED</text><text x="1128" y="140" font-size="11" text-anchor="end" class="mono mut">0xA4</text><text x="1176" y="140" font-size="10.5" text-anchor="end" class="mut">仕様</text></g></g><g class="stage" data-k="tpl"><rect class="box" x="10" y="230" width="388" height="212" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="24" y="256" font-size="15" font-weight="700">④ テンプレート</text><text x="384" y="256" font-size="11" text-anchor="end" class="mono mut">作る・読む・変える</text>
+      <line x1="20" y1="266" x2="388" y2="266" stroke="var(--line)"/>
+      <g class="row" data-a="TEMPLATE_INCOMPLETE"><rect class="hl" x="16" y="275" width="376" height="21" rx="3"/>
+          <text x="24" y="290" font-size="11.5" class="mono cy">CKR_TEMPLATE_INCOMPLETE</text><text x="336" y="290" font-size="11" text-anchor="end" class="mono mut">0xD0</text><text x="384" y="290" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="TEMPLATE_INCONSISTENT"><rect class="hl" x="16" y="299" width="376" height="21" rx="3"/>
+          <text x="24" y="314" font-size="11.5" class="mono cy">CKR_TEMPLATE_INCONSISTENT</text><text x="336" y="314" font-size="11" text-anchor="end" class="mono mut">0xD1</text><text x="384" y="314" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="ATTRIBUTE_TYPE_INVALID"><rect class="hl" x="16" y="323" width="376" height="21" rx="3"/>
+          <text x="24" y="338" font-size="11.5" class="mono cy">CKR_ATTRIBUTE_TYPE_INVALID</text><text x="336" y="338" font-size="11" text-anchor="end" class="mono mut">0x12</text><text x="384" y="338" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="ATTRIBUTE_VALUE_INVALID"><rect class="hl" x="16" y="347" width="376" height="21" rx="3"/>
+          <text x="24" y="362" font-size="11.5" class="mono cy">CKR_ATTRIBUTE_VALUE_INVALID</text><text x="336" y="362" font-size="11" text-anchor="end" class="mono mut">0x13</text><text x="384" y="362" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="ATTRIBUTE_READ_ONLY"><rect class="hl" x="16" y="371" width="376" height="21" rx="3"/>
+          <text x="24" y="386" font-size="11.5" class="mono cy">CKR_ATTRIBUTE_READ_ONLY</text><text x="336" y="386" font-size="11" text-anchor="end" class="mono mut">0x10</text><text x="384" y="386" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="ATTRIBUTE_SENSITIVE"><rect class="hl" x="16" y="395" width="376" height="21" rx="3"/>
+          <text x="24" y="410" font-size="11.5" class="mono cy">CKR_ATTRIBUTE_SENSITIVE</text><text x="336" y="410" font-size="11" text-anchor="end" class="mono mut">0x11</text><text x="384" y="410" font-size="10.5" text-anchor="end" class="cy">✓</text></g></g><path d="M399,256 L405,256" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><g class="stage" data-k="init"><rect class="box" x="406" y="230" width="388" height="212" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="420" y="256" font-size="15" font-weight="700">⑤ 操作の開始</text><text x="780" y="256" font-size="11" text-anchor="end" class="mono mut">C_SignInit / C_EncryptInit など</text>
+      <line x1="416" y1="266" x2="784" y2="266" stroke="var(--line)"/>
+      <g class="row" data-a="MECHANISM_INVALID"><rect class="hl" x="412" y="275" width="376" height="21" rx="3"/>
+          <text x="420" y="290" font-size="11.5" class="mono cy">CKR_MECHANISM_INVALID</text><text x="732" y="290" font-size="11" text-anchor="end" class="mono mut">0x70</text><text x="780" y="290" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="KEY_FUNCTION_NOT_PERMITTED"><rect class="hl" x="412" y="299" width="376" height="21" rx="3"/>
+          <text x="420" y="314" font-size="11.5" class="mono cy">CKR_KEY_FUNCTION_NOT_PERMITTED</text><text x="732" y="314" font-size="11" text-anchor="end" class="mono mut">0x68</text><text x="780" y="314" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="KEY_TYPE_INCONSISTENT"><rect class="hl" x="412" y="323" width="376" height="21" rx="3"/>
+          <text x="420" y="338" font-size="11.5" class="mono cy">CKR_KEY_TYPE_INCONSISTENT</text><text x="732" y="338" font-size="11" text-anchor="end" class="mono mut">0x63</text><text x="780" y="338" font-size="10.5" text-anchor="end" class="mut">仕様</text></g><g class="row" data-a="OPERATION_ACTIVE"><rect class="hl" x="412" y="347" width="376" height="21" rx="3"/>
+          <text x="420" y="362" font-size="11.5" class="mono cy">CKR_OPERATION_ACTIVE</text><text x="732" y="362" font-size="11" text-anchor="end" class="mono mut">0x90</text><text x="780" y="362" font-size="10.5" text-anchor="end" class="cy">✓</text></g></g><path d="M795,256 L801,256" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><g class="stage" data-k="data"><rect class="box" x="802" y="230" width="388" height="212" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="816" y="256" font-size="15" font-weight="700">⑥ データ</text><text x="1176" y="256" font-size="11" text-anchor="end" class="mono mut">C_Sign / C_Encrypt / C_Verify など</text>
+      <line x1="812" y1="266" x2="1180" y2="266" stroke="var(--line)"/>
+      <g class="row" data-a="DATA_LEN_RANGE"><rect class="hl" x="808" y="275" width="376" height="21" rx="3"/>
+          <text x="816" y="290" font-size="11.5" class="mono cy">CKR_DATA_LEN_RANGE</text><text x="1128" y="290" font-size="11" text-anchor="end" class="mono mut">0x21</text><text x="1176" y="290" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="SIGNATURE_INVALID"><rect class="hl" x="808" y="299" width="376" height="21" rx="3"/>
+          <text x="816" y="314" font-size="11.5" class="mono cy">CKR_SIGNATURE_INVALID</text><text x="1128" y="314" font-size="11" text-anchor="end" class="mono mut">0xC0</text><text x="1176" y="314" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="SIGNATURE_LEN_RANGE"><rect class="hl" x="808" y="323" width="376" height="21" rx="3"/>
+          <text x="816" y="338" font-size="11.5" class="mono cy">CKR_SIGNATURE_LEN_RANGE</text><text x="1128" y="338" font-size="11" text-anchor="end" class="mono mut">0xC1</text><text x="1176" y="338" font-size="10.5" text-anchor="end" class="cy">✓</text></g><g class="row" data-a="ENCRYPTED_DATA_INVALID"><rect class="hl" x="808" y="347" width="376" height="21" rx="3"/>
+          <text x="816" y="362" font-size="11.5" class="mono cy">CKR_ENCRYPTED_DATA_INVALID</text><text x="1128" y="362" font-size="11" text-anchor="end" class="mono mut">0x40</text><text x="1176" y="362" font-size="10.5" text-anchor="end" class="mut">仕様</text></g><g class="row" data-a="BUFFER_TOO_SMALL"><rect class="hl" x="808" y="371" width="376" height="21" rx="3"/>
+          <text x="816" y="386" font-size="11.5" class="mono cy">CKR_BUFFER_TOO_SMALL</text><text x="1128" y="386" font-size="11" text-anchor="end" class="mono mut">0x150</text><text x="1176" y="386" font-size="10.5" text-anchor="end" class="mut">仕様</text></g><g class="row" data-a="OPERATION_NOT_INITIALIZED"><rect class="hl" x="808" y="395" width="376" height="21" rx="3"/>
+          <text x="816" y="410" font-size="11.5" class="mono cy">CKR_OPERATION_NOT_INITIALIZED</text><text x="1128" y="410" font-size="11" text-anchor="end" class="mono mut">0x91</text><text x="1176" y="410" font-size="10.5" text-anchor="end" class="cy">✓</text></g></g>
+      <g class="stage" data-k="uni"><rect class="box" x="10" y="442" width="1180" height="32" rx="6" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="463" font-size="12" font-weight="700" class="mut">どこでも起きうる</text><g class="row" data-a="GENERAL_ERROR"><text x="170" y="463" font-size="11" class="mono">CKR_GENERAL_ERROR 0x5</text></g><g class="row" data-a="FUNCTION_FAILED"><text x="375" y="463" font-size="11" class="mono">CKR_FUNCTION_FAILED 0x6</text></g><g class="row" data-a="ARGUMENTS_BAD"><text x="580" y="463" font-size="11" class="mono">CKR_ARGUMENTS_BAD 0x7</text></g><g class="row" data-a="HOST_MEMORY"><text x="785" y="463" font-size="11" class="mono">CKR_HOST_MEMORY 0x2</text></g><g class="row" data-a="DEVICE_ERROR"><text x="990" y="463" font-size="11" class="mono">CKR_DEVICE_ERROR 0x30</text></g></g>
+    </g>
+    <g data-only="9"><rect class="box" x="10" y="230" width="1180" height="212" rx="6" fill="var(--bg)" stroke="var(--brass)"/>
+  <text x="24" y="260" font-size="15" font-weight="700">エラーのあと、その操作は終わっている</text>
+  <rect class="box" x="24" y="296" width="176" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="112" y="326" font-size="13" text-anchor="middle" class="mono">C_EncryptInit</text><text x="112" y="348" font-size="11" text-anchor="middle" class="cy">操作が始まる</text><path d="M202,336 L216,336" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="box" x="220" y="296" width="176" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="308" y="326" font-size="13" text-anchor="middle" class="mono">C_EncryptUpdate</text><text x="308" y="348" font-size="11" text-anchor="middle" class="cy">途中のデータをためる</text><path d="M398,336 L412,336" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="box" x="416" y="296" width="176" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="504" y="326" font-size="13" text-anchor="middle" class="mono">C_EncryptFinal</text><text x="504" y="348" font-size="11" text-anchor="middle" class="mono wr">CKR_DATA_LEN_RANGE</text><path d="M594,336 L608,336" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><text x="700" y="340" font-size="12.5" text-anchor="middle" font-weight="700" class="wr">（操作はここで終わる）</text><path d="M790,336 L804,336" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="box" x="808" y="296" width="176" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="896" y="326" font-size="13" text-anchor="middle" class="mono">C_EncryptUpdate</text><text x="896" y="348" font-size="11" text-anchor="middle" class="mono wr">CKR_OPERATION_</text><text x="896" y="363" font-size="11" text-anchor="middle" class="mono wr">NOT_INITIALIZED</text><path d="M986,336 L1000,336" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="box" x="1004" y="296" width="176" height="80" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1092" y="326" font-size="13" text-anchor="middle" class="mono">C_EncryptInit</text><text x="1092" y="348" font-size="11" text-anchor="middle" class="cy">やり直せば使える</text>
+  <text x="24" y="410" font-size="12" class="mut">C_Sign / C_Verify / C_Decrypt なども同じ。例外は CKR_BUFFER_TOO_SMALL（出力先を大きくして同じ呼び出しをやり直せる）</text></g>
+    <g data-only="10"><rect class="box" x="10" y="230" width="1180" height="212" rx="6" fill="var(--bg)" stroke="var(--warn)"/>
+  <text x="24" y="258" font-size="15" font-weight="700">意味のはっきりしたものだけ個別に扱う</text>
+  <text x="24" y="278" font-size="11" class="mut">戻り値</text><text x="330" y="278" font-size="11" class="mut">アプリがすること</text>
+  <text x="24" y="300" font-size="11.5" class="mono wr">CKR_PIN_INCORRECT</text><text x="330" y="300" font-size="12">PIN を聞き直す。続けて間違えるとロックされうる</text><text x="24" y="319" font-size="11.5" class="mono wr">CKR_PIN_LOCKED</text><text x="330" y="319" font-size="12">SO に User PIN を付け直してもらう（第1章 C_InitPIN）</text><text x="24" y="338" font-size="11.5" class="mono wr">CKR_USER_NOT_LOGGED_IN</text><text x="330" y="338" font-size="12">ログインし直す（最後のセッションを閉じるとログアウト）</text><text x="24" y="357" font-size="11.5" class="mono wr">CKR_SIGNATURE_INVALID</text><text x="330" y="357" font-size="12">エラーではなく「署名が正しくない」という結果として扱う</text><text x="24" y="376" font-size="11.5" class="mono wr">CKR_BUFFER_TOO_SMALL</text><text x="330" y="376" font-size="12">出力先を大きくして、同じ呼び出しをやり直す</text><text x="24" y="395" font-size="11.5" class="mono wr">CKR_SESSION_HANDLE_INVALID ほか</text><text x="330" y="395" font-size="12">セッションを開き直す。トークンが外れたならつなぎ直す</text><text x="24" y="414" font-size="11.5" class="mono mut">それ以外</text><text x="330" y="414" font-size="12">失敗としてまとめ、番号と関数名をログに残す</text>
+  <text x="24" y="434" font-size="11.5" class="mut">同じ場面でも、返すエラーの名前はトークン次第。仕様と違う名前や CKR_GENERAL_ERROR になることもある</text></g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+  <nav class="sitenav" data-page="docs/ref-errors.html" data-root="../" data-spec="base latest" aria-label="章の移動"></nav>
+</div>
+
+<script>
+const C=code;
+const STEPS=[
+  {t:"戻り値はすべて CK_RV",
+   b:"PKCS#11 の関数はすべて <code>CK_RV</code>（数値）を返す。0 が <code>CKR_OK</code>（成功）で、それ以外は失敗の理由。cryptoki は番号を名前に直し、失敗した関数の名前と組にして <code>Error::Pkcs11</code> として返す。",
+   c:["Err(Error::Pkcs11(RvError::KeyFunctionNotPermitted,","    Function::SignInit))",C("// 表示: Function::SignInit: PKCS11 error: ...")],
+   k:[], lit:{}},
+  {t:"どの段階のエラーかで読む",
+   b:"エラーは、どの段階で起きたかで読むと原因に近づきやすい。右の地図は、これまでの章で出てきたものを段階ごとに並べたもの。✓ は本サイトのサンプルで実際に返ることを確かめたもの、「仕様」は仕様書にあるが確かめていないもの。",
+   c:[C("// ① ライブラリ → ② セッション → ③ ログイン"),C("// → ④ テンプレート → ⑤ 操作の開始 → ⑥ データ")],
+   k:["lib","sess","login","tpl","init","data"], lit:{}},
+  {t:"① ライブラリ",
+   b:"<code>C_Initialize</code> の前にほかの関数を呼ぶと <code>CKR_CRYPTOKI_NOT_INITIALIZED</code>、2回呼ぶと <code>CKR_CRYPTOKI_ALREADY_INITIALIZED</code>。ライブラリを複数の場所から使うときに起きやすい。",
+   c:["lib.get_all_slots(); "+C("// 初期化前 → NOT_INITIALIZED"),"lib.initialize(args)?;","lib.initialize(args); "+C("// → ALREADY_INITIALIZED")],
+   k:["lib"], lit:{CRYPTOKI_NOT_INITIALIZED:"on",CRYPTOKI_ALREADY_INITIALIZED:"on"}},
+  {t:"② セッション",
+   b:"R/O セッションでトークンオブジェクト（<code>CKA_TOKEN=TRUE</code>）を作ろうとすると <code>CKR_SESSION_READ_ONLY</code>。セッションオブジェクトなら R/O でも作れる。閉じたセッションを使うと <code>CKR_SESSION_HANDLE_INVALID</code>（cryptoki では型で防がれるので、サンプルでは確かめていない）。",
+   c:["ro.generate_key(&mech, &[Attribute::Token(true), ...])",C("// → CKR_SESSION_READ_ONLY")],
+   k:["sess"], lit:{SESSION_READ_ONLY:"on",SESSION_HANDLE_INVALID:"on"}},
+  {t:"③ ログイン",
+   b:"PIN が違えば <code>CKR_PIN_INCORRECT</code>。間違えるとトークン情報に「残り回数が少ない」の印（<code>CKF_USER_PIN_COUNT_LOW</code>）が立ち、間違えすぎると <code>CKR_PIN_LOCKED</code> になりうる。ログインせずに非公開オブジェクトを作れば <code>CKR_USER_NOT_LOGGED_IN</code>、2回ログインすれば <code>CKR_USER_ALREADY_LOGGED_IN</code>。",
+   c:["s.login(UserType::User, Some(&wrong_pin))",C("// → CKR_PIN_INCORRECT"),"lib.get_token_info(slot)?.user_pin_count_low(); "+C("// true")],
+   k:["login"], lit:{PIN_INCORRECT:"on",USER_NOT_LOGGED_IN:"on",USER_ALREADY_LOGGED_IN:"on",PIN_LOCKED:"on"}},
+  {t:"④ テンプレート",
+   b:"オブジェクトを作る・読む・変えるときのエラー。必要な属性がない、属性どうしが食い違う、その種類にない属性を書いた、値が許されない、変えられない属性を変えようとした、読めない属性を読もうとした。第3章・第4章で見たもの。",
+   c:["s.generate_key(&Mechanism::AesKeyGen, &[/* 長さなし */])",C("// → CKR_TEMPLATE_INCOMPLETE"),"s.update_attributes(key, &[Attribute::Sensitive(false)])",C("// → CKR_ATTRIBUTE_READ_ONLY")],
+   k:["tpl"], lit:{TEMPLATE_INCOMPLETE:"on",TEMPLATE_INCONSISTENT:"on",ATTRIBUTE_TYPE_INVALID:"on",ATTRIBUTE_VALUE_INVALID:"on",ATTRIBUTE_READ_ONLY:"on",ATTRIBUTE_SENSITIVE:"on"}},
+  {t:"⑤ 操作の開始",
+   b:"<code>C_SignInit</code> や <code>C_EncryptInit</code> は、メカニズムと鍵を確かめる。トークンにない方式なら <code>CKR_MECHANISM_INVALID</code>、鍵の用途が許していなければ <code>CKR_KEY_FUNCTION_NOT_PERMITTED</code>、同じセッションで別の操作が途中なら <code>CKR_OPERATION_ACTIVE</code>。第6章・第7章で見たもの。",
+   c:["s.sign(&Mechanism::Sha256RsaPkcs, pub_h, data)",C("// → CKR_KEY_FUNCTION_NOT_PERMITTED")],
+   k:["init"], lit:{MECHANISM_INVALID:"on",KEY_FUNCTION_NOT_PERMITTED:"on",KEY_TYPE_INCONSISTENT:"on",OPERATION_ACTIVE:"on"}},
+  {t:"⑥ データ",
+   b:"データを渡す段階のエラー。長さが合わなければ <code>CKR_DATA_LEN_RANGE</code>、検証で署名が合わなければ <code>CKR_SIGNATURE_INVALID</code>、署名の長さが違えば <code>CKR_SIGNATURE_LEN_RANGE</code>。出力先が小さければ <code>CKR_BUFFER_TOO_SMALL</code>（cryptoki は先に長さを聞くので、ふつうは出ない）。",
+   c:["s.encrypt(&Mechanism::AesCbc(iv), key, b\"hello hsm\")",C("// → CKR_DATA_LEN_RANGE（16 の倍数でない）")],
+   k:["data"], lit:{DATA_LEN_RANGE:"on",SIGNATURE_INVALID:"on",SIGNATURE_LEN_RANGE:"on",ENCRYPTED_DATA_INVALID:"on",BUFFER_TOO_SMALL:"on"}},
+  {t:"エラーのあと、操作は終わる",
+   b:"暗号化や署名の途中でエラーが返ると、その操作は終わっている。続きを呼ぶと <code>CKR_OPERATION_NOT_INITIALIZED</code> になるので、<code>Init</code> からやり直す。例外は <code>CKR_BUFFER_TOO_SMALL</code> で、このときは出力先を大きくして同じ呼び出しをやり直せる。",
+   c:["s.encrypt_final() "+C("// → CKR_DATA_LEN_RANGE"),"s.encrypt_update(&block)",C("// → CKR_OPERATION_NOT_INITIALIZED"),"s.encrypt_init(&mech, key)?; "+C("// やり直し")],
+   k:[], lit:{}},
+  {t:"仕様どおりとは限らない",
+   b:"同じ場面でも、トークンが仕様と違うエラーを返すことがある。仕様では別の名前が決まっている失敗が <code>CKR_GENERAL_ERROR</code> になるトークンもある。<code>CKR_PIN_INCORRECT</code> や <code>CKR_SIGNATURE_INVALID</code> のように意味がはっきりしたものだけ個別に扱い、それ以外は「失敗」としてまとめて扱うと、トークンを変えても壊れにくい。",
+   c:["match e {","    Error::Pkcs11(RvError::PinIncorrect, _) =>","        /* PIN を聞き直す */,","    Error::Pkcs11(rv, f) => /* 失敗として記録 */,","    _ => /* 読み込みの失敗など */,","}"],
+   k:[], lit:{}},
+  {t:"番号でも読めるようにする",
+   b:"ログには名前だけでなく番号と関数名も残す。番号は仕様書の表や、ほかのツールの出力（<code>0x000000A0</code> など）と突き合わせやすい。<code>0x80000000</code> 以上はベンダー独自のエラーで、意味はそのトークンの資料を見る。",
+   c:["Rv::from(0xA0) "+C("// → Error(PinIncorrect)"),"Rv::from(0x8000_0001)",C("// → Error(VendorDefined(0x80000001))")],
+   k:["lib","sess","login","tpl","init","data","uni"], lit:{}}
+];
+const ALL={t:"全体像",
+  b:"戻り値はすべて <code>CK_RV</code>。どの段階（ライブラリ・セッション・ログイン・テンプレート・操作の開始・データ）で起きたかで読み、エラーのあとは <code>Init</code> からやり直す。トークンによって返すエラーは仕様と違うことがあるので、意味のはっきりしたものだけ個別に扱う。",
+  c:[C("// 挙動は examples/ref-errors で CI 確認"),C("// 根拠：Base v2.40「Function return values」"),C("//   と各関数の「Return values」")]};
+
+const svgEl=document.getElementById('svg');
+let step=1;
+function lightUp(){
+  const st=step===0?{k:[],lit:{}}:STEPS[step-1];
+  svgEl.querySelectorAll('.row').forEach(r=>{const m=st.lit[r.dataset.a];r.classList.remove('lit','ok','ng','on');if(m)r.classList.add('lit',m)});
+  svgEl.querySelectorAll('.stage').forEach(g=>g.classList.toggle('lit',st.k.includes(g.dataset.k)));
+}
+runSteps({steps:STEPS, all:ALL, onShow:(cur,all)=>{step=all?0:cur; lightUp()}});
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>第7章 署名と検証 | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/steps.js"></script>
+<style>
+svg[data-v="rsa"] .v-ec,svg[data-v="rsa"] .v-hmac,
+svg[data-v="ec"] .v-rsa,svg[data-v="ec"] .v-hmac,
+svg[data-v="hmac"] .v-rsa,svg[data-v="hmac"] .v-ec{display:none}
+/* 手順ごとに光らせる部分 */
+/* 手順全体を光らせる共通の演出は使わず、関係する部分だけを光らせる */
+g[data-step].now{filter:none}
+svg [data-k].lit>.box{stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 0 6px var(--brass))}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　第7章 署名と検証<span class="ver" title="この章の関数・メカニズムは v2.40 にあり、v3.0 / v3.1 でも変わらない">仕様 v2.40〜</span></h1>
+    <div class="ctl">
+      <a class="ref" href="ref-attributes.html#private" target="_blank" rel="noopener">属性リファレンス</a>
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 480" role="img" aria-labelledby="dt" data-v="rsa">
+    <title id="dt">署名の図。アプリのデータがセッションを通ってトークンのメカニズムと秘密鍵で署名になり、公開鍵で検証される。</title>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/></marker></defs>
+
+    <g data-step="1">
+      <!-- アプリ -->
+      <rect class="frame" x="10" y="8" width="290" height="464" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="24" y="34" font-size="16" font-weight="700">アプリ</text>
+      <g data-k="data"><rect class="box" x="24" y="50" width="262" height="56" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="36" y="70" font-size="12" class="mut">データ</text><text x="36" y="94" font-size="13" class="mono">"hello hsm"（9 バイト）</text></g>
+      <!-- セッション -->
+      <g data-k="calls"><rect class="box" x="312" y="50" width="160" height="250" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+        <text x="324" y="74" font-size="14" font-weight="700">セッション</text><text x="324" y="98" font-size="11.5" class="mut">進行中の操作は 1 つ</text>
+        <rect x="324" y="106" width="136" height="30" rx="4" fill="var(--panel2)" stroke="var(--cipher)"/><text x="392" y="126" font-size="13" text-anchor="middle" class="cy">署名</text>
+        <g class="calls1"><text x="324" y="170" font-size="12.5" class="mono cy">① C_SignInit</text><text x="338" y="188" font-size="11.5" class="mut">メカニズム＋鍵</text>
+        <text x="324" y="218" font-size="12.5" class="mono cy">② C_Sign</text><text x="338" y="236" font-size="11.5" class="mut">データ → 署名</text></g></g>
+      <!-- トークン -->
+      <rect class="frame" x="484" y="8" width="706" height="464" rx="6" fill="none" stroke="var(--line)"/>
+      <text x="498" y="30" font-size="14" class="mut mono">トークン</text>
+      <g data-k="pipe"><rect class="box" x="498" y="44" width="680" height="126" rx="6" fill="var(--panel)" stroke="var(--line)"/></g>
+      <path class="draw" pathLength="1" d="M286,78 L310,78" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <path class="draw" pathLength="1" d="M472,96 L496,96" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <path class="draw" pathLength="1" d="M496,320 L290,320" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/>
+      <g class="chip on" data-v="rsa" role="button" tabindex="0" aria-label="RSA の署名を見る"><rect x="1004" y="14" width="54" height="22" rx="4"/><text x="1031" y="29" font-size="12" text-anchor="middle" class="mono">RSA</text></g>
+      <g class="chip" data-v="ec" role="button" tabindex="0" aria-label="ECDSA の署名を見る"><rect x="1062" y="14" width="58" height="22" rx="4"/><text x="1091" y="29" font-size="12" text-anchor="middle" class="mono">ECDSA</text></g>
+      <g class="chip" data-v="hmac" role="button" tabindex="0" aria-label="HMAC を見る"><rect x="1124" y="14" width="56" height="22" rx="4"/><text x="1152" y="29" font-size="12" text-anchor="middle" class="mono">HMAC</text></g>
+    </g>
+    <!-- 9. 毎回同じ・毎回違う -->
+    <g data-only="9"><rect class="box" x="24" y="350" width="262" height="112" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+      <text x="36" y="374" font-size="12">同じデータにもう一度署名すると</text></g>
+
+    <g class="v-rsa"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_SHA256_RSA_PKCS</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">ハッシュも含めて1つのメカニズム</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">SHA-256</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">データを 32 バイトに要約</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">PKCS#1 v1.5</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">決まった形に整える</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">RSA 秘密鍵で演算</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">d を使う（外に出ない）</text><g data-k="priv"><rect class="box" x="498" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">秘密鍵</text>
+          <text x="512" y="238" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="640" y="238" font-size="12" class="mono cy">CKK_RSA</text>
+          <text x="512" y="262" font-size="12" class="mono">CKA_SIGN</text><text x="640" y="262" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="286" font-size="12" class="mono">CKA_SENSITIVE</text><text x="640" y="286" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="318" font-size="11.5" class="mut">署名に使う</text></g>
+        <g data-k="pub"><rect class="box" x="728" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="742" y="210" font-size="15" font-weight="700">公開鍵</text>
+          <text x="742" y="238" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="870" y="238" font-size="12" class="mono cy">CKK_RSA</text>
+          <text x="742" y="262" font-size="12" class="mono">CKA_VERIFY</text><text x="870" y="262" font-size="12" class="mono cy">TRUE</text>
+          <text x="742" y="318" font-size="11.5" class="mut">検証に使う（外にも配れる）</text></g><g data-k="sig"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="36" y="258" font-size="12" class="mut">署名</text>
+        <rect x="36" y="270" width="238" height="18" rx="3" fill="var(--brass)"/>
+        <text x="36" y="312" font-size="12">256 バイト（RSA 2048）</text></g><text x="36" y="150" font-size="12" class="mut">ハッシュはメカニズムの中で計算する</text></g><g data-only="9"><text x="36" y="402" font-size="12" class="cy">2 回目も同じ署名になる</text><text x="36" y="426" font-size="11.5" class="mut">（PKCS#1 v1.5 は毎回同じ）</text></g></g><g class="v-ec"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_ECDSA</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">ハッシュは含まない</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="none" stroke="var(--line)" stroke-dasharray="5 4"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" class="mut">SHA-256 は先に済ませる</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">アプリが C_Digest で 32 バイトに</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">ECDSA</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">乱数 k を使って署名</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">r ‖ s</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">32 + 32 = 64 バイト</text><g data-k="priv"><rect class="box" x="498" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">秘密鍵</text>
+          <text x="512" y="238" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="640" y="238" font-size="12" class="mono cy">CKK_EC</text>
+          <text x="512" y="262" font-size="12" class="mono">CKA_SIGN</text><text x="640" y="262" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="286" font-size="12" class="mono">CKA_SENSITIVE</text><text x="640" y="286" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="318" font-size="11.5" class="mut">署名に使う</text></g>
+        <g data-k="pub"><rect class="box" x="728" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="742" y="210" font-size="15" font-weight="700">公開鍵</text>
+          <text x="742" y="238" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="870" y="238" font-size="12" class="mono cy">CKK_EC</text>
+          <text x="742" y="262" font-size="12" class="mono">CKA_VERIFY</text><text x="870" y="262" font-size="12" class="mono cy">TRUE</text>
+          <text x="742" y="318" font-size="11.5" class="mut">検証に使う（外にも配れる）</text></g><g data-k="sig"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="36" y="258" font-size="12" class="mut">署名</text>
+        <rect x="36" y="270" width="60" height="18" rx="3" fill="var(--brass)"/>
+        <text x="36" y="312" font-size="12">64 バイト（r と s を並べる。DER ではない）</text></g><g data-k="hash"><rect class="box" x="24" y="118" width="262" height="56" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+          <text x="36" y="139" font-size="12" class="mono cy">C_Digest(CKM_SHA256)</text><text x="36" y="161" font-size="12">SHA-256 の値（32 バイト）を署名に渡す</text></g></g><g data-only="9"><text x="36" y="402" font-size="12" class="cy">2 回目は違う署名になる</text><text x="36" y="426" font-size="11.5" class="mut">乱数 k が毎回違うため。どちらも検証は通る</text></g></g><g class="v-hmac"><g data-step="1"><text x="512" y="68" font-size="14" class="mono brass">CKM_SHA256_HMAC</text><text x="1166" y="68" font-size="12" text-anchor="end" class="mut">共通鍵で作る MAC</text><rect class="pbox" x="512" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="615.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">共通鍵</text><text x="615.0" y="130" font-size="11.5" text-anchor="middle" class="mut">CKK_GENERIC_SECRET・32 バイト</text><path d="M720,115 L738,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="742" y="82" width="206" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="845.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">HMAC-SHA256</text><text x="845.0" y="130" font-size="11.5" text-anchor="middle" class="mut">鍵とデータを混ぜて要約</text><path d="M950,115 L968,115" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/><rect class="pbox" x="972" y="82" width="194" height="66" rx="6" fill="var(--panel2)" stroke="var(--line)"/><text x="1069.0" y="108" font-size="13.5" text-anchor="middle" font-weight="700">MAC</text><text x="1069.0" y="130" font-size="11.5" text-anchor="middle" class="mut">32 バイト</text><g data-k="priv"><rect class="box" x="498" y="186" width="450" height="150" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+          <text x="512" y="210" font-size="15" font-weight="700">共通鍵</text><text x="934" y="210" font-size="11.5" text-anchor="end" class="mono mut">CKO_SECRET_KEY</text>
+          <text x="512" y="234" font-size="12" class="mono">CKA_KEY_TYPE</text><text x="712" y="234" font-size="12" class="mono cy">CKK_GENERIC_SECRET</text>
+          <text x="512" y="256" font-size="12" class="mono">CKA_SIGN</text><text x="712" y="256" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="278" font-size="12" class="mono">CKA_VERIFY</text><text x="712" y="278" font-size="12" class="mono cy">TRUE</text>
+          <text x="512" y="300" font-size="12" class="mono">CKA_VALUE_LEN</text><text x="712" y="300" font-size="12" class="mono cy">32</text>
+          <text x="512" y="326" font-size="11.5" class="mut">MAC を作るのも確かめるのも、この同じ鍵</text></g><g data-k="sig"><rect class="box" x="24" y="236" width="262" height="100" rx="6" fill="var(--panel2)" stroke="var(--line)"/>
+        <text x="36" y="258" font-size="12" class="mut">MAC</text>
+        <rect x="36" y="270" width="30" height="18" rx="3" fill="var(--brass)"/>
+        <text x="36" y="312" font-size="12">32 バイト（HMAC-SHA256）</text></g><text x="36" y="150" font-size="12" class="mut">ハッシュはメカニズムの中で計算する</text></g><g data-only="9"><text x="36" y="402" font-size="12" class="cy">2 回目も同じ MAC になる</text></g></g>
+
+    <!-- 2. 使えるメカニズム -->
+    <g data-only="2"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" class="mono brass">C_GetMechanismList の結果の例（中身はトークン次第）</text>
+      <text x="512" y="404" font-size="12.5" class="mono cy">✓ CKM_SHA256_RSA_PKCS</text><text x="512" y="428" font-size="12.5" class="mono cy">✓ CKM_ECDSA</text>
+      <text x="842" y="404" font-size="12.5" class="mono cy">✓ CKM_SHA256_HMAC</text><text x="842" y="428" font-size="12.5" class="mono wr">✕ CKM_ECDSA_SHA256 → CKR_MECHANISM_INVALID</text>
+      <text x="512" y="452" font-size="11.5" class="mut">仕様にあっても、トークンが対応していなければ使えない</text></g>
+
+    <!-- 4. 断られる組み合わせ -->
+    <g data-only="4"><rect class="box" x="958" y="186" width="220" height="150" rx="6" fill="var(--panel)" stroke="var(--warn)" stroke-dasharray="5 4"/>
+      <text x="972" y="210" font-size="15" font-weight="700" class="wr">署名できない鍵</text>
+      <text x="972" y="238" font-size="12" class="mono">CKA_SIGN</text><text x="1100" y="238" font-size="12" class="mono wr">FALSE</text>
+      <text x="972" y="270" font-size="12">公開鍵</text><text x="1100" y="270" font-size="11.5" class="mut">（SIGN なし）</text>
+      <text x="972" y="302" font-size="12">種類の違う鍵</text><text x="1100" y="302" font-size="11.5" class="mut">（RSA に ECDSA）</text>
+      <rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+      <text x="512" y="376" font-size="13" font-weight="700" class="wr">C_SignInit で断られる</text>
+      <text x="512" y="402" font-size="12.5" class="mono">CKA_SIGN のない鍵・公開鍵 → CKR_KEY_FUNCTION_NOT_PERMITTED</text><text x="512" y="426" font-size="12.5" class="mono">RSA の鍵で CKM_ECDSA → 仕様では CKR_KEY_TYPE_INCONSISTENT</text><text x="512" y="450" font-size="11.5" class="mut">（返すエラーはトークン次第。CKR_GENERAL_ERROR になることもある）</text></g>
+
+    <!-- 5. 署名の長さ -->
+    <g data-only="5"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" font-weight="700">署名の長さは鍵とメカニズムで決まる</text>
+      <text x="512" y="402" font-size="12.5">RSA 2048 → 256 バイト ／ ECDSA P-256 → 64 バイト ／ HMAC-SHA256 → 32 バイト</text><text x="512" y="426" font-size="12" class="mut">出力先を NULL にして C_Sign を呼ぶと、長さだけが返る（cryptoki は自動でこうする）</text><text x="512" y="450" font-size="12" class="mono mut">出力先が小さすぎれば CKR_BUFFER_TOO_SMALL</text></g>
+
+    <!-- 6. 検証 -->
+    <g data-only="6"><rect x="324" y="106" width="136" height="30" rx="4" fill="var(--panel2)" stroke="var(--cipher)"/><text x="392" y="126" font-size="13" text-anchor="middle" class="cy">検証</text>
+      <rect x="316" y="150" width="152" height="146" fill="var(--panel)"/>
+      <text x="324" y="170" font-size="12.5" class="mono cy">① C_VerifyInit</text><text x="324" y="194" font-size="11.5" class="mut">　メカニズム＋公開鍵</text><text x="324" y="218" font-size="12.5" class="mono cy">② C_Verify</text><text x="324" y="242" font-size="11.5" class="mut">　データ＋署名 → 結果</text>
+      <rect class="box" x="24" y="350" width="262" height="112" rx="6" fill="var(--panel2)" stroke="var(--cipher)"/>
+      <text x="36" y="372" font-size="12" class="mono cy">C_VerifyInit / C_Verify</text>
+      <text x="36" y="398" font-size="12" class="mono cy">正しい → CKR_OK</text><text x="36" y="420" font-size="11.5" class="mono wr">1バイト改ざん → CKR_SIGNATURE_INVALID</text><text x="36" y="442" font-size="11.5" class="mono wr">署名が短い → CKR_SIGNATURE_LEN_RANGE</text>
+      <path class="" pathLength="1" d="M838,338 L838,345 L478,345 L478,406 L290,406" stroke="var(--cipher)" stroke-width="2.2" fill="none" marker-end="url(#ar)"/></g>
+
+    <!-- 7. 分けて渡す -->
+    <g data-only="7"><rect class="box" x="316" y="150" width="152" height="146" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="324" y="172" font-size="12" class="mono cy">① C_SignInit</text><text x="324" y="193" font-size="12" class="mono cy">② C_SignUpdate</text><text x="324" y="214" font-size="11.5" class="mut">　 × 何回でも</text><text x="324" y="235" font-size="12" class="mono cy">③ C_SignFinal</text><text x="324" y="256" font-size="11.5">→ 一度に渡したとき</text><text x="324" y="277" font-size="11.5">　と同じ署名</text></g>
+
+    <!-- 8. 1つのセッションで1つ -->
+    <g data-only="8"><rect class="box" x="316" y="150" width="152" height="146" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+      <text x="324" y="172" font-size="11.5">署名の途中で</text><text x="324" y="193" font-size="12" class="mono">もう一度 C_SignInit</text><text x="324" y="214" font-size="11" class="mono wr">→ CKR_OPERATION</text><text x="324" y="235" font-size="11" class="mono wr">　 _ACTIVE</text>
+      <rect class="box" x="312" y="330" width="160" height="110" rx="6" fill="var(--panel)" stroke="var(--cipher)"/>
+      <text x="324" y="354" font-size="14" font-weight="700">別のセッション</text>
+      <text x="324" y="382" font-size="12" class="mono cy">C_Sign → OK</text><text x="324" y="406" font-size="11.5" class="mut">同時に署名できる</text></g>
+
+    <!-- 10. 共通鍵を作る -->
+    <g data-only="10"><rect class="box" x="498" y="352" width="680" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="512" y="376" font-size="13" class="mono brass">C_GenerateKey(CKM_GENERIC_SECRET_KEY_GEN)</text>
+      <text x="512" y="402" font-size="12" class="mono">CKA_VALUE_LEN = 32, CKA_SIGN = TRUE, CKA_VERIFY = TRUE, CKA_SENSITIVE = TRUE</text>
+      <text x="512" y="428" font-size="12" class="wr">相手も同じ鍵を持っていないと検証できない（公開鍵のように配れない）</text>
+      <text x="512" y="452" font-size="11.5" class="mut">AES の鍵と同じく、テンプレート1つの C_GenerateKey で作る</text></g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+  <nav class="sitenav" data-page="docs/07-sign.html" data-root="../" data-spec="base curr latest" aria-label="章の移動"></nav>
+</div>
+
+<script>
+const C=code;
+const STEPS=[
+  {t:"署名は2段階で頼む",
+   b:"まず <code>C_SignInit</code> でメカニズムと秘密鍵を決め、次に <code>C_Sign</code> でデータを渡すと署名が返る。鍵はトークンの中から出ない。cryptoki の <code>sign</code> はこの2つを続けて呼ぶ。",
+   c:["let sig = s.sign(&Mechanism::Sha256RsaPkcs,","    priv_h, b\"hello hsm\")?;",C("// C_SignInit → C_Sign")],
+   k:["data","calls","pipe","priv","sig"], v:"rsa"},
+  {t:"使えるメカニズムはトークン次第",
+   b:"仕様にあるメカニズムでも、トークンが対応していなければ使えない（<code>CKR_MECHANISM_INVALID</code>）。たとえば <code>CKM_ECDSA</code> はあっても <code>CKM_ECDSA_SHA256</code> はない、ということがある。使う前に <code>C_GetMechanismList</code> で確かめる。",
+   c:["let list = lib.get_mechanism_list(slot)?;","list.contains(&MechanismType::ECDSA_SHA256);",C("// トークン次第")],
+   k:["pipe"]},
+  {t:"ハッシュまでやるメカニズム・やらないメカニズム",
+   b:"<code>CKM_SHA256_RSA_PKCS</code> はハッシュから署名まで1つで行う。<code>CKM_ECDSA</code> はハッシュを含まないので、先に SHA-256 の値を作って渡す（ハッシュもトークンの <code>C_Digest</code> でできる）。この手順では RSA と ECDSA が交互に切り替わる。",
+   c:["let hash = s.digest(&Mechanism::Sha256, data)?;","let sig = s.sign(&Mechanism::Ecdsa,","    priv_h, &hash)?; "+C("// ハッシュ値に署名")],
+   k:["pipe","hash"], cycle:["rsa","ec"]},
+  {t:"断られる鍵",
+   b:"<code>C_SignInit</code> は鍵の属性を確かめる。<code>CKA_SIGN</code> のない鍵や公開鍵では <code>CKR_KEY_FUNCTION_NOT_PERMITTED</code>。鍵の種類とメカニズムが合わないときは、仕様では <code>CKR_KEY_TYPE_INCONSISTENT</code>（返すエラーはトークン次第）。",
+   c:["s.sign(&Mechanism::Sha256RsaPkcs, no_sign, data)",C("// → CKR_KEY_FUNCTION_NOT_PERMITTED")],
+   k:["priv"], v:"rsa"},
+  {t:"署名の長さ",
+   b:"署名の長さは鍵とメカニズムで決まる。RSA 2048 は 256 バイト、P-256 の ECDSA は r と s を並べた 64 バイト（DER 形式ではない）。出力先を NULL にして呼ぶと長さだけを教えてくれる。",
+   c:["sig.len(); "+C("// RSA 2048 → 256"),"ec_sig.len(); "+C("// P-256 → 64（r ‖ s）")],
+   k:["sig"]},
+  {t:"検証は公開鍵で",
+   b:"検証は <code>C_VerifyInit</code> と <code>C_Verify</code> に公開鍵・データ・署名を渡す。正しければ成功、データが1バイトでも違えば <code>CKR_SIGNATURE_INVALID</code>、長さが合わなければ <code>CKR_SIGNATURE_LEN_RANGE</code>。",
+   c:["s.verify(&Mechanism::Sha256RsaPkcs,","    pub_h, data, &sig)?;",C("// 改ざん → CKR_SIGNATURE_INVALID")],
+   k:["pub"]},
+  {t:"長いデータは分けて渡す",
+   b:"データが大きいときは <code>C_SignUpdate</code> で少しずつ渡し、最後に <code>C_SignFinal</code> で署名を受け取る。結果は一度に渡したときと同じ。",
+   c:["s.sign_init(&mech, priv_h)?;","s.sign_update(b\"hello \")?; s.sign_update(b\"hsm\")?;","let sig = s.sign_final()?; "+C("// 一度に渡したときと同じ")],
+   k:["calls"], v:"rsa"},
+  {t:"1つのセッションで1つの操作",
+   b:"署名の途中（<code>C_SignInit</code> のあと、終わる前）に同じセッションでもう一度 <code>C_SignInit</code> すると <code>CKR_OPERATION_ACTIVE</code>。並行して署名したいときは、別のセッションを開く。",
+   c:["s.sign_init(&mech, priv_h)?;","s.sign_init(&mech, priv_h); "+C("// もう一度"),C("// → CKR_OPERATION_ACTIVE"),"other.sign(&mech, priv_h, data)?; "+C("// OK")],
+   k:["calls"]},
+  {t:"毎回同じ署名・毎回違う署名",
+   b:"RSA の PKCS#1 v1.5 は、同じ鍵とデータなら毎回同じ署名になる。ECDSA は署名のたびに乱数を使うので毎回違う値になるが、どれも検証は通る。この手順では RSA と ECDSA が交互に切り替わる。",
+   c:["s.sign(&mech, priv_h, data)? == sig;",C("// RSA: true"),"s.sign(&Mechanism::Ecdsa, priv_h, &hash)? == ec_sig;",C("// ECDSA: false（でも検証は通る）")],
+   k:["sig","pipe"], cycle:["rsa","ec"]},
+  {t:"共通鍵なら MAC",
+   b:"共通鍵でも <code>C_Sign</code> と <code>C_Verify</code> を使う。これは MAC（HMAC など）で、作るのも確かめるのも同じ鍵。鍵は AES と同じく <code>C_GenerateKey</code> で作る。相手も同じ鍵を持つ必要があり、公開鍵のように配れない。",
+   c:["let k = s.generate_key(","    &Mechanism::GenericSecretKeyGen, &template)?;","let mac = s.sign(&Mechanism::Sha256Hmac, k, data)?;"],
+   k:["priv","pipe","sig"], v:"hmac"}
+];
+const ALL={t:"全体像",
+  b:"署名は <code>C_SignInit</code>（メカニズムと鍵）→ <code>C_Sign</code>（データ）の2段階で、検証は公開鍵で同じ形に行う。使えるメカニズムはトークン次第、鍵の属性が合わなければ断られる。共通鍵なら同じ関数で MAC になる。",
+  c:[C("// この章の関数・メカニズムは v2.40 で定義済み"),C("// 挙動は examples/07-sign で CI 確認"),C("// 根拠：Base v2.40「Signing and MACing functions」"),C("//   「Functions for verifying signatures and MACs」")]};
+
+const svgEl=document.getElementById('svg'), stageEl=document.getElementById('stage');
+let cycle=null, step=1;
+function setV(v){
+  svgEl.dataset.v=v;
+  svgEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===v));
+}
+function lightUp(){
+  const ks=(step===0?[]:STEPS[step-1].k)||[];
+  svgEl.querySelectorAll('[data-k]').forEach(g=>g.classList.toggle('lit',ks.includes(g.dataset.k)));
+}
+function stopCycle(){clearInterval(cycle);cycle=null}
+svgEl.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>{stopCycle();setV(c.dataset.v)});
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();stopCycle();setV(c.dataset.v)}});
+});
+runSteps({
+  steps:STEPS, all:ALL,
+  onShow:(cur,all)=>{
+    stopCycle(); step=all?0:cur; lightUp();
+    if(all)return;
+    const st=STEPS[cur-1];
+    if(st.v)setV(st.v);
+    else if(svgEl.dataset.v==='hmac')setV('rsa');
+    if(st.cycle){
+      setV(st.cycle[0]); let i=0;
+      cycle=setInterval(()=>{if(!stageEl.classList.contains('paused')){i=(i+1)%st.cycle.length;setV(st.cycle[i])}},3500);
+    }
+  }
+});
+</script>
+</body>
+</html>
