@@ -25,3 +25,4 @@ jobs:
           cargo run -p keygen
           cargo run -p sign
           cargo run -p crypt
+          cargo run -p errors

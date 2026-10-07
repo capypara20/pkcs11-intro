@@ -7,6 +7,7 @@
     ['docs/02-keygen.html','第2章 鍵の生成'],
     ['docs/03-sign.html','第3章 署名と検証'],
     ['docs/04-crypt.html','第4章 暗号化と復号'],
+    ['docs/05-errors.html','第5章 エラーコード'],
   ];
   const REFS=[
     ['docs/ref-attributes.html','属性リファレンス'],
