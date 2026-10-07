@@ -13,6 +13,7 @@ main{max-width:46rem;margin:0 auto;padding:64px 24px 80px}
 .hex{font-family:var(--mono);color:var(--muted);font-size:13px;letter-spacing:.06em;word-break:break-all;opacity:.7;margin:0}
 h1{font-size:44px;line-height:1.2;margin:18px 0 8px}
 .lead{color:var(--muted);margin:0 0 40px}
+.sub{color:var(--muted);margin:0 0 12px;font-size:14px}
 ol{list-style:none;padding:0;margin:0;border-top:1px solid var(--line)}
 li{display:grid;grid-template-columns:6rem 1fr auto;gap:12px;align-items:baseline;padding:14px 4px;border-bottom:1px solid var(--line)}
 li .n{font-family:var(--mono);color:var(--brass)}
@@ -42,7 +43,13 @@ h2{font-size:18px;margin:40px 0 12px;color:var(--muted);font-weight:500}
     <li><span class="n">第4章</span><a href="docs/04-crypt.html">暗号化と復号</a><span class="s">公開中</span></li>
     <li><span class="n">第5章</span><a href="docs/05-errors.html">エラーコード</a><span class="s">公開中</span></li>
     <li><span class="n">第6章</span><a href="docs/06-init.html">初期化とセッション</a><span class="s">公開中</span></li>
+    <li><span class="n">第7章</span><a href="docs/07-find.html">鍵の探し方と名前の付け方</a><span class="s">公開中</span></li>
     <li class="todo"><span class="n">付録</span><span>cryptoki の下で何が起きているか（生 FFI）</span><span class="s">準備中</span></li>
+  </ol>
+  <h2>シナリオ</h2>
+  <p class="sub">1本の鍵を最初から最後まで追う通しの例。各場面で、関係する章を使う。</p>
+  <ol>
+    <li><span class="n">シナリオ1</span><a href="docs/s1-lifecycle.html">鍵の一生（読み込み → 作る → 証明書 → 別の HSM へ移す → 消す）</a><span class="s">公開中</span></li>
   </ol>
   <h2>リファレンス</h2>
   <ol>

@@ -1,0 +1,10 @@
+[package]
+name = "lifecycle"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+cryptoki = { workspace = true }
+cryptoki-sys = "0.5"
+rcgen = { version = "0.14", default-features = false, features = ["pem"] }
