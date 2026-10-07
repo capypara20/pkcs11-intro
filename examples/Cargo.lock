@@ -51,6 +51,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "init"
+version = "0.1.0"
+dependencies = [
+ "cryptoki",
+]
+
+[[package]]
 name = "keygen"
 version = "0.1.0"
 dependencies = [

@@ -30,3 +30,5 @@ nav.sitenav .home{color:var(--muted)}
 nav.sitenav .spec{color:var(--muted);font-size:13px}
 nav.sitenav .next{justify-self:end}
 nav.sitenav .off{color:var(--muted);opacity:.6}
+/* スマホでは真ん中（目次・仕様書）を上の段にして、前後のリンクを下の段に並べる */
+@media (max-width:820px){nav.sitenav{grid-template-columns:1fr 1fr}nav.sitenav .mid{grid-column:1 / -1;grid-row:1}}

@@ -42,10 +42,11 @@ Ubuntu の場合：
 sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
-cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keygen && cargo run -p sign && cargo run -p crypt && cargo run -p errors
+cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keygen && cargo run -p sign && cargo run -p crypt && cargo run -p errors && cargo run -p init
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。
+第6章のサンプル（`init`）だけは、同じ `.softhsm/` の空きスロットに練習用トークン `ch6` を作ります（2回目からは `ch6` を初期化し直します）。
 スクリプトは実行のたびにトークンを作り直します。サンプルは結果を assert で確かめるので、章の記述と挙動がずれると CI が失敗します。
 
 ## ライセンス
