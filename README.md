@@ -43,12 +43,12 @@ sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
 cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keygen && cargo run -p sign && cargo run -p crypt && cargo run -p errors && cargo run -p init && cargo run -p find && cargo run -p lifecycle
-cargo run -p functions && cargo run -p mechanisms   # リファレンスの裏付け
+cargo run -p functions && cargo run -p mechanisms && cargo run -p maintenance   # リファレンスの裏付け
 bash ../scripts/check-commands.sh                   # コマンドリファレンスの全コマンド（専用のトークン置き場を使う）
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。
-第6章のサンプル（`init`）とシナリオ1（`lifecycle`）は、同じ `.softhsm/` の空きスロットに練習用トークン（`ch6`、`hsm-a`、`hsm-b`）を作ります（2回目からは初期化し直します）。
+第6章のサンプル（`init`）・シナリオ1（`lifecycle`）・`maintenance` は、同じ `.softhsm/` の空きスロットに練習用トークン（`ch6`、`hsm-a`、`hsm-b`、`maint-api`）を作ります（2回目からは初期化し直します）。
 シナリオ1は、作った証明書と署名を `openssl` コマンドでも検証します（PATH にあるとき）。
 スクリプトは実行のたびにトークンを作り直します。サンプルは結果を assert で確かめるので、章の記述と挙動がずれると CI が失敗します。
 

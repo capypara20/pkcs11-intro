@@ -19,6 +19,7 @@
     ['docs/ref-attributes.html','属性リファレンス'],
     ['docs/ref-mechanisms.html','メカニズムリファレンス'],
     ['docs/ref-functions.html','関数リファレンス'],
+    ['docs/ref-maintenance.html','メンテナンス API リファレンス'],
     ['docs/ref-commands.html','コマンドリファレンス'],
   ];
   // 根拠にしている OASIS の仕様書（新しいタブで開く）。index.html の参考資料も合わせて更新すること

@@ -31,5 +31,6 @@ jobs:
           cargo run -p lifecycle
           cargo run -p functions
           cargo run -p mechanisms
+          cargo run -p maintenance
       - name: Check maintenance commands
         run: bash scripts/check-commands.sh

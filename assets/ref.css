@@ -79,3 +79,9 @@ body.hide-weak .fn[data-weak]{display:none}
 .cmdrow .note{font-size:13px;color:var(--muted);margin-top:6px}
 .cmdrow .cf code.f{display:inline-block;font-size:12px;color:var(--cipher);border:1px solid var(--line);border-radius:4px;padding:0 6px;margin:3px 4px 0 0}
 @media (max-width:1000px){.cmdrow{grid-template-columns:1fr}}
+
+/* メンテナンスの行：作業・関数と確認・cryptoki・関連ページ・コマンド */
+.fn.mt{grid-template-columns:minmax(11rem,14rem) minmax(0,1fr) minmax(12rem,17rem) minmax(8rem,11rem) minmax(8rem,12rem)}
+.fn.mt .name{font-weight:700;font-size:14.5px}
+.fn code.api{display:block;color:var(--cipher);font-size:13px;overflow-wrap:anywhere}
+@media (max-width:1000px){.fn.mt{grid-template-columns:1fr}}
