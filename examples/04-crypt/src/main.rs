@@ -1,4 +1,5 @@
-//! 第4章 暗号化と復号：共通鍵（AES）の各モードと、公開鍵（RSA-OAEP）での暗号化を確かめる。
+//! 第4章 暗号化と復号：共通鍵（AES の各モード・3DES）と、公開鍵（RSA-OAEP・RSA PKCS#1 v1.5）での
+//! 暗号化を確かめる。
 //!
 //! 実行前に scripts/setup-softhsm.sh でテスト用トークンを用意すること。
 //!   PKCS11_MODULE      … Cryptoki ライブラリのパス（既定: SoftHSM2）
@@ -11,12 +12,14 @@ use cryptoki::context::{CInitializeArgs, CInitializeFlags, Pkcs11};
 use cryptoki::error::{Error, RvError};
 use cryptoki::mechanism::aead::GcmParams;
 use cryptoki::mechanism::rsa::{PkcsMgfType, PkcsOaepParams, PkcsOaepSource};
+use cryptoki::mechanism::vendor_defined::VendorDefinedMechanism;
 use cryptoki::mechanism::{Mechanism, MechanismType};
-use cryptoki::object::{Attribute, ObjectHandle};
+use cryptoki::object::{Attribute, AttributeType, KeyType, ObjectHandle};
 use cryptoki::session::{Session, UserType};
 use cryptoki::slot::Slot;
 use cryptoki::types::AuthPin;
 use std::env;
+use std::os::raw::c_ulong;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -57,6 +60,21 @@ fn aes_key(s: &Session, encrypt: bool) -> Result<ObjectHandle> {
 fn random_iv(s: &Session) -> Result<[u8; 16]> {
     let v = s.generate_random_vec(16)?;
     Ok(v.try_into().expect("16 バイト"))
+}
+
+/// 仕様の CK_AES_CTR_PARAMS。cryptoki 0.12 には AES-CTR の型がないので、仕様どおりに自分で定義して渡す
+#[repr(C)]
+struct CtrParams {
+    counter_bits: c_ulong, // カウンタブロックのうち、カウンタとして増やすビット数
+    cb: [u8; 16],          // カウンタブロックの初期値
+}
+
+fn ctr(p: &CtrParams) -> Mechanism<'_> {
+    Mechanism::VendorDefined(VendorDefinedMechanism::new(MechanismType::AES_CTR, Some(p)))
+}
+
+fn xor(a: &[u8], b: &[u8]) -> Vec<u8> {
+    a.iter().zip(b).map(|(x, y)| x ^ y).collect()
 }
 
 fn gcm<'a>(iv: &'a mut [u8], aad: &'a [u8]) -> Result<Mechanism<'a>> {
@@ -124,7 +142,29 @@ fn main() -> Result<()> {
         String::from_utf8_lossy(&changed)
     );
 
-    // 8. GCM は暗号文にタグを付け、改ざんされていれば復号を拒む
+    // 8. CTR はパディング不要（長さそのまま）。改ざんには気づかず、同じカウンタを使い回すと平文の XOR が漏れる
+    let counter = CtrParams {
+        counter_bits: 32,
+        cb: random_iv(&s)?,
+    };
+    let ctr_ct = s.encrypt(&ctr(&counter), key, DATA)?;
+    assert_eq!(ctr_ct.len(), DATA.len());
+    assert_eq!(s.decrypt(&ctr(&counter), key, &ctr_ct)?, DATA);
+    let mut ctr_flip = ctr_ct.clone();
+    ctr_flip[0] ^= 0x01;
+    assert_eq!(s.decrypt(&ctr(&counter), key, &ctr_flip)?, b"iello hsm");
+    let other = s.encrypt(&ctr(&counter), key, b"HELLO HSM")?;
+    assert_eq!(
+        xor(&ctr_ct, &other),
+        xor(DATA, b"HELLO HSM"),
+        "暗号文どうしの XOR = 平文どうしの XOR"
+    );
+    println!(
+        "CTR: 9 バイト → {} バイト。1ビット改ざんは素通り、カウンタの使い回しで平文の XOR が漏れる",
+        ctr_ct.len()
+    );
+
+    // 9. GCM は暗号文にタグを付け、改ざんされていれば復号を拒む
     let mut giv = s.generate_random_vec(12)?;
     let sealed = s.encrypt(&gcm(&mut giv.clone(), AAD)?, key, DATA)?;
     assert_eq!(
@@ -146,7 +186,56 @@ fn main() -> Result<()> {
         sealed.len()
     );
 
-    // 9. 長いデータは分けて渡せる。途中では出力が 0 バイトのこともある（ブロックがそろうまでためる）
+    // 10. DES と 3DES：鍵の長さは固定（CKA_VALUE_LEN は書かない）、ブロックは 8 バイト
+    let des_t = [
+        Attribute::Token(false),
+        Attribute::Encrypt(true),
+        Attribute::Decrypt(true),
+        Attribute::Sensitive(false), // パリティを見るためだけに値を読めるようにしている
+        Attribute::Extractable(true),
+    ];
+    let des3 = s.generate_key(&Mechanism::Des3KeyGen, &des_t)?; // C_GenerateKey(CKM_DES3_KEY_GEN)
+    let attrs = s.get_attributes(des3, &[AttributeType::KeyType, AttributeType::Value])?;
+    assert!(attrs.contains(&Attribute::KeyType(KeyType::DES3)));
+    let value = attrs
+        .iter()
+        .find_map(|a| match a {
+            Attribute::Value(v) => Some(v.clone()),
+            _ => None,
+        })
+        .ok_or("CKA_VALUE が読めない")?;
+    assert_eq!(value.len(), 24, "3 鍵の 3DES は 24 バイト");
+    assert!(
+        value.iter().all(|b| b.count_ones() % 2 == 1),
+        "各バイトは奇数パリティ"
+    );
+    let des2 = s.generate_key(&Mechanism::Des2KeyGen, &des_t)?; // 2 鍵の 3DES（16 バイト）
+    assert!(s
+        .get_attributes(des2, &[AttributeType::KeyType])?
+        .contains(&Attribute::KeyType(KeyType::DES2)));
+    let iv8: [u8; 8] = s.generate_random_vec(8)?.try_into().expect("8 バイト");
+    let des_ct = s.encrypt(&Mechanism::Des3CbcPad(iv8), des3, DATA)?;
+    assert_eq!(des_ct.len(), 16, "9 バイト → 8 の倍数の 16 バイト");
+    assert_eq!(s.decrypt(&Mechanism::Des3CbcPad(iv8), des3, &des_ct)?, DATA);
+    let des_ecb = s.encrypt(&Mechanism::Des3Ecb, des3, &[b'A'; 16])?;
+    assert_eq!(
+        des_ecb[..8],
+        des_ecb[8..],
+        "ECB の模様は 8 バイト単位で残る"
+    );
+    // 単一 DES：鍵は作れるが、SoftHSM2 2.6.1（この環境）は「暗号化できる」と答えても実際は拒む。
+    // C_GetMechanismInfo でトークンに直接聞く（cryptoki の get_mechanism_list は DES 系を一覧から間引く）
+    let des1 = s.generate_key(&Mechanism::DesKeyGen, &des_t)?;
+    assert!(lib
+        .get_mechanism_info(slot, MechanismType::DES_CBC_PAD)?
+        .encrypt());
+    let single = rv(s.encrypt(&Mechanism::DesCbcPad(iv8), des1, DATA));
+    assert_eq!(single, Some(RvError::MechanismInvalid));
+    println!(
+        "3DES: 鍵 24 バイト（パリティ付き）、9 バイト → 16 バイト。単一 DES の暗号化 → {single:?}"
+    );
+
+    // 11. 長いデータは分けて渡せる。途中では出力が 0 バイトのこともある（ブロックがそろうまでためる）
     s.encrypt_init(&Mechanism::AesCbcPad(iv), key)?;
     let mut parts = s.encrypt_update(b"hello ")?;
     let first = parts.len();
@@ -155,7 +244,7 @@ fn main() -> Result<()> {
     assert_eq!(parts, ct);
     println!("分けて暗号化 = 一度に暗号化（最初の C_EncryptUpdate の出力は {first} バイト）");
 
-    // 10. 公開鍵で暗号化、秘密鍵で復号（RSA-OAEP）。SoftHSM2 2.6.1 は SHA-1 の OAEP だけに対応
+    // 12. 公開鍵で暗号化、秘密鍵で復号（RSA-OAEP）。SoftHSM2 2.6.1 は SHA-1 の OAEP だけに対応
     let (pub_h, priv_h) = s.generate_key_pair(
         &Mechanism::RsaPkcsKeyPairGen,
         &[
@@ -209,6 +298,22 @@ fn main() -> Result<()> {
     println!(
         "RSA-OAEP: 256 バイト・毎回違う。SHA-256 の OAEP → {sha256_result:?}、215 バイト → {too_long:?}"
     );
+
+    // 13. RSA PKCS#1 v1.5 の暗号化：古い詰め方。2048 ビットなら 256 - 11 = 245 バイトまで
+    let v15 = s.encrypt(&Mechanism::RsaPkcs, pub_h, DATA)?;
+    assert_eq!(v15.len(), 256);
+    assert_ne!(
+        v15,
+        s.encrypt(&Mechanism::RsaPkcs, pub_h, DATA)?,
+        "乱数で埋めるので毎回違う"
+    );
+    assert_eq!(s.decrypt(&Mechanism::RsaPkcs, priv_h, &v15)?, DATA);
+    assert_eq!(
+        s.encrypt(&Mechanism::RsaPkcs, pub_h, &[7u8; 245])?.len(),
+        256
+    );
+    assert!(rv(s.encrypt(&Mechanism::RsaPkcs, pub_h, &[7u8; 246])).is_some());
+    println!("RSA PKCS#1 v1.5: 256 バイト・毎回違う・245 バイトまで");
 
     s.logout()?;
     s.close()?; // セッションオブジェクトの鍵はここで消える
