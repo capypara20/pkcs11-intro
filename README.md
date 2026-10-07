@@ -31,7 +31,7 @@ docs/                 各章（NN-*.html）・シナリオ（sN-*.html）・リ�
 assets/               共通のスタイルとスクリプト（chapter.css / steps.js は第1章以降の章ページ用）
 diagrams/             図の元データ（draw.io）
 examples/             Rust サンプル（Cargo workspace）
-scripts/              SoftHSM2 のテスト用トークン作成
+scripts/              SoftHSM2 のテスト用トークン作成と、コマンドリファレンスの確認
 ```
 
 ## サンプルを動かす
@@ -43,6 +43,8 @@ sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
 cd examples && cargo run -p overview && cargo run -p objects && cargo run -p keygen && cargo run -p sign && cargo run -p crypt && cargo run -p errors && cargo run -p init && cargo run -p find && cargo run -p lifecycle
+cargo run -p functions && cargo run -p mechanisms   # リファレンスの裏付け
+bash ../scripts/check-commands.sh                   # コマンドリファレンスの全コマンド（専用のトークン置き場を使う）
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。
