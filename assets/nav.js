@@ -17,6 +17,7 @@
     ['docs/s2-rotation.html','シナリオ2 鍵の付け替え'],
   ];
   const REFS=[
+    ['docs/ref-glossary.html','用語・略語集'],
     ['docs/ref-attributes.html','属性リファレンス'],
     ['docs/ref-mechanisms.html','メカニズムリファレンス'],
     ['docs/ref-functions.html','関数リファレンス'],
