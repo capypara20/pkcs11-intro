@@ -14,6 +14,7 @@
   // 1本の鍵を最初から最後まで追う、章をまたいだ通しの例
   const SCENARIOS=[
     ['docs/s1-lifecycle.html','シナリオ1 鍵の一生'],
+    ['docs/s2-rotation.html','シナリオ2 鍵の付け替え'],
   ];
   const REFS=[
     ['docs/ref-attributes.html','属性リファレンス'],

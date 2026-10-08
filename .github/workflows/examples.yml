@@ -29,6 +29,7 @@ jobs:
           cargo run -p crypt
           cargo run -p sign
           cargo run -p lifecycle
+          cargo run -p rotation
           cargo run -p functions
           cargo run -p mechanisms
           cargo run -p maintenance

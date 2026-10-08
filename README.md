@@ -44,14 +44,14 @@ Ubuntu の場合：
 sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
-cd examples && cargo run -p overview && cargo run -p init && cargo run -p connect && cargo run -p objects && cargo run -p keygen && cargo run -p find && cargo run -p crypt && cargo run -p sign && cargo run -p lifecycle
+cd examples && cargo run -p overview && cargo run -p init && cargo run -p connect && cargo run -p objects && cargo run -p keygen && cargo run -p find && cargo run -p crypt && cargo run -p sign && cargo run -p lifecycle && cargo run -p rotation
 cargo run -p functions && cargo run -p mechanisms && cargo run -p maintenance && cargo run -p errors   # リファレンスの裏付け
 bash ../scripts/check-commands.sh                   # コマンドリファレンスの全コマンド（専用のトークン置き場を使う）
 ```
 
 テスト用トークン（ラベル `demo`）はリポジトリ内の `.softhsm/` に作られ、既存の SoftHSM2 トークンには影響しません。
-第1章のサンプル（`init`）・シナリオ1（`lifecycle`）・`maintenance` は、同じ `.softhsm/` の空きスロットに練習用トークン（`ch1`、`hsm-a`、`hsm-b`、`maint-api`）を作ります（2回目からは初期化し直します）。
-シナリオ1は、作った証明書と署名を `openssl` コマンドでも検証します（PATH にあるとき）。
+第1章のサンプル（`init`）・シナリオ1（`lifecycle`）・シナリオ2（`rotation`）・`maintenance` は、同じ `.softhsm/` の空きスロットに練習用トークン（`ch1`、`hsm-a`、`hsm-b`、`rotate`、`maint-api`）を作ります（2回目からは初期化し直します）。
+シナリオ1・2は、証明書や署名を `openssl` コマンドでも検証します（PATH にあるとき）。
 スクリプトは実行のたびにトークンを作り直します。サンプルは結果を assert で確かめるので、章の記述と挙動がずれると CI が失敗します。
 
 ## ライセンス
