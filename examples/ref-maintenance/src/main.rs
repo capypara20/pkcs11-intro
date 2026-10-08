@@ -12,7 +12,7 @@ use cryptoki::error::{Error, RvError};
 use cryptoki::mechanism::{Mechanism, MechanismType};
 use cryptoki::object::{Attribute, AttributeType, ObjectHandle};
 use cryptoki::session::{Session, UserType};
-use cryptoki::slot::{Limit, Slot};
+use cryptoki::slot::Slot;
 use cryptoki::types::{AuthPin, Date};
 use std::env;
 
@@ -81,23 +81,25 @@ fn main() -> Result<()> {
         env::var("PKCS11_MODULE").unwrap_or_else(|_| "/usr/lib/softhsm/libsofthsm2.so".to_string());
     let lib = Pkcs11::new(&module)?;
     lib.initialize(CInitializeArgs::new(CInitializeFlags::OS_LOCKING_OK))?;
-    let softhsm = lib.get_library_info()?.manufacturer_id() == "SoftHSM";
     let slot = prepare(&lib)?;
 
     // A. 健康診断：ログインしなくても読める
     assert!(lib.get_slots_with_initialized_token()?.contains(&slot));
     let t = lib.get_token_info(slot)?; // C_GetTokenInfo
     assert!(t.token_initialized() && t.user_pin_initialized());
-    if softhsm {
-        // 空き容量・セッション数は「不明」、時計はない
-        assert_eq!(t.free_public_memory(), None);
-        assert_eq!(t.free_private_memory(), None);
-        assert_eq!(t.session_count(), None);
-        assert!(matches!(t.max_session_count(), Limit::Infinite));
-        assert!(!t.clock_on_token() && t.utc_time().is_none());
-    }
+    // 空き容量・セッション数は、わからなければ CK_UNAVAILABLE_INFORMATION（cryptoki では None）。時計はトークン次第
+    let known = |v: Option<u64>| v.map_or("不明".to_string(), |n| n.to_string());
+    let clock = if t.clock_on_token() {
+        "あり"
+    } else {
+        "なし"
+    };
     assert_eq!(lib.get_slot_event()?, None); // C_WaitForSlotEvent（待たない）→ CKR_NO_EVENT
-    println!("A: 初期化済み・User PIN あり。空き容量・セッション数は不明、時計なし、抜き差しの知らせなし");
+    println!(
+        "A: 初期化済み・User PIN あり。空き容量 {}・セッション数 {}・時計 {clock}、抜き差しの知らせなし",
+        known(t.free_public_memory().map(|n| n as u64)),
+        known(t.session_count())
+    );
 
     // A（続き）PIN を間違えると「残りが少ない」の印が立つ
     let s = lib.open_rw_session(slot)?;
@@ -150,19 +152,13 @@ fn main() -> Result<()> {
     assert_eq!(count, 2);
     println!("C: オブジェクト {count} 件。秘密鍵は CKA_LOCAL=TRUE、CKA_KEY_GEN_MECHANISM=CKM_EC_KEY_PAIR_GEN");
 
-    // C（続き）日付：書けるが、使い道は止めない。SoftHSM2 では書いた日付を読み戻せない
+    // C（続き）日付：書けるが、使い道は止めない（仕様でも、日付で使い道を止めるのはアプリの役目）
     let past = Date::new_from_str_slice("2020", "01", "01")?;
     s.update_attributes(sign_priv, &[Attribute::EndDate(past)])?; // C_SetAttributeValue は成功
     let hash = s.digest(&Mechanism::Sha256, b"hello hsm")?;
     let sig = s.sign(&Mechanism::Ecdsa, sign_priv, &hash)?; // 終了日を過ぎていても署名できる
     s.verify(&Mechanism::Ecdsa, sign_pub, &hash, &sig)?;
-    if softhsm {
-        assert_eq!(
-            rv(s.get_attributes(sign_priv, &[AttributeType::EndDate])),
-            Some(RvError::GeneralError)
-        );
-    }
-    println!("C: CKA_END_DATE を過去にしても署名できた。SoftHSM2 では読むと CKR_GENERAL_ERROR");
+    println!("C: CKA_END_DATE を過去にしても署名できた");
 
     // D. 用途を止める：CKA_SIGN は変えられる。止めた鍵では署名できない
     s.update_attributes(sign_priv, &[Attribute::Sign(false)])?;

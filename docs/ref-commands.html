@@ -13,8 +13,8 @@
 <body>
 <main>
   <nav class="sitenav" data-page="docs/ref-commands.html" data-root="../" data-spec="base latest" aria-label="ページの移動"></nav>
-  <h1>コマンドリファレンス（pkcs11-tool・softhsm2-util）</h1>
-  <p class="lead">トークンの用意・状態の確認・鍵の出し入れ・PIN の管理・バックアップを、コマンドで行うときの引き表（26 件）。すべて CI で実行し、中で呼ばれる PKCS#11 の関数も記録して確かめている。同じ作業を API で行うときは<a href="ref-maintenance.html" target="_blank" rel="noopener">メンテナンス API リファレンス</a>へ。</p>
+  <h1>コマンドリファレンス（pkcs11-tool・pkcs11-spy）</h1>
+  <p class="lead">トークンの用意・状態の確認・鍵の出し入れ・PIN の管理・呼ばれた関数の記録を、コマンドで行うときの引き表（24 件）。どれも PKCS#11 の関数を呼ぶだけなので、HSM の種類を問わない。すべて CI で実行し、中で呼ばれる PKCS#11 の関数も記録して確かめている。同じ作業を API で行うときは<a href="ref-maintenance.html" target="_blank" rel="noopener">メンテナンス API リファレンス</a>へ。</p>
 
   <div class="intro">
     <div>
@@ -23,15 +23,16 @@
         <table class="mini">
           <tr><th>コマンド</th><th>どこで使えるか</th><th>中身</th></tr>
           <tr><td><code>pkcs11-tool</code></td><td>どの HSM でも（<code>--module</code> でライブラリを指定）</td><td>OpenSC に入っている。PKCS#11 の関数を呼ぶだけなので、HSM の種類を問わない</td></tr>
-          <tr><td><code>softhsm2-util</code></td><td>SoftHSM2 だけ</td><td>トークンの作成・削除と、鍵ファイルの取り込み</td></tr>
+          <tr><td><code>pkcs11-spy</code></td><td>どの HSM でも（アプリとライブラリの間にはさむ）</td><td>OpenSC に入っている。呼ばれた関数と引数・戻り値を記録する</td></tr>
           <tr><td><code>openssl</code></td><td>（確認用）</td><td>書き出した公開鍵や署名を、HSM の外で確かめる</td></tr>
         </table>
-        <p>本物の HSM には、ベンダーの管理ツールがある（トークンの初期化・バックアップ・複製・監査ログなど）。それらは PKCS#11 の外の仕組みで、このページでは扱わない。</p>
+        <p>表のコマンドは、環境変数 <code>PKCS11_MODULE</code> に使う HSM の PKCS#11 ライブラリ（ベンダーが配る .so / .dll）のパスを入れておく前提で書いた。</p>
+        <p>HSM には、ベンダーの管理ツールもある（トークンの初期化・バックアップ・複製・監査ログなど）。それらは PKCS#11 の外の仕組みで、このページでは扱わない。</p>
       </div>
       <div class="box" style="margin-top:14px">
         <h2>「中で呼ばれる関数」の調べ方</h2>
         <p>OpenSC の <code>pkcs11-spy</code> を間にはさむと、呼ばれた関数と引数をすべて記録できる。本物のライブラリは環境変数 <code>PKCS11SPY</code> で渡す。</p>
-        <pre class="cmd">PKCS11SPY=/usr/lib/softhsm/libsofthsm2.so \
+        <pre class="cmd">PKCS11SPY="$PKCS11_MODULE" \
 PKCS11SPY_OUTPUT=spy.log \
 pkcs11-tool --module /usr/lib/x86_64-linux-gnu/pkcs11-spy.so -L</pre>
         <p style="margin-top:8px">表には、そのコマンドの本題の関数だけを載せた（<code>C_Initialize</code>・<code>C_OpenSession</code> などの決まった前後の呼び出しは省いた）。cryptoki のサンプルも同じ方法で記録できる（<code>PKCS11_MODULE</code> に spy を渡す）。</p>
@@ -44,7 +45,7 @@ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/pkcs11-spy.so -L</pre>
       </div>
       <div class="box" style="margin-top:14px">
         <h2>作業ごと（押すとそこへ）</h2>
-        <ul class="toc"><li><a href="#c-A">A. トークンを用意する</a> <span class="mut">3</span></li><li><a href="#c-B">B. 状態を見る</a> <span class="mut">4</span></li><li><a href="#c-C">C. 鍵を作る・入れる・出す</a> <span class="mut">6</span></li><li><a href="#c-D">D. 動かして確かめる</a> <span class="mut">5</span></li><li><a href="#c-E">E. 変える・消す</a> <span class="mut">3</span></li><li><a href="#c-F">F. PIN の管理</a> <span class="mut">3</span></li><li><a href="#c-G">G. 片付けとバックアップ（SoftHSM2）</a> <span class="mut">2</span></li></ul>
+        <ul class="toc"><li><a href="#c-A">A. トークンを用意する</a> <span class="mut">2</span></li><li><a href="#c-B">B. 状態を見る</a> <span class="mut">3</span></li><li><a href="#c-C">C. 鍵を作る・入れる・出す</a> <span class="mut">6</span></li><li><a href="#c-D">D. 動かして確かめる</a> <span class="mut">5</span></li><li><a href="#c-E">E. 変える・消す</a> <span class="mut">3</span></li><li><a href="#c-F">F. PIN の管理</a> <span class="mut">3</span></li><li><a href="#c-G">G. 呼ばれた関数を記録する（pkcs11-spy）</a> <span class="mut">2</span></li></ul>
       </div>
     </div>
   </div>
@@ -54,72 +55,76 @@ pkcs11-tool --module /usr/lib/x86_64-linux-gnu/pkcs11-spy.so -L</pre>
     <button onclick="document.querySelectorAll('details').forEach(d=>d.open=false)">すべて閉じる</button>
   </div>
 
-<details class="node" id="c-A" open><summary><span class="tw">▶</span><span class="nt">A. トークンを用意する</span><span class="nn">3 件</span></summary>
-<div class="callout">鍵を置く場所を作り、PIN を決める（第1章）。中身はすべて消えるので、使い始める前に1回だけ。</div><div class="cmdrow" id="init-softhsm"><div class="ct"><div class="name">SoftHSM2 のトークンを作る</div><span class="bd b-so">SoftHSM2 だけ</span></div>
-<div class="cb"><p>空きスロットのトークンを初期化し、SO PIN と User PIN を一度に決める。</p><pre class="cmd">softhsm2-util --init-token --free --label maint --so-pin 5678 --pin 1111</pre><div class="note">中では C_InitToken と C_InitPIN を続けて呼んでいる。初期化したトークンは別のスロット番号に付け替えられる（第1章）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（pkcs11-tool ではない）</span></div></div><div class="cmdrow" id="init-token"><div class="ct"><div class="name">トークンを初期化する（どの HSM でも）</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>pkcs11-tool で C_InitToken を呼ぶ。スロットは番号で指定する（未初期化のトークンにはラベルがない）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --slot &lt;空きスロットの番号&gt; --init-token --label spare --so-pin 5678</pre><div class="note">本物の HSM では、トークンの初期化はベンダーの管理ツールで行うことが多い。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_InitToken</code></div></div><div class="cmdrow" id="init-pin"><div class="ct"><div class="name">SO が User PIN を決める</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>SO でログインして C_InitPIN を呼ぶ。これで User がログインできるようになる。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label spare --login --login-type so --so-pin 5678 --init-pin --new-pin 1111</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_Login</code><code class="f">C_InitPIN</code></div></div></details>
-<details class="node" id="c-B" open><summary><span class="tw">▶</span><span class="nt">B. 状態を見る</span><span class="nn">4 件</span></summary>
-<div class="callout">ログインしなくても見られるものが多い。困ったら、まずここから。注意：pkcs11-tool の --token-label は前方一致で探す（「mai」で maint が選ばれた）。maint と maint2 のように片方がもう片方の頭と同じラベルだと、どちらが選ばれるかはスロットの並び次第で、このページの確認中に、別のトークンの PIN を変えてしまった。ラベルは互いに頭がそろわない名前にするか、--slot で番号を指定する。</div><div class="cmdrow" id="show-slots"><div class="ct"><div class="name">スロットとトークンの一覧（SoftHSM2）</div><span class="bd b-so">SoftHSM2 だけ</span></div>
-<div class="cb"><p>SoftHSM2 のスロット・トークンの状態を表示する。未初期化の空きスロットも出る。</p><pre class="cmd">softhsm2-util --show-slots</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（pkcs11-tool ではない）</span></div></div><div class="cmdrow" id="list-slots"><div class="ct"><div class="name">スロットとトークンの一覧</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_GetSlotList と C_GetTokenInfo で、トークンのラベルやフラグ（PIN の状態など）を表示する。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    -L</pre><div class="note">token flags に「user PIN count low」「user PIN locked」が出ていないかを見る。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GetSlotList</code><code class="f">C_GetSlotInfo</code><code class="f">C_GetTokenInfo</code></div></div><div class="cmdrow" id="show-info"><div class="ct"><div class="name">ライブラリの情報</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_GetInfo で Cryptoki の版とライブラリの提供元・版を表示する。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    -I</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GetInfo</code></div></div><div class="cmdrow" id="list-mechanisms"><div class="ct"><div class="name">使えるメカニズムの一覧</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_GetMechanismList と C_GetMechanismInfo で、メカニズムと鍵の長さ・用途を表示する（メカニズムリファレンスと同じ内容）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
+<details class="node" id="c-A" open><summary><span class="tw">▶</span><span class="nt">A. トークンを用意する</span><span class="nn">2 件</span></summary>
+<div class="callout">鍵を置く場所を作り、PIN を決める（第1章）。中身はすべて消えるので、使い始める前に1回だけ。</div><div class="cmdrow" id="init-token"><div class="ct"><div class="name">トークンを初期化する</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_InitToken で、SO PIN とラベルを決める。未初期化のトークンにはラベルがないので、スロットは番号で指す。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --slot &lt;空きスロットの番号&gt; --init-token --label maint --so-pin 5678</pre><div class="note">本物の HSM では、トークンの初期化はベンダーの管理ツールで行うことが多い。スロット番号は固定とは限らない（トークン次第）ので、このあとはラベルで指す。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_InitToken</code></div></div><div class="cmdrow" id="init-pin"><div class="ct"><div class="name">SO が User PIN を決める</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>SO でログインして C_InitPIN を呼ぶ。これで User がログインできるようになる。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --login-type so --so-pin 5678 --init-pin --new-pin 1111</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_Login</code><code class="f">C_InitPIN</code></div></div></details>
+<details class="node" id="c-B" open><summary><span class="tw">▶</span><span class="nt">B. 状態を見る</span><span class="nn">3 件</span></summary>
+<div class="callout">ログインしなくても見られるものが多い。困ったら、まずここから。注意：pkcs11-tool の --token-label は前方一致で探す（「mai」で maint が選ばれる）。maint と maint2 のように片方がもう片方の頭と同じラベルだと、どちらが選ばれるかはスロットの並び次第。ラベルの頭をかぶらせないか、--slot で指す。</div><div class="cmdrow" id="list-slots"><div class="ct"><div class="name">スロットとトークンの一覧</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_GetSlotList と C_GetTokenInfo で、トークンのラベルやフラグ（PIN の状態など）を表示する。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    -L</pre><div class="note">token flags に「user PIN count low」「user PIN locked」が出ていないかを見る。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GetSlotList</code><code class="f">C_GetSlotInfo</code><code class="f">C_GetTokenInfo</code></div></div><div class="cmdrow" id="show-info"><div class="ct"><div class="name">ライブラリの情報</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_GetInfo で Cryptoki の版とライブラリの提供元・版を表示する。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    -I</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GetInfo</code></div></div><div class="cmdrow" id="list-mechanisms"><div class="ct"><div class="name">使えるメカニズムの一覧</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_GetMechanismList と C_GetMechanismInfo で、そのトークンが使えるメカニズムと鍵の長さ・用途を表示する（中身はトークン次第。メカニズムリファレンスの表と見比べる）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
     --token-label maint -M</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GetMechanismList</code><code class="f">C_GetMechanismInfo</code></div></div></details>
 <details class="node" id="c-C" open><summary><span class="tw">▶</span><span class="nt">C. 鍵を作る・入れる・出す</span><span class="nn">6 件</span></summary>
-<div class="callout">指定しなかった属性はトークンの既定になる。SoftHSM2 で --keygen した AES 鍵は、用途を何も指定しなくても、暗号化・署名・包むなどすべての用途が TRUE だった。用途を絞るなら、作る側で明示する（第4章）。</div><div class="cmdrow" id="keypairgen"><div class="ct"><div class="name">EC 鍵ペアを作る</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_GenerateKeyPair で P-256 の鍵ペアを作り、公開鍵と秘密鍵に同じ CKA_ID（01）とラベルを付ける（第5章）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --keypairgen --key-type EC:prime256v1 --id 01 --label orders-sign --usage-sign</pre><div class="note">--key-type は rsa:2048、EC:ed25519 なども書ける。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateKeyPair</code></div></div><div class="cmdrow" id="keygen"><div class="ct"><div class="name">AES 鍵を作る</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_GenerateKey で AES-256 の鍵を作る。--sensitive で CKA_SENSITIVE=TRUE にする。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --keygen --key-type AES:32 --id 02 --label orders-data --sensitive</pre><div class="note">値を読もうとして CKR_ATTRIBUTE_SENSITIVE の警告が出るのは正常（読めないのが正しい）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateKey</code></div></div><div class="cmdrow" id="list-objects"><div class="ct"><div class="name">オブジェクトの一覧</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_FindObjects で全オブジェクトを探し、C_GetAttributeValue で属性を表示する。ログインしないと非公開のものは出ない（第5章）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 -O</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_FindObjectsInit</code><code class="f">C_FindObjects</code><code class="f">C_GetAttributeValue</code><code class="f">C_FindObjectsFinal</code></div></div><div class="cmdrow" id="read-pubkey"><div class="ct"><div class="name">公開鍵を書き出す</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>公開鍵を DER（SubjectPublicKeyInfo）でファイルに書き出す。秘密鍵はこの方法では出せない（第3章）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --read-object --type pubkey --id 01 -o pub.der</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_FindObjects</code><code class="f">C_GetAttributeValue</code></div></div><div class="cmdrow" id="write-cert"><div class="ct"><div class="name">証明書を入れる</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>DER の証明書を C_CreateObject で証明書オブジェクトとして入れる。鍵ペアと同じ CKA_ID にすると結びつく（シナリオ1）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --write-object web.der --type cert --id 03 --label web</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_CreateObject</code></div></div><div class="cmdrow" id="import-key"><div class="ct"><div class="name">秘密鍵を取り込む（SoftHSM2）</div><span class="bd b-so">SoftHSM2 だけ</span></div>
-<div class="cb"><p>PKCS#8 の秘密鍵ファイルを、鍵ペアとしてトークンに取り込む。</p><pre class="cmd">softhsm2-util --import web.p8.pem --token maint --label web --id 03 --pin 1111</pre><div class="note">取り込んだ鍵は CKA_LOCAL=FALSE（トークンの中で生まれていない）。HSM の外で作った鍵は、外にも写しが残っている。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（pkcs11-tool ではない）</span></div></div></details>
+<div class="callout">指定しなかった属性は、トークンの既定値になる（既定値はトークン次第）。用途や守りは、作る側で明示する（第4章）。</div><div class="cmdrow" id="keypairgen"><div class="ct"><div class="name">EC 鍵ペアを作る</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_GenerateKeyPair で P-256 の鍵ペアを作り、公開鍵と秘密鍵に同じ CKA_ID（01）とラベルを付ける（第5章）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --keypairgen --key-type EC:prime256v1 --id 01 --label orders-sign --usage-sign</pre><div class="note">--key-type は rsa:2048、EC:ed25519 なども書ける（使えるかはトークン次第）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateKeyPair</code></div></div><div class="cmdrow" id="keygen"><div class="ct"><div class="name">AES 鍵を作る</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_GenerateKey で AES-256 の鍵を作る。--sensitive で CKA_SENSITIVE=TRUE にする。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --keygen --key-type AES:32 --id 02 --label orders-data --sensitive</pre><div class="note">値を読もうとして CKR_ATTRIBUTE_SENSITIVE の警告が出るのは正常（読めないのが正しい）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateKey</code></div></div><div class="cmdrow" id="list-objects"><div class="ct"><div class="name">オブジェクトの一覧</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_FindObjects で全オブジェクトを探し、C_GetAttributeValue で属性を表示する。ログインしないと非公開のものは出ない（第5章）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 -O</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_FindObjectsInit</code><code class="f">C_FindObjects</code><code class="f">C_GetAttributeValue</code><code class="f">C_FindObjectsFinal</code></div></div><div class="cmdrow" id="read-pubkey"><div class="ct"><div class="name">公開鍵を書き出す</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>公開鍵を DER（SubjectPublicKeyInfo）でファイルに書き出す。秘密鍵はこの方法では出せない（第3章）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --read-object --type pubkey --id 01 -o pub.der</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_FindObjects</code><code class="f">C_GetAttributeValue</code></div></div><div class="cmdrow" id="write-cert"><div class="ct"><div class="name">証明書を入れる</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>DER の証明書を C_CreateObject で証明書オブジェクトとして入れる。鍵ペアと同じ CKA_ID にすると結びつく（シナリオ1）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --write-object web.der --type cert --id 03 --label web</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_CreateObject</code></div></div><div class="cmdrow" id="import-key"><div class="ct"><div class="name">秘密鍵を取り込む</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>外で作った秘密鍵（DER の PKCS#8）を、C_CreateObject で秘密鍵オブジェクトとして入れる（第4章の取り込みの線）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --write-object web.p8.der --type privkey --id 03 --label web --sensitive</pre><div class="note">取り込んだ鍵は CKA_LOCAL=FALSE（トークンの中で生まれていない）。外で作った鍵は、外にも写しが残っている。安全に運ぶなら、包んで C_UnwrapKey で入れる（シナリオ1）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_CreateObject</code></div></div></details>
 <details class="node" id="c-D" open><summary><span class="tw">▶</span><span class="nt">D. 動かして確かめる</span><span class="nn">5 件</span></summary>
-<div class="callout">鍵が使えるか、トークンが正しく動いているかを確かめる。</div><div class="cmdrow" id="random"><div class="ct"><div class="name">乱数を取り出す</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_GenerateRandom で 16 バイトの乱数をファイルに書く。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --generate-random 16 -o rnd.bin</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateRandom</code></div></div><div class="cmdrow" id="hash"><div class="ct"><div class="name">ハッシュを計算する</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>トークンで SHA-256 を計算する（C_DigestInit → C_DigestUpdate → C_DigestFinal）。openssl の結果と同じになる。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --hash -m SHA256 -i data.txt -o h.bin</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_DigestInit</code><code class="f">C_DigestUpdate</code><code class="f">C_DigestFinal</code></div></div><div class="cmdrow" id="sign"><div class="ct"><div class="name">署名する</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>ハッシュ済みの値に CKM_ECDSA で署名し、openssl が読める DER 形式で書き出す（既定は r‖s、第7章）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --sign -m ECDSA --id 01 -i h.bin -o sig.der --signature-format openssl</pre><div class="note">SoftHSM2 には ECDSA-SHA256 がないので、先に --hash でハッシュしてから署名する。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SignInit</code><code class="f">C_Sign</code></div></div><div class="cmdrow" id="verify"><div class="ct"><div class="name">検証する</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>トークンの公開鍵（ID 01）で署名を検証する。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --verify -m ECDSA --id 01 -i h.bin --signature-file sig.der --signature-format openssl</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_VerifyInit</code><code class="f">C_Verify</code></div></div><div class="cmdrow" id="test"><div class="ct"><div class="name">まとめて自己テスト</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>乱数とハッシュを一通り試す。最後に「No errors」と出れば問題ない。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --test</pre><div class="note">署名・検証・復号の試験は RSA 鍵だけが対象で、EC 鍵は飛ばす（「non-RSA, skipping」と出る）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SeedRandom</code><code class="f">C_GenerateRandom</code><code class="f">C_DigestInit</code><code class="f">C_DigestUpdate</code><code class="f">C_DigestFinal</code></div></div></details>
+<div class="callout">鍵が使えるか、トークンが正しく動いているかを確かめる。</div><div class="cmdrow" id="random"><div class="ct"><div class="name">乱数を取り出す</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_GenerateRandom で 16 バイトの乱数をファイルに書く。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --generate-random 16 -o rnd.bin</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateRandom</code></div></div><div class="cmdrow" id="hash"><div class="ct"><div class="name">ハッシュを計算する</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>トークンで SHA-256 を計算する（C_DigestInit → C_DigestUpdate → C_DigestFinal）。openssl の結果と同じになる。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --hash -m SHA256 -i data.txt -o h.bin</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_DigestInit</code><code class="f">C_DigestUpdate</code><code class="f">C_DigestFinal</code></div></div><div class="cmdrow" id="sign"><div class="ct"><div class="name">署名する</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>ハッシュ済みの値に CKM_ECDSA で署名し、openssl が読める DER 形式で書き出す（既定は r‖s、第7章）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --sign -m ECDSA --id 01 -i h.bin -o sig.der --signature-format openssl</pre><div class="note">ハッシュ込みの ECDSA-SHA256 があるトークンなら、-m ECDSA-SHA256 でデータをそのまま渡せる（トークン次第）。ここでは先に --hash でハッシュしてから署名する。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SignInit</code><code class="f">C_Sign</code></div></div><div class="cmdrow" id="verify"><div class="ct"><div class="name">検証する</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>トークンの公開鍵（ID 01）で署名を検証する。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --verify -m ECDSA --id 01 -i h.bin --signature-file sig.der --signature-format openssl</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_VerifyInit</code><code class="f">C_Verify</code></div></div><div class="cmdrow" id="test"><div class="ct"><div class="name">まとめて自己テスト</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>乱数とハッシュを一通り試す。最後に「No errors」と出れば問題ない。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --test</pre><div class="note">署名・検証・復号の試験は RSA 鍵だけが対象で、EC 鍵は飛ばす（「non-RSA, skipping」と出る）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_GenerateRandom</code><code class="f">C_DigestInit</code><code class="f">C_DigestUpdate</code><code class="f">C_DigestFinal</code></div></div></details>
 <details class="node" id="c-E" open><summary><span class="tw">▶</span><span class="nt">E. 変える・消す</span><span class="nn">3 件</span></summary>
-<div class="callout">属性の書き換えと削除。鍵ペアは2つのオブジェクトなので、両方に同じことをする。</div><div class="cmdrow" id="set-id-priv"><div class="ct"><div class="name">CKA_ID を付け替える（秘密鍵）</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_SetAttributeValue で、ID が 01 の秘密鍵の CKA_ID を 11 にする。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --set-id 11 --type privkey --id 01</pre><div class="note">変わるのは指定した1つだけ。公開鍵は 01 のままなので、このままでは --id 11 で検証しようとしても公開鍵が見つからない（確認済）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SetAttributeValue</code></div></div><div class="cmdrow" id="set-id-pub"><div class="ct"><div class="name">CKA_ID を付け替える（公開鍵）</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>公開鍵の CKA_ID も 11 にして、鍵ペアの結びつきを戻す。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --set-id 11 --type pubkey --id 01</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SetAttributeValue</code></div></div><div class="cmdrow" id="delete-cert"><div class="ct"><div class="name">オブジェクトを消す</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>C_DestroyObject で、ID が 03 の証明書を消す。--type を privkey にすれば秘密鍵を消せる（元に戻せない）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
+<div class="callout">属性の書き換えと削除。鍵ペアは2つのオブジェクトなので、両方に同じことをする。</div><div class="cmdrow" id="set-id-priv"><div class="ct"><div class="name">CKA_ID を付け替える（秘密鍵）</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_SetAttributeValue で、ID が 01 の秘密鍵の CKA_ID を 11 にする。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --set-id 11 --type privkey --id 01</pre><div class="note">変わるのは指定した1つだけ。公開鍵は 01 のままなので、このままでは --id 11 で検証しようとしても公開鍵が見つからない（確認済）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SetAttributeValue</code></div></div><div class="cmdrow" id="set-id-pub"><div class="ct"><div class="name">CKA_ID を付け替える（公開鍵）</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>公開鍵の CKA_ID も 11 にして、鍵ペアの結びつきを戻す。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --set-id 11 --type pubkey --id 01</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_SetAttributeValue</code></div></div><div class="cmdrow" id="delete-cert"><div class="ct"><div class="name">オブジェクトを消す</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>C_DestroyObject で、ID が 03 の証明書を消す。--type を privkey にすれば秘密鍵を消せる（元に戻せない）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
     --token-label maint --login --pin 1111 --delete-object --type cert --id 03</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_DestroyObject</code></div></div></details>
 <details class="node" id="c-F" open><summary><span class="tw">▶</span><span class="nt">F. PIN の管理</span><span class="nn">3 件</span></summary>
-<div class="callout">PIN の変更と、間違えすぎたときの立て直し。</div><div class="cmdrow" id="change-pin"><div class="ct"><div class="name">User PIN を変える</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>ログインしてから C_SetPIN で自分の PIN を変える（第1章）。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label maint --login --pin 1111 --change-pin --new-pin 2222</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_Login</code><code class="f">C_SetPIN</code></div></div><div class="cmdrow" id="pin-count-low"><div class="ct"><div class="name">PIN を間違えすぎたとき</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>PIN を何度も間違えると、トークンのフラグに「user PIN count low」が立つ。</p><pre class="cmd">pkcs11-tool --module …/libsofthsm2.so -L   # PIN を何度も間違えたあと</pre><div class="note">SoftHSM2 は 12 回間違えてもロックしなかった。本物の HSM の多くは、決まった回数でロックする（user PIN locked）。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（pkcs11-tool ではない）</span></div></div><div class="cmdrow" id="unlock"><div class="ct"><div class="name">SO が User PIN を付け直す</div><span class="bd b-g">どの HSM でも</span></div>
-<div class="cb"><p>SO が C_InitPIN で新しい User PIN を決める。ロックや「count low」も消える。</p><pre class="cmd">pkcs11-tool --module /usr/lib/softhsm/libsofthsm2.so \
-    --token-label spare --login --login-type so --so-pin 5678 --init-pin --new-pin 3333</pre><div class="note">SO PIN まで忘れると、トークンを初期化する（中身はすべて消える）しかない。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_Login</code><code class="f">C_InitPIN</code></div></div></details>
-<details class="node" id="c-G" open><summary><span class="tw">▶</span><span class="nt">G. 片付けとバックアップ（SoftHSM2）</span><span class="nn">2 件</span></summary>
-<div class="callout">SoftHSM2 のトークンは、tokendir の下のディレクトリ（ファイル）。本物の HSM では、ベンダーのバックアップの仕組み（鍵を平文で外に出さない）を使う。</div><div class="cmdrow" id="delete-token"><div class="ct"><div class="name">トークンを消す</div><span class="bd b-so">SoftHSM2 だけ</span></div>
-<div class="cb"><p>トークンのディレクトリごと消す。中の鍵も消える（元に戻せない）。</p><pre class="cmd">softhsm2-util --delete-token --token spare</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（pkcs11-tool ではない）</span></div></div><div class="cmdrow" id="backup"><div class="ct"><div class="name">トークンを丸ごと写して戻す</div><span class="bd b-so">SoftHSM2 だけ</span></div>
-<div class="cb"><p>使っていないときに tokendir を写しておけば、消えても戻せる。戻したトークンは鍵も PIN も元のまま。</p><pre class="cmd">cp -a tokens backup      # 写す（SoftHSM2 を使っていないときに）
-softhsm2-util --delete-token --token maint
-cp -a backup/. tokens/   # 戻す</pre><div class="note">写しには鍵がそのまま入っているので、トークンと同じだけ厳重に扱う。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（pkcs11-tool ではない）</span></div></div></details>
+<div class="callout">PIN の変更と、間違えすぎたときの立て直し。</div><div class="cmdrow" id="change-pin"><div class="ct"><div class="name">User PIN を変える</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>ログインしてから C_SetPIN で自分の PIN を変える（第1章）。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --pin 1111 --change-pin --new-pin 2222</pre></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_Login</code><code class="f">C_SetPIN</code></div></div><div class="cmdrow" id="pin-count-low"><div class="ct"><div class="name">PIN を間違えたとき</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>PIN を間違えると、トークンのフラグに「user PIN count low」が立つ（最後に正しくログインしてから、1回でも間違えた印）。</p><pre class="cmd">for i in 1 2 3; do
+  pkcs11-tool --module "$PKCS11_MODULE" --token-label maint --login --pin 9999 -O
+done
+pkcs11-tool --module "$PKCS11_MODULE" -L</pre><div class="note">何回間違えるとロックされるか（user PIN locked）はトークン次第。ロックされたら、次の SO の作業で付け直す。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">—</span></div></div><div class="cmdrow" id="unlock"><div class="ct"><div class="name">SO が User PIN を付け直す</div><span class="bd b-g">pkcs11-tool</span></div>
+<div class="cb"><p>SO が C_InitPIN で新しい User PIN を決める。ロックや「count low」も消える。</p><pre class="cmd">pkcs11-tool --module "$PKCS11_MODULE" \
+    --token-label maint --login --login-type so --so-pin 5678 --init-pin --new-pin 3333</pre><div class="note">SO PIN まで忘れると、トークンを初期化する（中身はすべて消える）しかない。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><code class="f">C_Login</code><code class="f">C_InitPIN</code></div></div></details>
+<details class="node" id="c-G" open><summary><span class="tw">▶</span><span class="nt">G. 呼ばれた関数を記録する（pkcs11-spy）</span><span class="nn">2 件</span></summary>
+<div class="callout">アプリやコマンドが、実際にどの PKCS#11 の関数をどんな引数で呼んだかを見る。問い合わせのときや、思った動きをしないときに使う。</div><div class="cmdrow" id="spy"><div class="ct"><div class="name">pkcs11-tool の呼び出しを記録する</div><span class="bd b-g">pkcs11-spy</span></div>
+<div class="cb"><p>pkcs11-spy を --module に渡し、本物のライブラリを PKCS11SPY で渡す。呼ばれた関数が順に、引数と戻り値つきで記録される。</p><pre class="cmd">PKCS11SPY="$PKCS11_MODULE" PKCS11SPY_OUTPUT=spy.log \
+  pkcs11-tool --module /usr/lib/x86_64-linux-gnu/pkcs11-spy.so -L
+grep -E '^[0-9]+: C_' spy.log   # 呼ばれた関数の一覧</pre><div class="note">記録には PIN も平文で残るので、扱いに気をつける。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（記録そのものを見る）</span></div></div><div class="cmdrow" id="spy-app"><div class="ct"><div class="name">アプリの呼び出しを記録する</div><span class="bd b-g">pkcs11-spy</span></div>
+<div class="cb"><p>自分のアプリでも同じ。アプリが読み込むライブラリを pkcs11-spy に替え、本物を PKCS11SPY で渡す。このサイトのサンプルなら PKCS11_MODULE に pkcs11-spy を入れる。</p><pre class="cmd">PKCS11_MODULE=/usr/lib/x86_64-linux-gnu/pkcs11-spy.so \
+PKCS11SPY=/path/to/vendor-pkcs11.so PKCS11SPY_OUTPUT=app.log \
+  cargo run -p connect</pre><div class="note">このサイトの「使っているページ」（関数リファレンス・メカニズムリファレンス）は、この方法でサンプルを動かして記録した。</div></div><div class="cf"><div class="mut">中で呼ばれる関数</div><span class="mut">（記録そのものを見る）</span></div></div></details>
 
   <nav class="sitenav" data-page="docs/ref-commands.html" data-root="../" data-spec="base latest" aria-label="ページの移動" style="margin-top:28px"></nav>
   <footer>
-    <p>上から順に実行すると、そのまま1つの流れになる（後の項目は前の項目で作ったトークンや鍵を使う）。<code>scripts/check-commands.sh</code> がこの順で全件を実行し、出力と、pkcs11-spy に記録された関数を確かめている（CI で毎回確認。OpenSC 0.25・SoftHSM2 2.6.1）。</p>
+    <p>上から順に実行すると、そのまま1つの流れになる（後の項目は前の項目で作ったトークンや鍵を使う）。<code>scripts/check-commands.sh</code> がこの順で全件を実行し、出力と、pkcs11-spy に記録された関数を確かめている（CI で毎回確認。OpenSC 0.25 とテスト用のトークン）。</p>
     <p>オプションの名前や出力の書式は、OpenSC の版によって変わることがある。</p>
   </footer>
 </main>
