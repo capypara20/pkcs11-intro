@@ -16,7 +16,7 @@ use cryptoki::mechanism::{Mechanism, MechanismType};
 use cryptoki::object::{
     Attribute, AttributeType, CertificateType, KeyType, ObjectClass, ObjectHandle,
 };
-use cryptoki::session::{Session, UserType};
+use cryptoki::session::{Session, SessionState, UserType};
 use cryptoki::slot::Slot;
 use cryptoki::types::AuthPin;
 use rcgen::{
@@ -190,7 +190,19 @@ fn main() -> Result<()> {
     a.login(UserType::User, Some(&pin(USER_PIN)))?; // C_Login
     println!("HSM を2台用意した: hsm-a と hsm-b");
 
-    // 3. HSM-A で、名前を決めて鍵を作る。あとで移すので「包む形でだけ出せる」設定にする
+    // 3. セッションはトークンごと：B には別のセッションを開く。ログインもトークンごと
+    let b = lib.open_rw_session(slot_b)?; // C_OpenSession（HSM-B）
+    assert_eq!(b.get_session_info()?.slot_id(), slot_b);
+    let state = |s: &Session| s.get_session_info().map(|i| i.session_state());
+    assert_eq!(
+        (state(&a)?, state(&b)?),
+        (SessionState::RwUser, SessionState::RwPublic),
+        "A にログインしても、B はログインなしのまま"
+    );
+    b.login(UserType::User, Some(&pin(USER_PIN)))?; // C_Login（HSM-B）
+    println!("セッションはトークンごと。A のログインは B に効かない");
+
+    // 4. HSM-A で、名前を決めて鍵を作る。あとで移すので「包む形でだけ出せる」設定にする
     let (sign_pub, sign_priv) = a.generate_key_pair(
         &Mechanism::EccKeyPairGen,
         &[
@@ -235,7 +247,13 @@ fn main() -> Result<()> {
     assert!(!flag(&a, sign_priv, AttributeType::NeverExtractable)?);
     println!("HSM-A に orders-sign（EC 鍵ペア）と orders-data（AES-256）を作った");
 
-    // 4. 使う：データを AES-GCM で暗号化し、ECDSA で署名する
+    assert!(
+        b.get_attributes(sign_priv, &[AttributeType::Label])
+            .is_err(),
+        "ハンドルはそのトークンの中のもの。B のセッションでは A の鍵を指せない"
+    );
+
+    // 5. 使う：データを AES-GCM で暗号化し、ECDSA で署名する
     let iv = a.generate_random_vec(12)?;
     let sealed = a.encrypt(
         &Mechanism::AesGcm(GcmParams::new(&mut iv.clone(), AAD, 128.into())?),
@@ -257,7 +275,7 @@ fn main() -> Result<()> {
         sig_a.len()
     );
 
-    // 5. 証明書を作る。PKCS#11 に証明書を作る関数はない。中身はアプリが組み、署名だけ HSM で行う
+    // 6. 証明書を作る。PKCS#11 に証明書を作る関数はない。中身はアプリが組み、署名だけ HSM で行う
     let mut params = CertificateParams::default();
     let mut serial = a.generate_random_vec(16)?; // シリアル番号は HSM の乱数で（C_GenerateRandom）
     serial[0] &= 0x7F; // 正の数にする
@@ -301,7 +319,7 @@ fn main() -> Result<()> {
         cert_der.len()
     );
 
-    // 6. 証明書をトークンに入れる。鍵ペアと同じ CKA_ID で結ぶ
+    // 7. 証明書をトークンに入れる。鍵ペアと同じ CKA_ID で結ぶ
     let cert_attrs = vec![
         Attribute::Class(ObjectClass::CERTIFICATE),
         Attribute::CertificateType(CertificateType::X_509),
@@ -313,7 +331,7 @@ fn main() -> Result<()> {
     ];
     a.create_object(&cert_attrs)?; // C_CreateObject
 
-    // 7. CKA_ID で探すと、公開鍵・秘密鍵・証明書の3つが見つかる
+    // 8. CKA_ID で探すと、公開鍵・秘密鍵・証明書の3つが見つかる
     let found = a.find_objects(&[Attribute::Id(sign_id.clone())])?;
     assert_eq!(found.len(), 3);
     let cert_a = a.find_objects(&[
@@ -323,9 +341,7 @@ fn main() -> Result<()> {
     assert_eq!(cert_a.len(), 1);
     println!("CKA_ID で3つ見つかった（公開鍵・秘密鍵・証明書）");
 
-    // 8. 移す準備：HSM-B で「受け取り用」の RSA 鍵ペアを作り、公開鍵だけを HSM-A に渡す
-    let b = lib.open_rw_session(slot_b)?;
-    b.login(UserType::User, Some(&pin(USER_PIN)))?;
+    // 9. 移す準備：HSM-B で「受け取り用」の RSA 鍵ペアを作り、公開鍵だけを HSM-A に渡す
     let (recv_pub, recv_priv) = b.generate_key_pair(
         &Mechanism::RsaPkcsKeyPairGen,
         &[
@@ -353,7 +369,7 @@ fn main() -> Result<()> {
     ])?;
     println!("HSM-B の受け取り用公開鍵（RSA-2048）を HSM-A に入れた");
 
-    // 9. 包む（C_WrapKey）：運搬用の AES 鍵を HSM-B の公開鍵で包み、その運搬用の鍵で中身を包む
+    // 10. 包む（C_WrapKey）：運搬用の AES 鍵を HSM-B の公開鍵で包み、その運搬用の鍵で中身を包む
     let carrier = a.generate_key(
         &Mechanism::AesKeyGen,
         &[
@@ -399,7 +415,7 @@ fn main() -> Result<()> {
         wrapped_data.len()
     );
 
-    // 10. ほどく（C_UnwrapKey）：HSM-B で運搬用の鍵を取り出し、それで秘密鍵と AES 鍵を取り出す
+    // 11. ほどく（C_UnwrapKey）：HSM-B で運搬用の鍵を取り出し、それで秘密鍵と AES 鍵を取り出す
     let carrier_b = b.unwrap_key(
         &oaep,
         recv_priv,
@@ -459,7 +475,7 @@ fn main() -> Result<()> {
     assert_eq!(b.find_objects(&[Attribute::Id(sign_id.clone())])?.len(), 3);
     println!("HSM-B でほどいた。公開鍵と証明書はそのまま入れた");
 
-    // 11. 移した鍵の印：HSM の中で生まれた・ずっと秘密だった、という証明は引き継がれない
+    // 12. 移した鍵の印：HSM の中で生まれた・ずっと秘密だった、という証明は引き継がれない
     for ty in [
         AttributeType::Local,
         AttributeType::AlwaysSensitive,
@@ -469,7 +485,7 @@ fn main() -> Result<()> {
     }
     println!("HSM-B の秘密鍵: CKA_LOCAL / ALWAYS_SENSITIVE / NEVER_EXTRACTABLE はどれも FALSE");
 
-    // 12. 移った先で確かめる：移す前の暗号文を復号でき、HSM-B の署名を元の証明書で検証できる
+    // 13. 移った先で確かめる：移す前の暗号文を復号でき、HSM-B の署名を元の証明書で検証できる
     let opened = b.decrypt(
         &Mechanism::AesGcm(GcmParams::new(&mut iv.clone(), AAD, 128.into())?),
         data_b,
@@ -498,7 +514,7 @@ fn main() -> Result<()> {
     }
     println!("HSM-B で復号 → 元のデータ。HSM-B の署名は HSM-A の公開鍵でも通る");
 
-    // 13. 元を消す（C_DestroyObject）。運搬用の鍵などのセッションオブジェクトは、閉じれば消える
+    // 14. 元を消す（C_DestroyObject）。運搬用の鍵などのセッションオブジェクトは、閉じれば消える
     for h in a.find_objects(&[Attribute::Id(sign_id.clone())])? {
         a.destroy_object(h)?;
     }
@@ -507,14 +523,31 @@ fn main() -> Result<()> {
         .find_objects(&[Attribute::Id(sign_id.clone())])?
         .is_empty());
     assert!(a.find_objects(&[label("orders-data")])?.is_empty());
-    assert_eq!(b.find_objects(&[Attribute::Id(sign_id)])?.len(), 3);
+    assert_eq!(b.find_objects(&[Attribute::Id(sign_id.clone())])?.len(), 3);
     println!("HSM-A から消した。鍵と証明書は HSM-B にだけある");
 
-    // 14. 後片付け：C_Logout → C_CloseSession → C_Finalize
+    // 15. 後片付け：C_Logout → C_CloseSession → C_Finalize。閉じるとセッションオブジェクトは消え、トークンオブジェクトは残る
+    assert!(!b.find_objects(&[Attribute::Token(false)])?.is_empty()); // 受け取り用・運搬用の鍵
     a.logout()?;
     b.logout()?;
     a.close()?;
     b.close()?;
+    let again = lib.open_ro_session(slot_b)?;
+    again.login(UserType::User, Some(&pin(USER_PIN)))?;
+    assert!(
+        again.find_objects(&[Attribute::Token(false)])?.is_empty(),
+        "セッションオブジェクトは、閉じたときに消えた"
+    );
+    assert_eq!(
+        again.find_objects(&[Attribute::Id(sign_id)])?.len(),
+        3,
+        "トークンオブジェクトは残る"
+    );
+    again.logout()?;
+    again.close()?;
+    println!(
+        "閉じたあと: HSM-B のセッションオブジェクトは 0 件、トークンオブジェクト（CKA_ID）は 3 件"
+    );
     lib.finalize()?;
     fs::remove_dir_all(&tmp)?;
     println!("OK: シナリオ「鍵の一生」が最後まで通った");
