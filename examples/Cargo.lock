@@ -109,6 +109,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "keystore"
+version = "0.1.0"
+dependencies = [
+ "cryptoki",
+ "cryptoki-sys",
+]
+
+[[package]]
 name = "libloading"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"

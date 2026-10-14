@@ -15,6 +15,7 @@
   const SCENARIOS=[
     ['docs/s1-lifecycle.html','シナリオ1 鍵の一生'],
     ['docs/s2-rotation.html','シナリオ2 鍵の付け替え'],
+    ['docs/s3-keystore.html','シナリオ3 包んだ鍵を外に置く'],
   ];
   const REFS=[
     ['docs/ref-glossary.html','用語・略語集'],
