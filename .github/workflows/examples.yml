@@ -31,6 +31,7 @@ jobs:
           cargo run -p lifecycle
           cargo run -p rotation
           cargo run -p keystore
+          cargo run -p families
           cargo run -p functions
           cargo run -p mechanisms
           cargo run -p maintenance
