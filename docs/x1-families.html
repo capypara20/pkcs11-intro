@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>解説1 楕円曲線と PQC | PKCS#11 入門</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/base.css">
+<link rel="stylesheet" href="../assets/chapter.css">
+<script src="../assets/nav.js" defer></script>
+<script src="../assets/steps.js"></script>
+<style>
+/* 表のマスの光らせ方：手順の行だけを縁取る（行全体のぼかしは強すぎるので使わない） */
+g[data-step].now{filter:none}
+g[data-step].now .box{stroke:var(--brass);stroke-width:2;filter:drop-shadow(0 0 5px var(--brass))}
+g[data-step].now text.wr{filter:drop-shadow(0 0 4px var(--warn))}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <header>
+    <h1><a href="../index.html">PKCS#11 入門</a>　解説1 楕円曲線と PQC<span class="ver" title="楕円曲線（Weierstrass）は v2.40、Edwards・Montgomery は v3.0、ML-KEM・ML-DSA・SLH-DSA と C_EncapsulateKey は v3.2 から">仕様 v2.40〜v3.2</span></h1>
+    <div class="ctl">
+      <a class="ref" href="ref-mechanisms.html" target="_blank" rel="noopener">メカニズムリファレンス</a>
+      <button id="prev">前へ</button>
+      <button id="next">次へ</button>
+      <button id="all" aria-pressed="false">全体を表示</button>
+    </div>
+  </header>
+
+  <div class="diagram">
+  <svg id="svg" viewBox="0 0 1200 600" role="img" aria-labelledby="dt">
+    <title id="dt">公開鍵暗号の方式の表。行が方式（RSA、3つの形の楕円曲線、ML-KEM、ML-DSA、SLH-DSA）、列が鍵の種類・鍵を作る・署名・鍵を共有するメカニズムと、仕様に入った版。RSA と楕円曲線は量子計算機に弱く、PQC は強い。</title>
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--cipher)"/></marker>
+      <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--brass)"/></marker>
+    </defs>
+
+    <!-- ここから PQC の区切り -->
+    <g data-step="7">
+      <line x1="10" y1="274" x2="1190" y2="274" stroke="var(--cipher)" stroke-width="1.5" stroke-dasharray="6 5"/>
+      <rect x="420" y="264" width="360" height="20" fill="var(--bg)"/>
+      <text x="600" y="279" font-size="12.5" text-anchor="middle" class="cy">ここから PQC（耐量子暗号）　v3.2 で加わった</text>
+    </g>
+
+    <g data-step="1"><text x="14" y="28" font-size="13" font-weight="700">方式（土台の数学）</text><text x="14" y="45" font-size="11" class="mono mut"></text></g>
+    <g data-step="2"><text x="234" y="28" font-size="13" font-weight="700">鍵の種類</text><text x="234" y="45" font-size="11" class="mono mut">CKA_KEY_TYPE</text></g>
+    <g data-step="2"><text x="382" y="28" font-size="13" font-weight="700">鍵を作る</text><text x="382" y="45" font-size="11" class="mono mut">C_GenerateKeyPair</text></g>
+    <g data-step="2"><text x="628" y="28" font-size="13" font-weight="700">署名</text><text x="628" y="45" font-size="11" class="mono mut">C_SignInit → C_Sign</text></g>
+    <g data-step="2"><text x="834" y="28" font-size="13" font-weight="700">鍵を共有する</text><text x="834" y="45" font-size="11" class="mono mut">C_DeriveKey など</text></g>
+    <g data-step="2"><text x="1076" y="28" font-size="13" font-weight="700">版</text><text x="1076" y="45" font-size="11" class="mono mut">量子計算機</text></g>
+    <g data-step="1" data-row="rsa"><rect class="box" x="10" y="56" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="76" font-size="14" font-weight="700">RSA</text><text x="22" y="94" font-size="11" class="mut">土台：素因数分解</text></g>
+    <g data-step="2" data-row="rsa"><rect class="box" x="230" y="56" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="76" font-size="11.5" class="mono cy" dy="9">CKK_RSA</text><text x="240" y="94" font-size="11" class="mut"></text><rect class="box" x="378" y="56" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="76" font-size="11.5" class="mono cy">CKM_RSA_PKCS_KEY_PAIR_GEN</text><text x="388" y="94" font-size="11" class="mut">強さ：CKA_MODULUS_BITS</text><rect class="box" x="624" y="56" width="200" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="634" y="76" font-size="11.5" class="mono cy">CKM_SHA256_RSA_PKCS</text><text x="634" y="94" font-size="11" class="mut">第7章</text><rect class="box" x="830" y="56" width="236" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="840" y="76" font-size="11.5" class="mono cy">CKM_RSA_PKCS_OAEP</text><text x="840" y="94" font-size="11" class="mut">鍵を包んで渡す（C_WrapKey）</text><rect class="box" x="1072" y="56" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="76" font-size="12" class="mono mut">v2.40〜</text></g>
+    <g data-step="6"><text x="1082" y="94" font-size="11.5" class="wr">✕ 量子に弱い</text></g>
+    <g data-step="1" data-row="ec"><rect class="box" x="10" y="108" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="128" font-size="14" font-weight="700">楕円曲線（Weierstrass）</text><text x="22" y="146" font-size="11" class="mut">土台：離散対数</text></g>
+    <g data-step="3" data-row="ec"><rect class="box" x="230" y="108" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="128" font-size="11.5" class="mono cy" dy="9">CKK_EC</text><text x="240" y="146" font-size="11" class="mut"></text><rect class="box" x="378" y="108" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="128" font-size="11.5" class="mono cy">CKM_EC_KEY_PAIR_GEN</text><text x="388" y="146" font-size="11" class="mut">強さ：CKA_EC_PARAMS（P-256 など）</text><rect class="box" x="624" y="108" width="200" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="634" y="128" font-size="11.5" class="mono cy">CKM_ECDSA</text><text x="634" y="146" font-size="11" class="mut">第7章</text><rect class="box" x="830" y="108" width="236" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="840" y="128" font-size="11.5" class="mono cy">CKM_ECDH1_DERIVE</text><text x="840" y="146" font-size="11" class="mut">C_DeriveKey</text><rect class="box" x="1072" y="108" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="128" font-size="12" class="mono mut">v2.40〜</text></g>
+    <g data-step="6"><text x="1082" y="146" font-size="11.5" class="wr">✕ 量子に弱い</text></g>
+    <g data-step="4" data-row="ed"><rect class="box" x="10" y="160" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="180" font-size="14" font-weight="700">楕円曲線（Edwards）</text><text x="22" y="198" font-size="11" class="mut">土台：離散対数</text></g>
+    <g data-step="4" data-row="ed"><rect class="box" x="230" y="160" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="180" font-size="11.5" class="mono cy" dy="9">CKK_EC_EDWARDS</text><text x="240" y="198" font-size="11" class="mut"></text><rect class="box" x="378" y="160" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="180" font-size="11.5" class="mono cy">CKM_EC_EDWARDS_KEY_PAIR_GEN</text><text x="388" y="198" font-size="11" class="mut">曲線：Ed25519・Ed448</text><rect class="box" x="624" y="160" width="200" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="634" y="180" font-size="11.5" class="mono cy">CKM_EDDSA</text><text x="634" y="198" font-size="11" class="mut">Ed25519 の署名は 64 バイト</text><rect x="830" y="160" width="236" height="46" rx="5" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="842" y="180" font-size="13" class="mut">—</text><text x="842" y="198" font-size="11" class="mut">鍵共有には使わない</text><rect class="box" x="1072" y="160" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="180" font-size="12" class="mono mut">v3.0〜</text></g>
+    <g data-step="6"><text x="1082" y="198" font-size="11.5" class="wr">✕ 量子に弱い</text></g>
+    <g data-step="5" data-row="mo"><rect class="box" x="10" y="212" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="232" font-size="14" font-weight="700">楕円曲線（Montgomery）</text><text x="22" y="250" font-size="11" class="mut">土台：離散対数</text></g>
+    <g data-step="5" data-row="mo"><rect class="box" x="230" y="212" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="232" font-size="11.5" class="mono cy" dy="9">CKK_EC_MONTGOMERY</text><text x="240" y="250" font-size="11" class="mut"></text><rect class="box" x="378" y="212" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="232" font-size="11.5" class="mono cy">CKM_EC_MONTGOMERY_KEY_PAIR_GEN</text><text x="388" y="250" font-size="11" class="mut">曲線：X25519・X448</text><rect class="box" x="624" y="212" width="200" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="634" y="232" font-size="11.5" class="mono cy">CKM_XEDDSA</text><text x="634" y="250" font-size="11" class="mut">X3DH 向けの特別な署名</text><rect class="box" x="830" y="212" width="236" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="840" y="232" font-size="11.5" class="mono cy">CKM_ECDH1_DERIVE</text><text x="840" y="250" font-size="11" class="mut">P-256 と同じメカニズム</text><rect class="box" x="1072" y="212" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="232" font-size="12" class="mono mut">v3.0〜</text></g>
+    <g data-step="6"><text x="1082" y="250" font-size="11.5" class="wr">✕ 量子に弱い</text></g>
+    <g data-step="7" data-row="kem"><rect class="box" x="10" y="288" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="308" font-size="14" font-weight="700">ML-KEM</text><text x="22" y="326" font-size="11" class="mut">土台：モジュール格子</text></g>
+    <g data-step="7" data-row="kem"><rect class="box" x="230" y="288" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="308" font-size="11.5" class="mono cy" dy="9">CKK_ML_KEM</text><text x="240" y="326" font-size="11" class="mut"></text><rect class="box" x="378" y="288" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="308" font-size="11.5" class="mono cy">CKM_ML_KEM_KEY_PAIR_GEN</text><text x="388" y="326" font-size="11" class="mut">強さ：CKA_PARAMETER_SET</text><rect x="624" y="288" width="200" height="46" rx="5" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="636" y="308" font-size="13" class="mut">—</text><text x="636" y="326" font-size="11" class="mut">署名には使わない</text><rect class="box" x="830" y="288" width="236" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="840" y="308" font-size="11.5" class="mono cy">CKM_ML_KEM</text><text x="840" y="326" font-size="11" class="mut">C_EncapsulateKey（v3.2 の新関数）</text><rect class="box" x="1072" y="288" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="308" font-size="12" class="mono mut">v3.2〜</text><text x="1082" y="326" font-size="11.5" class="cy">✓ 量子にも強い</text></g>
+    <g data-step="8" data-row="dsa"><rect class="box" x="10" y="340" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="360" font-size="14" font-weight="700">ML-DSA</text><text x="22" y="378" font-size="11" class="mut">土台：モジュール格子</text></g>
+    <g data-step="8" data-row="dsa"><rect class="box" x="230" y="340" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="360" font-size="11.5" class="mono cy" dy="9">CKK_ML_DSA</text><text x="240" y="378" font-size="11" class="mut"></text><rect class="box" x="378" y="340" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="360" font-size="11.5" class="mono cy">CKM_ML_DSA_KEY_PAIR_GEN</text><text x="388" y="378" font-size="11" class="mut">強さ：CKA_PARAMETER_SET</text><rect class="box" x="624" y="340" width="200" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="634" y="360" font-size="11.5" class="mono cy">CKM_ML_DSA</text><text x="634" y="378" font-size="11" class="mut">HASH_ML_DSA_SHA256 なども</text><rect x="830" y="340" width="236" height="46" rx="5" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="842" y="360" font-size="13" class="mut">—</text><text x="842" y="378" font-size="11" class="mut">鍵共有には使わない</text><rect class="box" x="1072" y="340" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="360" font-size="12" class="mono mut">v3.2〜</text><text x="1082" y="378" font-size="11.5" class="cy">✓ 量子にも強い</text></g>
+    <g data-step="9" data-row="slh"><rect class="box" x="10" y="392" width="214" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="22" y="412" font-size="14" font-weight="700">SLH-DSA</text><text x="22" y="430" font-size="11" class="mut">土台：ハッシュ関数</text></g>
+    <g data-step="9" data-row="slh"><rect class="box" x="230" y="392" width="142" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="240" y="412" font-size="11.5" class="mono cy" dy="9">CKK_SLH_DSA</text><text x="240" y="430" font-size="11" class="mut"></text><rect class="box" x="378" y="392" width="240" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="388" y="412" font-size="11.5" class="mono cy">CKM_SLH_DSA_KEY_PAIR_GEN</text><text x="388" y="430" font-size="11" class="mut">強さ：CKA_PARAMETER_SET</text><rect class="box" x="624" y="392" width="200" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="634" y="412" font-size="11.5" class="mono cy">CKM_SLH_DSA</text><text x="634" y="430" font-size="11" class="mut">HASH_SLH_DSA_SHA256 なども</text><rect x="830" y="392" width="236" height="46" rx="5" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="842" y="412" font-size="13" class="mut">—</text><text x="842" y="430" font-size="11" class="mut">鍵共有には使わない</text><rect class="box" x="1072" y="392" width="118" height="46" rx="5" fill="var(--panel)" stroke="var(--line)"/><text x="1082" y="412" font-size="12" class="mono mut">v3.2〜</text><text x="1082" y="430" font-size="11.5" class="cy">✓ 量子にも強い</text></g>
+
+    <!-- 6. 量子計算機：今の公開鍵暗号をまとめて囲む -->
+    <g data-only="6"><rect x="4" y="51" width="1192" height="214" rx="8" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="7 5"/></g>
+    <!-- 10. 強さを決める列 -->
+    <g data-only="10"><rect x="374" y="8" width="248" height="436" rx="8" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
+    <!-- 12. 署名の列 -->
+    <g data-only="12"><rect x="620" y="8" width="208" height="436" rx="8" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
+
+    <!-- ===== 下の段：手順ごとの説明図（y 452〜592） ===== -->
+
+    <!-- 1. 一家の名前 -->
+    <g data-only="1">
+      <rect x="10" y="456" width="240" height="134" rx="6" fill="var(--panel2)" stroke="var(--brass)"/>
+      <text x="26" y="488" font-size="22" font-weight="700" class="brass">RSA</text>
+      <text x="26" y="514" font-size="12.5">＝ 土台の数学（素因数分解）で</text>
+      <text x="26" y="534" font-size="12.5">　 分けた一家の名前</text>
+      <text x="26" y="566" font-size="11.5" class="mut">鍵ペアは 1 組（公開鍵＋秘密鍵）</text>
+      <path d="M250,523 L276,523 L276,477 L296,477 M276,523 L296,523 M276,523 L276,569 L296,569" stroke="var(--cipher)" stroke-width="2" fill="none"/>
+      <path d="M288,477 L298,477" stroke="var(--cipher)" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M288,523 L298,523" stroke="var(--cipher)" stroke-width="2" marker-end="url(#ar)"/>
+      <path d="M288,569 L298,569" stroke="var(--cipher)" stroke-width="2" marker-end="url(#ar)"/>
+      <rect x="300" y="458" width="440" height="38" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="314" y="482" font-size="13" font-weight="700">鍵を作る</text><text x="440" y="482" font-size="12" class="mono cy">C_GenerateKeyPair＋CKM_RSA_PKCS_KEY_PAIR_GEN</text>
+      <rect x="300" y="504" width="440" height="38" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="314" y="528" font-size="13" font-weight="700">署名する</text><text x="440" y="528" font-size="12" class="mono cy">C_Sign ＋ CKM_SHA256_RSA_PKCS</text>
+      <rect x="300" y="550" width="440" height="38" rx="5" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="314" y="574" font-size="13" font-weight="700">暗号化・鍵を包む</text><text x="440" y="574" font-size="12" class="mono cy">C_WrapKey ＋ CKM_RSA_PKCS_OAEP</text>
+      <rect x="756" y="456" width="434" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="772" y="480" font-size="13" font-weight="700">PKCS#11 での分け方</text>
+      <text x="772" y="506" font-size="12.5">何をするか　　　 ＝ 関数</text><text x="1000" y="506" font-size="12.5" class="mono cy">C_*</text>
+      <text x="772" y="530" font-size="12.5">どの方式でやるか ＝ メカニズム</text><text x="1000" y="530" font-size="12.5" class="mono cy">CKM_*</text>
+      <text x="772" y="554" font-size="12.5">どの方式の鍵か　 ＝ 鍵の種類</text><text x="1000" y="554" font-size="12.5" class="mono cy">CKK_*</text>
+      <text x="772" y="578" font-size="11.5" class="mut">メカニズムの名前に一家の名前が入っている</text>
+    </g>
+
+    <!-- 2. 表の読み方 -->
+    <g data-only="2">
+      <rect x="10" y="456" width="1180" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="28" y="482" font-size="13" font-weight="700">表の読み方</text>
+      <text x="28" y="510" font-size="13">行 ＝ 方式（一家）</text>
+      <text x="28" y="536" font-size="13">列 ＝ やりたいこと（関数）</text>
+      <text x="28" y="562" font-size="13">マス ＝ そのためのメカニズム</text>
+      <rect x="330" y="496" width="60" height="22" rx="4" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/><text x="344" y="512" font-size="13" class="mut">—</text>
+      <text x="402" y="512" font-size="13">＝ その一家には仕様にない使い道</text>
+      <text x="330" y="542" font-size="13" class="mono mut">v2.40〜</text><text x="402" y="542" font-size="13">＝ 仕様に入った版（それより前のトークンにはない）</text>
+      <text x="330" y="572" font-size="12" class="mut">RSA は 1 組の鍵ペアで、鍵を作ったあと署名にも鍵の受け渡しにも使える</text>
+    </g>
+
+    <!-- 3〜5. 3つの形の楕円曲線（図は実数で描いたイメージ） -->
+    <g data-only="3 4 5">
+      <rect x="10" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <g transform="translate(20,470)"><rect width="110" height="104" rx="4" fill="var(--bg)"/>
+        <line x1="0" y1="52" x2="110" y2="52" stroke="var(--line)"/><line x1="48" y1="0" x2="48" y2="104" stroke="var(--line)"/>
+        <path d="M96.0,7.0 L93.9,10.1 L91.8,13.1 L89.7,15.9 L87.7,18.6 L85.6,21.2 L83.6,23.6 L81.6,25.9 L79.7,28.1 L77.7,30.1 L75.8,31.9 L73.9,33.5 L72.0,35.0 L70.2,36.2 L68.4,37.2 L66.6,37.9 L64.8,38.4 L63.0,38.6 L61.3,38.7 L59.6,38.5 L57.9,38.2 L56.3,37.8 L54.6,37.3 L53.0,36.8 L51.4,36.2 L49.9,35.7 L48.4,35.1 L46.9,34.6 L45.4,34.1 L43.9,33.7 L42.5,33.3 L41.1,32.9 L39.8,32.6 L38.4,32.4 L37.1,32.2 L35.9,32.1 L34.6,32.0 L33.4,32.0 L32.2,32.1 L31.1,32.2 L30.0,32.4 L28.9,32.7 L27.8,33.0 L26.8,33.4 L25.8,33.9 L24.9,34.4 L24.0,35.0 L23.1,35.7 L22.3,36.4 L21.5,37.2 L20.7,38.1 L20.0,39.0 L19.4,40.0 L18.8,41.1 L18.2,42.2 L17.7,43.5 L17.3,44.8 L16.9,46.2 L16.6,47.8 L16.3,49.6 L16.2,52.0 L16.3,54.4 L16.6,56.2 L16.9,57.8 L17.3,59.2 L17.7,60.5 L18.2,61.8 L18.8,62.9 L19.4,64.0 L20.0,65.0 L20.7,65.9 L21.5,66.8 L22.3,67.6 L23.1,68.3 L24.0,69.0 L24.9,69.6 L25.8,70.1 L26.8,70.6 L27.8,71.0 L28.9,71.3 L30.0,71.6 L31.1,71.8 L32.2,71.9 L33.4,72.0 L34.6,72.0 L35.9,71.9 L37.1,71.8 L38.4,71.6 L39.8,71.4 L41.1,71.1 L42.5,70.7 L43.9,70.3 L45.4,69.9 L46.9,69.4 L48.4,68.9 L49.9,68.3 L51.4,67.8 L53.0,67.2 L54.6,66.7 L56.3,66.2 L57.9,65.8 L59.6,65.5 L61.3,65.3 L63.0,65.4 L64.8,65.6 L66.6,66.1 L68.4,66.8 L70.2,67.8 L72.0,69.0 L73.9,70.5 L75.8,72.1 L77.7,73.9 L79.7,75.9 L81.6,78.1 L83.6,80.4 L85.6,82.8 L87.7,85.4 L89.7,88.1 L91.8,90.9 L93.9,93.9 L96.0,97.0" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
+      <text x="144" y="482" font-size="14" font-weight="700">Weierstrass 形</text>
+      <text x="144" y="504" font-size="13" class="mono cy">y² = x³ + ax + b</text>
+      <text x="144" y="528" font-size="12">P-256・P-384 など（v2.40〜）</text>
+      <text x="144" y="550" font-size="12">署名 ECDSA ／ 鍵共有 ECDH</text>
+      <text x="144" y="574" font-size="12" class="mono mut">CKK_EC</text>
+    </g>
+    <g data-only="4 5">
+      <rect x="407" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <g transform="translate(417,470)"><rect width="110" height="104" rx="4" fill="var(--bg)"/>
+        <line x1="0" y1="52" x2="110" y2="52" stroke="var(--line)"/><line x1="55" y1="0" x2="55" y2="104" stroke="var(--line)"/>
+        <path d="M99.0,52.0 L98.6,49.7 L97.5,47.5 L95.9,45.5 L94.2,43.7 L92.4,42.0 L90.7,40.4 L89.0,39.0 L87.4,37.6 L85.9,36.3 L84.5,35.0 L83.1,33.8 L81.8,32.5 L80.5,31.4 L79.3,30.2 L78.0,29.0 L76.8,27.7 L75.6,26.5 L74.5,25.2 L73.2,23.9 L72.0,22.5 L70.7,21.1 L69.4,19.6 L68.0,18.0 L66.6,16.3 L65.0,14.6 L63.3,12.8 L61.5,11.1 L59.5,9.5 L57.3,8.4 L55.0,8.0 L52.7,8.4 L50.5,9.5 L48.5,11.1 L46.7,12.8 L45.0,14.6 L43.4,16.3 L42.0,18.0 L40.6,19.6 L39.3,21.1 L38.0,22.5 L36.8,23.9 L35.5,25.2 L34.4,26.5 L33.2,27.7 L32.0,29.0 L30.7,30.2 L29.5,31.4 L28.2,32.5 L26.9,33.8 L25.5,35.0 L24.1,36.3 L22.6,37.6 L21.0,39.0 L19.3,40.4 L17.6,42.0 L15.8,43.7 L14.1,45.5 L12.5,47.5 L11.4,49.7 L11.0,52.0 L11.4,54.3 L12.5,56.5 L14.1,58.5 L15.8,60.3 L17.6,62.0 L19.3,63.6 L21.0,65.0 L22.6,66.4 L24.1,67.7 L25.5,69.0 L26.9,70.2 L28.2,71.5 L29.5,72.6 L30.7,73.8 L32.0,75.0 L33.2,76.3 L34.4,77.5 L35.5,78.8 L36.8,80.1 L38.0,81.5 L39.3,82.9 L40.6,84.4 L42.0,86.0 L43.4,87.7 L45.0,89.4 L46.7,91.2 L48.5,92.9 L50.5,94.5 L52.7,95.6 L55.0,96.0 L57.3,95.6 L59.5,94.5 L61.5,92.9 L63.3,91.2 L65.0,89.4 L66.6,87.7 L68.0,86.0 L69.4,84.4 L70.7,82.9 L72.0,81.5 L73.2,80.1 L74.5,78.8 L75.6,77.5 L76.8,76.3 L78.0,75.0 L79.3,73.8 L80.5,72.6 L81.8,71.5 L83.1,70.2 L84.5,69.0 L85.9,67.7 L87.4,66.4 L89.0,65.0 L90.7,63.6 L92.4,62.0 L94.2,60.3 L95.9,58.5 L97.5,56.5 L98.6,54.3 L99.0,52.0 Z" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
+      <text x="541" y="482" font-size="14" font-weight="700">Edwards 形</text>
+      <text x="541" y="504" font-size="13" class="mono cy">ax² + y² = 1 + dx²y²</text>
+      <text x="541" y="528" font-size="12">Ed25519・Ed448（v3.0〜）</text>
+      <text x="541" y="550" font-size="12">署名 EdDSA だけ</text>
+      <text x="541" y="574" font-size="12" class="mono mut">CKK_EC_EDWARDS</text>
+    </g>
+    <g data-only="5">
+      <rect x="804" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <g transform="translate(814,470)"><rect width="110" height="104" rx="4" fill="var(--bg)"/>
+        <line x1="0" y1="52" x2="110" y2="52" stroke="var(--line)"/><line x1="72" y1="0" x2="72" y2="104" stroke="var(--line)"/>
+        <path d="M24.9,52.0 L24.9,49.4 L25.1,46.9 L25.4,44.4 L25.9,42.0 L26.4,39.7 L27.1,37.6 L27.8,35.5 L28.7,33.7 L29.7,32.0 L30.8,30.5 L31.9,29.2 L33.2,28.1 L34.5,27.2 L35.9,26.6 L37.3,26.2 L38.8,26.0 L40.3,26.0 L41.9,26.3 L43.4,26.7 L45.0,27.4 L46.6,28.2 L48.1,29.1 L49.7,30.2 L51.2,31.4 L52.7,32.7 L54.1,34.1 L55.5,35.6 L56.8,37.1 L58.1,38.5 L59.2,40.0 L60.3,41.5 L61.3,42.9 L62.2,44.2 L62.9,45.5 L63.6,46.7 L64.1,47.9 L64.6,49.0 L64.9,50.0 L65.1,51.0 L65.1,52.0 L65.1,52.0 L65.1,53.0 L64.9,54.0 L64.6,55.0 L64.1,56.1 L63.6,57.3 L62.9,58.5 L62.2,59.8 L61.3,61.1 L60.3,62.5 L59.2,64.0 L58.1,65.5 L56.8,66.9 L55.5,68.4 L54.1,69.9 L52.7,71.3 L51.2,72.6 L49.7,73.8 L48.1,74.9 L46.6,75.8 L45.0,76.6 L43.4,77.3 L41.9,77.7 L40.3,78.0 L38.8,78.0 L37.3,77.8 L35.9,77.4 L34.5,76.8 L33.2,75.9 L31.9,74.8 L30.8,73.5 L29.7,72.0 L28.7,70.3 L27.8,68.5 L27.1,66.4 L26.4,64.3 L25.9,62.0 L25.4,59.6 L25.1,57.1 L24.9,54.6 L24.9,52.0 Z" fill="none" stroke="var(--brass)" stroke-width="2"/><path d="M92.7,5.6 L91.9,7.5 L91.1,9.3 L90.3,11.1 L89.5,12.9 L88.7,14.6 L88.0,16.3 L87.2,17.9 L86.5,19.5 L85.8,21.0 L85.1,22.5 L84.4,23.9 L83.7,25.4 L83.0,26.7 L82.4,28.1 L81.8,29.4 L81.1,30.6 L80.5,31.8 L80.0,33.0 L79.4,34.1 L78.8,35.3 L78.3,36.3 L77.8,37.4 L77.3,38.4 L76.8,39.3 L76.3,40.3 L75.9,41.2 L75.4,42.0 L75.0,42.9 L74.6,43.7 L74.3,44.5 L73.9,45.3 L73.6,46.0 L73.3,46.7 L73.0,47.4 L72.7,48.1 L72.5,48.8 L72.3,49.5 L72.2,50.2 L72.1,51.0 L72.0,52.0 L72.1,53.0 L72.2,53.8 L72.3,54.5 L72.5,55.2 L72.7,55.9 L73.0,56.6 L73.3,57.3 L73.6,58.0 L73.9,58.7 L74.3,59.5 L74.6,60.3 L75.0,61.1 L75.4,62.0 L75.9,62.8 L76.3,63.7 L76.8,64.7 L77.3,65.6 L77.8,66.6 L78.3,67.7 L78.8,68.7 L79.4,69.9 L80.0,71.0 L80.5,72.2 L81.1,73.4 L81.8,74.6 L82.4,75.9 L83.0,77.3 L83.7,78.6 L84.4,80.1 L85.1,81.5 L85.8,83.0 L86.5,84.5 L87.2,86.1 L88.0,87.7 L88.7,89.4 L89.5,91.1 L90.3,92.9 L91.1,94.7 L91.9,96.5 L92.7,98.4" fill="none" stroke="var(--brass)" stroke-width="2"/></g>
+      <text x="938" y="482" font-size="14" font-weight="700">Montgomery 形</text>
+      <text x="938" y="504" font-size="13" class="mono cy">By² = x³ + Ax² + x</text>
+      <text x="938" y="528" font-size="12">X25519・X448（v3.0〜）</text>
+      <text x="938" y="550" font-size="12">鍵共有 ECDH（＋XEdDSA）</text>
+      <text x="938" y="574" font-size="12" class="mono mut">CKK_EC_MONTGOMERY</text>
+    </g>
+
+    <!-- 6. ショアのアルゴリズム -->
+    <g data-only="6">
+      <rect x="10" y="456" width="1180" height="134" rx="6" fill="var(--panel)" stroke="var(--warn)"/>
+      <text x="28" y="482" font-size="14" font-weight="700" class="wr">ショアのアルゴリズム（量子計算機で動く解き方）</text>
+      <text x="28" y="508" font-size="13">素因数分解を解く</text><text x="250" y="508" font-size="13" class="wr">→ RSA が破られる</text>
+      <text x="28" y="532" font-size="13">離散対数を解く</text><text x="250" y="532" font-size="13" class="wr">→ Weierstrass・Edwards・Montgomery の楕円曲線がすべて破られる</text>
+      <text x="28" y="558" font-size="12.5" class="cy">Ed25519・X25519 は速さや実装のしやすさの改良。土台は同じ離散対数なので、量子への強さは変わらない</text>
+      <text x="28" y="580" font-size="11.5" class="mut">この段は仕様書の外の、暗号理論の一般的な話。PKCS#11 の仕様は量子計算機への強さを定めていない</text>
+    </g>
+
+    <!-- 7. 名前の読み方 -->
+    <g data-only="7">
+      <rect x="10" y="456" width="1180" height="134" rx="6" fill="var(--panel)" stroke="var(--cipher)"/>
+      <text x="28" y="482" font-size="14" font-weight="700">名前の読み方：「土台」＋「使い道」</text>
+      <text x="28" y="510" font-size="13" class="mono brass">ML</text><text x="80" y="510" font-size="13">Module-Lattice（モジュール格子）… 土台の数学の名前。アルゴリズムの名前ではない</text>
+      <text x="28" y="534" font-size="13" class="mono brass">KEM</text><text x="80" y="534" font-size="13">Key Encapsulation Mechanism（鍵カプセル化）… 使い道の名前</text>
+      <text x="28" y="558" font-size="13" class="mono brass">DSA</text><text x="80" y="558" font-size="13">Digital Signature Algorithm … 署名</text>
+      <text x="610" y="558" font-size="13" class="mono brass">SLH</text><text x="662" y="558" font-size="13">StateLess Hash-based … 状態を持たないハッシュ署名</text>
+      <text x="28" y="582" font-size="11.5" class="mut">NIST の標準 FIPS 203（ML-KEM）・FIPS 204（ML-DSA）・FIPS 205（SLH-DSA）を、PKCS#11 v3.2 がメカニズムとして取り込んだ</text>
+    </g>
+
+    <!-- 8. ML-DSA のメカニズム3つ -->
+    <g data-only="8">
+      <rect x="10" y="456" width="386" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="26" y="480" font-size="13" class="mono brass">CKM_ML_DSA</text>
+      <text x="26" y="506" font-size="12.5">データをそのまま渡す</text>
+      <text x="26" y="528" font-size="12.5">ハッシュは ML-DSA の中で行う（SHAKE256）</text>
+      <text x="26" y="550" font-size="12" class="mut">分けて渡す（C_SignUpdate）もできる</text>
+      <rect x="407" y="456" width="386" height="110" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="423" y="480" font-size="13" class="mono brass">CKM_HASH_ML_DSA</text>
+      <text x="423" y="506" font-size="12.5">ハッシュ済みの値を渡す（HashML-DSA）</text>
+      <text x="423" y="528" font-size="12.5">使ったハッシュはパラメータで伝える</text>
+      <text x="423" y="550" font-size="12" class="mut">1 回で渡す形だけ（第7章の CKM_ECDSA と同じ立場）</text>
+      <rect x="804" y="456" width="386" height="110" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="820" y="480" font-size="13" class="mono brass">CKM_HASH_ML_DSA_SHA256 など</text>
+      <text x="820" y="506" font-size="12.5">データを渡し、ハッシュもトークンで</text>
+      <text x="820" y="528" font-size="12.5">SHA-2・SHA-3・SHAKE の 10 通り</text>
+      <text x="820" y="550" font-size="12" class="mut">第7章の CKM_SHA256_RSA_PKCS と同じ立場</text>
+      <text x="26" y="586" font-size="12.5">ML-DSA と HashML-DSA は署名の作り方が違う。検証も、署名したときと同じ種類のメカニズムで行う</text>
+    </g>
+
+    <!-- 9. SLH-DSA と状態ありのハッシュ署名 -->
+    <g data-only="9">
+      <rect x="10" y="456" width="1180" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="28" y="482" font-size="14" font-weight="700">ハッシュ関数を土台にした署名</text>
+      <text x="28" y="508" font-size="13" class="mono cy">SLH-DSA</text><text x="190" y="508" font-size="13">状態なし。パラメータセットは CKP_SLH_DSA_SHA2_128S など 12 通り（SHA2 / SHAKE × 128 / 192 / 256 × S / F）</text>
+      <text x="28" y="534" font-size="13" class="mono cy">HSS（v3.1〜）</text><text x="190" y="534" font-size="13">状態あり。署名するたびに秘密鍵の状態が進み、残りの回数を CKA_HSS_KEYS_REMAINING で読める</text>
+      <text x="28" y="560" font-size="13" class="mono cy">XMSS（v3.2〜）</text><text x="190" y="560" font-size="13">状態あり（CKK_XMSS・CKK_XMSSMT）</text>
+      <text x="28" y="582" font-size="11.5" class="mut">表には状態なしの SLH-DSA だけを載せた</text>
+    </g>
+
+    <!-- 10. 強さの決め方 -->
+    <g data-only="10">
+      <rect x="10" y="456" width="386" height="110" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="26" y="480" font-size="13" font-weight="700">RSA：ビット数</text>
+      <text x="26" y="506" font-size="12.5" class="mono cy">CKA_MODULUS_BITS = 2048</text>
+      <text x="26" y="530" font-size="12" class="mut">数を選ぶ（第4章）</text>
+      <rect x="407" y="456" width="386" height="110" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="423" y="480" font-size="13" font-weight="700">楕円曲線：曲線</text>
+      <text x="423" y="506" font-size="12.5" class="mono cy">CKA_EC_PARAMS = P-256 の OID</text>
+      <text x="423" y="530" font-size="12" class="mut">曲線を選ぶ。Ed25519・X25519 も同じ属性</text>
+      <rect x="804" y="456" width="386" height="110" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="820" y="480" font-size="13" font-weight="700">PQC：パラメータセット</text>
+      <text x="820" y="502" font-size="12.5" class="mono cy">CKA_PARAMETER_SET = CKP_ML_KEM_768</text>
+      <text x="820" y="522" font-size="12">ML-KEM：512 / 768 / 1024</text>
+      <text x="820" y="540" font-size="12">ML-DSA：44 / 65 / 87</text>
+      <text x="820" y="558" font-size="11.5" class="mono wr">未対応 → CKR_PARAMETER_SET_NOT_SUPPORTED</text>
+      <text x="26" y="586" font-size="12.5">どれも<tspan class="brass">公開鍵</tspan>のテンプレートに書く。PQC の秘密鍵のテンプレートには書かない（鍵ペアとしてまとめて作られるため）</text>
+    </g>
+
+    <!-- 11. ECDH と KEM（表の右側に重ねる） -->
+    <g data-only="11">
+      <rect x="372" y="52" width="822" height="390" rx="8" fill="var(--bg)" stroke="var(--brass)" stroke-width="1.5"/>
+      <line x1="783" y1="64" x2="783" y2="430" stroke="var(--line)"/>
+      <!-- 左：ECDH -->
+      <text x="388" y="80" font-size="15" font-weight="700">ECDH（いままで）</text>
+      <text x="388" y="99" font-size="11.5" class="mono mut">CKM_ECDH1_DERIVE ／ C_DeriveKey</text>
+      <rect x="405" y="112" width="150" height="36" rx="5" fill="var(--panel2)" stroke="var(--line)"/><text x="480" y="135" font-size="14" text-anchor="middle" font-weight="700">A</text>
+      <rect x="615" y="112" width="150" height="36" rx="5" fill="var(--panel2)" stroke="var(--line)"/><text x="690" y="135" font-size="14" text-anchor="middle" font-weight="700">B</text>
+      <line x1="480" y1="148" x2="480" y2="388" stroke="var(--line)" stroke-dasharray="4 4"/><line x1="690" y1="148" x2="690" y2="388" stroke="var(--line)" stroke-dasharray="4 4"/>
+      <rect x="415" y="164" width="130" height="30" rx="4" fill="var(--panel)" stroke="var(--cipher)"/><text x="480" y="184" font-size="12" text-anchor="middle">鍵ペアを作る</text>
+      <rect x="625" y="164" width="130" height="30" rx="4" fill="var(--panel)" stroke="var(--cipher)"/><text x="690" y="184" font-size="12" text-anchor="middle">鍵ペアを作る</text>
+      <text x="585" y="218" font-size="11.5" text-anchor="middle" class="cy">A の公開鍵</text>
+      <path d="M482,226 L686,226" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <path d="M688,244 L484,244" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <text x="585" y="262" font-size="11.5" text-anchor="middle" class="cy">B の公開鍵</text>
+      <rect x="392" y="282" width="176" height="54" rx="5" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="480" y="303" font-size="12.5" text-anchor="middle" class="mono cy">C_DeriveKey</text><text x="480" y="324" font-size="11.5" text-anchor="middle">A の秘密鍵＋B の公開鍵</text>
+      <rect x="602" y="282" width="176" height="54" rx="5" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="690" y="303" font-size="12.5" text-anchor="middle" class="mono cy">C_DeriveKey</text><text x="690" y="324" font-size="11.5" text-anchor="middle">B の秘密鍵＋A の公開鍵</text>
+      <rect x="415" y="356" width="130" height="28" rx="14" fill="var(--brass)"/><text x="480" y="375" font-size="12.5" text-anchor="middle" font-weight="700" style="fill:var(--bg)">同じ共通鍵</text>
+      <rect x="625" y="356" width="130" height="28" rx="14" fill="var(--brass)"/><text x="690" y="375" font-size="12.5" text-anchor="middle" font-weight="700" style="fill:var(--bg)">同じ共通鍵</text>
+      <text x="585" y="414" font-size="12" text-anchor="middle" class="mut">両方が鍵ペアを持ち、公開鍵を交換する</text>
+      <!-- 右：KEM -->
+      <text x="798" y="80" font-size="15" font-weight="700">KEM（ML-KEM・v3.2）</text>
+      <text x="798" y="99" font-size="11.5" class="mono mut">CKM_ML_KEM ／ C_EncapsulateKey・C_DecapsulateKey</text>
+      <rect x="810" y="112" width="150" height="36" rx="5" fill="var(--panel2)" stroke="var(--line)"/><text x="885" y="135" font-size="13" text-anchor="middle"><tspan font-weight="700">A</tspan>（送る側）</text>
+      <rect x="1020" y="112" width="150" height="36" rx="5" fill="var(--panel2)" stroke="var(--line)"/><text x="1095" y="135" font-size="13" text-anchor="middle"><tspan font-weight="700">B</tspan>（受け取る側）</text>
+      <line x1="885" y1="148" x2="885" y2="388" stroke="var(--line)" stroke-dasharray="4 4"/><line x1="1095" y1="148" x2="1095" y2="388" stroke="var(--line)" stroke-dasharray="4 4"/>
+      <text x="885" y="184" font-size="12" text-anchor="middle" class="mut">鍵ペアは要らない</text>
+      <rect x="1030" y="164" width="130" height="30" rx="4" fill="var(--panel)" stroke="var(--cipher)"/><text x="1095" y="184" font-size="12" text-anchor="middle">鍵ペアを作る</text>
+      <text x="990" y="218" font-size="11.5" text-anchor="middle" class="cy">① B の公開鍵</text>
+      <path d="M1093,226 L889,226" stroke="var(--cipher)" stroke-width="2" fill="none" marker-end="url(#ar)"/>
+      <rect x="797" y="238" width="176" height="54" rx="5" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="885" y="259" font-size="12.5" text-anchor="middle" class="mono cy">C_EncapsulateKey</text><text x="885" y="280" font-size="11.5" text-anchor="middle">B の公開鍵 → 共通鍵＋暗号文</text>
+      <text x="990" y="308" font-size="11.5" text-anchor="middle" class="brass">② 暗号文</text>
+      <path d="M887,316 L1091,316" stroke="var(--brass)" stroke-width="2" fill="none" marker-end="url(#arb)"/>
+      <rect x="1007" y="282" width="176" height="54" rx="5" fill="var(--panel)" stroke="var(--brass)" transform="translate(0,44)"/>
+      <text x="1095" y="347" font-size="12.5" text-anchor="middle" class="mono cy">C_DecapsulateKey</text><text x="1095" y="368" font-size="11.5" text-anchor="middle">B の秘密鍵＋暗号文 → 共通鍵</text>
+      <rect x="820" y="356" width="130" height="28" rx="14" fill="var(--brass)"/><text x="885" y="375" font-size="12.5" text-anchor="middle" font-weight="700" style="fill:var(--bg)">同じ共通鍵</text>
+      <rect x="1030" y="388" width="130" height="28" rx="14" fill="var(--brass)"/><text x="1095" y="407" font-size="12.5" text-anchor="middle" font-weight="700" style="fill:var(--bg)">同じ共通鍵</text>
+      <text x="885" y="430" font-size="12" text-anchor="middle" class="mut">鍵ペアは受け取る側だけ</text>
+    </g>
+    <g data-only="11">
+      <rect x="10" y="456" width="1180" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="28" y="482" font-size="13" font-weight="700">鍵とメカニズムの印</text>
+      <text x="28" y="508" font-size="12.5">公開鍵に <tspan class="mono cy">CKA_ENCAPSULATE = TRUE</tspan>、秘密鍵に <tspan class="mono cy">CKA_DECAPSULATE = TRUE</tspan>（第3章の CKA_SIGN などと同じ使い道の印）</text>
+      <text x="28" y="532" font-size="12.5">メカニズムが対応しているかは <tspan class="mono cy">C_GetMechanismInfo</tspan> の <tspan class="mono cy">CKF_ENCAPSULATE</tspan> ／ <tspan class="mono cy">CKF_DECAPSULATE</tspan></text>
+      <text x="28" y="556" font-size="12.5">v3.2 では <tspan class="mono cy">CKM_ECDH1_DERIVE</tspan> も C_EncapsulateKey で使える（使い捨ての鍵ペアを作り、その公開鍵が暗号文になる）</text>
+      <text x="28" y="580" font-size="11.5" class="mut">C_EncapsulateKey でできた鍵は CKA_LOCAL が FALSE（トークンの中で一から作った鍵ではない扱い）</text>
+    </g>
+
+    <!-- 12. 署名の呼び方と hedge -->
+    <g data-only="12">
+      <rect x="10" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="26" y="480" font-size="13" font-weight="700">ECDSA（第7章）</text>
+      <text x="26" y="506" font-size="12" class="mono cy">C_SignInit(CKM_ECDSA, EC の秘密鍵)</text>
+      <text x="26" y="528" font-size="12" class="mono cy">C_Sign(ハッシュ値) → 署名</text>
+      <rect x="407" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="423" y="480" font-size="13" font-weight="700">ML-DSA</text>
+      <text x="423" y="506" font-size="12" class="mono cy">C_SignInit(CKM_ML_DSA, ML-DSA の秘密鍵)</text>
+      <text x="423" y="528" font-size="12" class="mono cy">C_Sign(データ) → 署名</text>
+      <text x="26" y="572" font-size="12" class="mut">関数も順番も同じ。変わるのはメカニズムと鍵だけ</text>
+      <rect x="804" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--line)"/>
+      <text x="820" y="478" font-size="12" class="mono brass">CK_SIGN_ADDITIONAL_CONTEXT（省略可）</text>
+      <text x="820" y="500" font-size="11.5" class="mono cy">CKH_HEDGE_PREFERRED</text><text x="1180" y="500" font-size="11.5" text-anchor="end">既定・トークン次第</text>
+      <text x="820" y="520" font-size="11.5" class="mono cy">CKH_HEDGE_REQUIRED</text><text x="1180" y="520" font-size="11.5" text-anchor="end">乱数を混ぜる</text>
+      <text x="820" y="540" font-size="11.5" class="mono cy">CKH_DETERMINISTIC_REQUIRED</text><text x="1180" y="540" font-size="11.5" text-anchor="end">毎回同じ</text>
+      <text x="820" y="562" font-size="11.5" class="mut">指定どおりにできなければ失敗する</text>
+      <text x="820" y="582" font-size="11.5" class="mut">文脈の文字列（context）も渡せる</text>
+    </g>
+
+    <!-- 13. トークン次第 -->
+    <g data-only="13">
+      <rect x="10" y="456" width="780" height="134" rx="6" fill="var(--panel)" stroke="var(--brass)"/>
+      <text x="26" y="482" font-size="13" font-weight="700">使う前に確かめる</text>
+      <text x="26" y="508" font-size="12.5"><tspan class="mono cy">C_GetInfo</tspan> の cryptokiVersion … 3.2 より前のライブラリには ML-KEM などがない</text>
+      <text x="26" y="532" font-size="12.5"><tspan class="mono cy">C_GetMechanismList</tspan> … そのトークンにメカニズムがあるか</text>
+      <text x="26" y="556" font-size="12.5"><tspan class="mono cy">C_GetMechanismInfo</tspan> … 使い道の印（CKF_ENCAPSULATE など）と鍵の大きさの範囲</text>
+      <text x="26" y="580" font-size="11.5" class="mut">パラメータセットも一部だけのことがある（CKR_PARAMETER_SET_NOT_SUPPORTED）</text>
+      <rect x="804" y="456" width="386" height="134" rx="6" fill="var(--panel)" stroke="var(--line)" stroke-dasharray="5 4"/>
+      <text x="820" y="482" font-size="13" font-weight="700" class="mut">策定中（v3.3 草案・未確定）</text>
+      <text x="820" y="508" font-size="12">ML-KEM と従来の方式を組み合わせる</text>
+      <text x="820" y="530" font-size="12">Composite KEM（CKM_COMP_KEM）などが</text>
+      <text x="820" y="552" font-size="12">OASIS の作業中の版で議論されている</text>
+      <text x="820" y="578" font-size="11" class="mut">公開された仕様ではないので、表には載せない</text>
+    </g>
+  </svg>
+  </div>
+
+  <section class="panel" aria-live="polite">
+    <div>
+      <div class="count" id="count"></div>
+      <h2 id="title"></h2>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="body" id="body"></div>
+    <pre id="code"></pre>
+  </section>
+  <nav class="sitenav" data-page="docs/x1-families.html" data-root="../" data-spec="curr latest" aria-label="ページの移動"></nav>
+</div>
+
+<script>
+const C=code;
+const STEPS=[
+  {t:"RSA・楕円曲線は「一家」の名前",
+   b:"RSA や楕円曲線は、鍵を作るアルゴリズムの名前でも、暗号化のアルゴリズムの名前でもない。<strong>どの数学の問題を土台にしているか</strong>で分けた一家の名前で、その上に「鍵を作る」「署名する」「暗号化する・鍵を包む」といった使い道が乗っている。PKCS#11 では、使い道ごとに別のメカニズム（<code>CKM_*</code>）になる。",
+   c:[C("// 同じ RSA の鍵ペアで、使い道ごとにメカニズムが違う"),"Mechanism::RsaPkcsKeyPairGen  "+C("// 鍵を作る"),"Mechanism::Sha256RsaPkcs      "+C("// 署名"),"Mechanism::RsaPkcsOaep(..)    "+C("// 暗号化・鍵を包む")]},
+  {t:"表の読み方：行は一家、列は使い道",
+   b:"このページの表は、行が方式（一家）、列がやりたいこと（PKCS#11 の関数）、マスがそのためのメカニズム。RSA は 1 組の鍵ペアを作れば、署名にも鍵の受け渡しにも使える。右端の列は、その方式が仕様に入った版。",
+   c:["let (pub_h, priv_h) = s.generate_key_pair(","    &Mechanism::RsaPkcsKeyPairGen, &pub_t, &priv_t)?;",C("// 鍵の種類は CKK_RSA（第4章）")]},
+  {t:"楕円曲線：曲線を選んで使う",
+   b:"楕円曲線は、y² = x³ + ax + b の形の曲線の上で点を足していく計算を土台にした一家（土台の問題は離散対数）。鍵の種類は <code>CKK_EC</code> で、どの曲線を使うかを <code>CKA_EC_PARAMS</code>（P-256 の OID など）で選ぶ。同じ鍵の種類で、署名（ECDSA）と鍵共有（ECDH）の両方がある。図の曲線は実数で描いたイメージで、実際の計算は有限体の上の点で行う。",
+   c:["s.generate_key_pair(&Mechanism::EccKeyPairGen,","    &[Attribute::EcParams(P256.to_vec()), ..], ..)?;",C("// 署名   → CKM_ECDSA（第7章）"),C("// 鍵共有 → CKM_ECDH1_DERIVE（C_DeriveKey）")]},
+  {t:"新しい曲線①　Edwards 形（Ed25519）",
+   b:"v3.0 で、Edwards 形の曲線（Ed25519・Ed448）が加わった。同じ楕円曲線でも鍵の種類は <code>CKK_EC_EDWARDS</code> で、鍵を作るメカニズムも別（<code>CKM_EC_EDWARDS_KEY_PAIR_GEN</code>）。使い道は署名（<code>CKM_EDDSA</code>）だけで、Edwards の鍵で <code>CKM_ECDSA</code> を使おうとすると断られる（返すエラーはトークン次第）。",
+   c:["s.generate_key_pair(&Mechanism::EccEdwardsKeyPairGen,","    &[Attribute::EcParams(ED25519.to_vec()), ..], ..)?;","let m = Mechanism::Eddsa(EddsaParams::new(","    EddsaSignatureScheme::Pure));","s.sign(&m, ed_priv, data)?.len(); "+C("// 64")]},
+  {t:"新しい曲線②　Montgomery 形（X25519）",
+   b:"Montgomery 形の曲線（X25519・X448）も v3.0 から。鍵の種類は <code>CKK_EC_MONTGOMERY</code> で、使い道は鍵共有。メカニズムは P-256 と同じ <code>CKM_ECDH1_DERIVE</code> を使い、鍵の種類だけが違う。<code>CKM_XEDDSA</code> は、X3DH という鍵交換のために、この鍵で署名もできるようにした特別なメカニズム。",
+   c:["s.generate_key_pair(&Mechanism::EccMontgomeryKeyPairGen,","    &[Attribute::EcParams(X25519.to_vec()), ..], ..)?;","s.derive_key(&Mechanism::Ecdh1Derive(..), priv_h, &aes)?;",C("// メカニズムは P-256 と同じ")]},
+  {t:"量子計算機には、どの曲線も弱い",
+   b:"量子計算機で動くショアのアルゴリズムは、素因数分解と離散対数を効率よく解ける。だから RSA も、Weierstrass・Edwards・Montgomery のどの楕円曲線も破られる。Ed25519 や X25519 は速さや実装のしやすさを良くした「新しい曲線」で、土台の問題は同じ離散対数。新しいからといって量子に強いわけではない。",
+   c:[C("// ✕ 量子計算機に弱い（ショアのアルゴリズム）"),C("// RSA                    … 素因数分解"),C("// EC・Edwards・Montgomery … 離散対数"),C("// → 土台ごと替える必要がある ＝ PQC")]},
+  {t:"PQC：土台そのものを替える",
+   b:"PQC（耐量子暗号）は、量子計算機でも効率よく解く方法が知られていない問題を土台にした方式の総称で、普通のコンピュータで動く（光の性質で鍵を配る「量子暗号」とは別物）。PKCS#11 には v3.2 で入った。ML-KEM の ML は Module-Lattice（モジュール格子）で土台の名前、KEM は鍵カプセル化で使い道の名前。RSA や楕円曲線と同じ「土台＋使い道」の形をしている。",
+   c:["s.generate_key_pair(&Mechanism::MlKemKeyPairGen,","    &[Attribute::ParameterSet(","        MlKemParameterSetType::ML_KEM_768.into()),","      Attribute::Encapsulate(true), ..],","    &[Attribute::Decapsulate(true), ..])?;"]},
+  {t:"ML-DSA：同じ土台の、別の鍵",
+   b:"ML-DSA も土台はモジュール格子だが、鍵の種類は <code>CKK_ML_DSA</code> で、ML-KEM の <code>CKK_ML_KEM</code> とは別。楕円曲線では 1 つの <code>CKK_EC</code> の鍵に署名と鍵共有の両方を許せたが、PQC では使い道ごとに鍵の種類が分かれる。メカニズムは、データをそのまま渡す <code>CKM_ML_DSA</code> と、ハッシュしてから署名する HashML-DSA（<code>CKM_HASH_ML_DSA*</code>）に分かれる。",
+   c:["let m = Mechanism::MlDsa(SignAdditionalContext::new(","    HedgeType::Preferred, None));","let sig = s.sign(&m, dsa_priv, data)?;","s.verify(&m, dsa_pub, data, &sig)?;"]},
+  {t:"SLH-DSA：ハッシュ関数だけが土台",
+   b:"SLH-DSA は、ハッシュ関数を土台にした署名（FIPS 205）。鍵の種類は <code>CKK_SLH_DSA</code> で、パラメータセットは <code>CKP_SLH_DSA_SHA2_128S</code> など 12 通り。同じハッシュ系の HSS（v3.1〜）と XMSS（v3.2〜）は、署名するたびに秘密鍵の状態が進む「状態あり」の方式で、SLH-DSA とは使い方の注意が違う。",
+   c:["s.generate_key_pair(&Mechanism::SlhDsaKeyPairGen,","    &[Attribute::ParameterSet(","        SlhDsaParameterSetType::SHA2_128S.into()), ..],","    ..)?;"]},
+  {t:"強さの決め方は3通り",
+   b:"RSA はビット数（<code>CKA_MODULUS_BITS</code>）、楕円曲線は曲線（<code>CKA_EC_PARAMS</code>）、PQC は NIST が決めた組から選ぶ（<code>CKA_PARAMETER_SET</code>）。どれも公開鍵のテンプレートに書く。PQC の秘密鍵は鍵ペアとしてまとめて作られるので、秘密鍵のテンプレートには書かない。トークンが対応しない組なら <code>CKR_PARAMETER_SET_NOT_SUPPORTED</code>。",
+   c:["Attribute::ModulusBits(2048.into())  "+C("// RSA"),"Attribute::EcParams(P256.to_vec())   "+C("// 楕円曲線"),"Attribute::ParameterSet(","    MlDsaParameterSetType::ML_DSA_65.into()) "+C("// PQC")]},
+  {t:"KEM：鍵共有の形が変わる",
+   b:"ECDH は、両方が鍵ペアを作って公開鍵を交換し、<code>C_DeriveKey</code>（自分の秘密鍵＋相手の公開鍵）で同じ共通鍵を作る。KEM では受け取る側だけが鍵ペアを持つ。送る側は相手の公開鍵で <code>C_EncapsulateKey</code> を呼んで共通鍵と暗号文を得て、暗号文を送る。受け取る側は <code>C_DecapsulateKey</code>（自分の秘密鍵＋暗号文）で同じ共通鍵を取り出す。この2つは v3.2 の新しい関数。",
+   c:[C("// 送る側（A）：相手の公開鍵だけで"),"let (ct, a_key) = s.encapsulate_key(","    &Mechanism::MlKem, kem_pub, &aes)?;",C("// 受け取る側（B）：自分の秘密鍵と暗号文で"),"let b_key = s.decapsulate_key(","    &Mechanism::MlKem, kem_priv, &aes, &ct)?;"]},
+  {t:"署名の呼び方は変わらない",
+   b:"ML-DSA でも、署名は <code>C_SignInit</code> → <code>C_Sign</code>、検証は <code>C_VerifyInit</code> → <code>C_Verify</code> で、第7章と同じ。変わるのはメカニズムと鍵だけ。パラメータ <code>CK_SIGN_ADDITIONAL_CONTEXT</code>（省略可）で、乱数を混ぜる（hedged）か毎回同じ（deterministic）かを指定できる。省略すると <code>CKH_HEDGE_PREFERRED</code> で、どちらになるかはトークン次第。",
+   c:["s.sign(&Mechanism::Ecdsa, ec_priv, &hash)?; "+C("// 第7章"),"let m = Mechanism::MlDsa(SignAdditionalContext::new(","    HedgeType::Required, None)); "+C("// 必ず乱数を混ぜる"),"s.sign(&m, dsa_priv, data)?; "+C("// 呼び方は同じ")]},
+  {t:"使えるかはトークン次第",
+   b:"ML-KEM などは v3.2 の仕様にあっても、ライブラリやトークンが対応していなければ使えない。<code>C_GetMechanismList</code> にメカニズムがあるか、<code>C_GetMechanismInfo</code> で <code>CKF_ENCAPSULATE</code> などの印が立っているかを確かめる。このページのサンプルは、トークンにあるときだけ Montgomery・ML-KEM・ML-DSA を動かす。",
+   c:["let list = lib.get_mechanism_list(slot)?;","if list.contains(&MechanismType::ML_KEM_KEY_PAIR_GEN) {","    "+C("// ML-KEM を使う"),"}","lib.get_mechanism_info(slot, MechanismType::ML_KEM)?","    .encapsulate(); "+C("// CKF_ENCAPSULATE")]}
+];
+const ALL={t:"全体像",
+  b:"RSA・楕円曲線・ML-KEM などは、土台の数学で分けた一家の名前。それぞれに鍵の種類（<code>CKK_*</code>）と、鍵を作る・署名・鍵共有のメカニズム（<code>CKM_*</code>）がある。Ed25519・X25519 は楕円曲線の新しい形で、量子計算機には RSA と同じく弱い。PQC（v3.2）は土台そのものを替えた方式で、鍵共有は KEM（<code>C_EncapsulateKey</code>）、署名は従来と同じ <code>C_Sign</code> で使う。",
+  c:[C("// 識別子は OASIS 公開のヘッダ（v3.0・v3.2）で確認"),C("// 根拠：v3.2「Elliptic Curve」「ML-KEM」「ML-DSA」"),C("//   「SLH-DSA」「C_EncapsulateKey」「C_DecapsulateKey」"),C("// 挙動は examples/x1-families で CI 確認"),C("//   （Montgomery・PQC はトークンにあるときだけ）")]};
+runSteps({steps:STEPS, all:ALL});
+</script>
+</body>
+</html>

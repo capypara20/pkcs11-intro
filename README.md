@@ -29,7 +29,7 @@ PKCS#11（Cryptoki）を、図とアニメーションで段階的に説明す�
 
 ```
 index.html            目次
-docs/                 各章（NN-*.html）・シナリオ（sN-*.html）・リファレンス（ref-*.html）
+docs/                 各章（NN-*.html）・シナリオ（sN-*.html）・解説（xN-*.html）・リファレンス（ref-*.html）
 assets/               共通のスタイルとスクリプト（chapter.css / steps.js は第1章以降の章ページ用）
 diagrams/             図の元データ（draw.io）
 examples/             Rust サンプル（Cargo workspace）
@@ -44,7 +44,7 @@ Ubuntu の場合：
 sudo apt-get install -y softhsm2 opensc
 bash scripts/setup-softhsm.sh
 export SOFTHSM2_CONF=$PWD/.softhsm/softhsm2.conf
-cd examples && cargo run -p overview && cargo run -p init && cargo run -p connect && cargo run -p objects && cargo run -p keygen && cargo run -p find && cargo run -p crypt && cargo run -p sign && cargo run -p lifecycle && cargo run -p rotation && cargo run -p keystore
+cd examples && cargo run -p overview && cargo run -p init && cargo run -p connect && cargo run -p objects && cargo run -p keygen && cargo run -p find && cargo run -p crypt && cargo run -p sign && cargo run -p lifecycle && cargo run -p rotation && cargo run -p keystore && cargo run -p families
 cargo run -p functions && cargo run -p mechanisms && cargo run -p maintenance && cargo run -p errors   # リファレンスの裏付け
 bash ../scripts/check-commands.sh                   # コマンドリファレンスの全コマンド（専用のトークン置き場を使う）
 ```

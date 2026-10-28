@@ -17,6 +17,10 @@
     ['docs/s2-rotation.html','シナリオ2 鍵の付け替え'],
     ['docs/s3-keystore.html','シナリオ3 包んだ鍵を外に置く'],
   ];
+  // 方式や仕組みそのものを図で説明するページ（章の操作を支える背景知識）
+  const EXPLAINERS=[
+    ['docs/x1-families.html','解説1 楕円曲線と PQC'],
+  ];
   const REFS=[
     ['docs/ref-glossary.html','用語・略語集'],
     ['docs/ref-attributes.html','属性リファレンス'],
@@ -34,10 +38,10 @@
   };
   document.querySelectorAll('nav.sitenav').forEach(n=>{
     const root=n.dataset.root||'', me=n.dataset.page;
-    const list=[CHAPTERS,SCENARIOS,REFS].find(l=>l.some(c=>c[0]===me))||REFS;
+    const list=[CHAPTERS,SCENARIOS,EXPLAINERS,REFS].find(l=>l.some(c=>c[0]===me))||REFS;
     const k=list.findIndex(c=>c[0]===me), prev=list[k-1], next=list[k+1];
     const link=(x,cls,text)=>x?`<a class="${cls}" href="${root}${x[0]}">${text}</a>`:`<span class="${cls} off">${text}</span>`;
-    const kind=list===CHAPTERS?'章':list===SCENARIOS?'シナリオ':'リファレンス';
+    const kind=list===CHAPTERS?'章':list===SCENARIOS?'シナリオ':list===EXPLAINERS?'解説':'リファレンス';
     // data-spec="base curr latest" のように、そのページの根拠になる仕様書を並べる
     const spec=(n.dataset.spec||'base latest').split(' ').map(s=>`<a href="${SPEC[s][0]}" target="_blank" rel="noopener">${SPEC[s][1]}</a>`).join(' ／ ');
     n.innerHTML=link(prev,'prev',prev?`← ${prev[1]}`:`← 前の${kind}はなし`)
